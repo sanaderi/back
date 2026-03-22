@@ -378,12 +378,12 @@ namespace GamaEdtech.Application.Service
                         }
                     }
 
-                    if (requestDto.BoardCodes?.Any() == true)
+                    if (requestDto.Boards?.Any() == true)
                     {
                         var schoolBoardRepository = uow.GetRepository<SchoolBoard>();
 
-                        var removedBoards = school.SchoolBoards?.Where(t => requestDto.BoardCodes is null || !requestDto.BoardCodes.Contains(t.Board.Code));
-                        var newBoards = requestDto.BoardCodes?.Where(t => school.SchoolBoards is null || school.SchoolBoards.All(s => s.Board.Code != t));
+                        var removedBoards = school.SchoolBoards?.Where(t => !requestDto.Boards.Contains(t.BoardId));
+                        var newBoards = requestDto.Boards?.Where(t => school.SchoolBoards is null || school.SchoolBoards.All(s => s.BoardId != t));
 
                         if (removedBoards is not null)
                         {
@@ -395,27 +395,12 @@ namespace GamaEdtech.Application.Service
 
                         if (newBoards is not null)
                         {
-                            var boards = await boardService.Value.GetBoardsAsync(null);
-                            if (boards.Data.List is null)
-                            {
-                                return new(OperationResult.NotFound)
-                                {
-                                    Errors = [new() { Message = Localizer.Value["BoardsNotFound"] },],
-                                };
-                            }
-
                             foreach (var item in newBoards)
                             {
-                                var boardId = boards.Data.List.FirstOrDefault(t => t.Code == item)?.Id;
-                                if (!boardId.HasValue)
-                                {
-                                    continue;
-                                }
-
                                 schoolBoardRepository.Add(new SchoolBoard
                                 {
                                     SchoolId = requestDto.Id.Value,
-                                    BoardId = boardId.Value,
+                                    BoardId = item,
                                     CreationDate = requestDto.Date,
                                     CreationUserId = requestDto.UserId,
                                 });
@@ -454,10 +439,10 @@ namespace GamaEdtech.Application.Service
                             CreationDate=requestDto.Date,
                         })];
                     }
-                    if (requestDto.BoardCodes is not null)
+                    if (requestDto.Boards is not null)
                     {
-                        var boards = await boardService.Value.GetBoardsAsync(null);
-                        if (boards.Data.List is null)
+                        var boards = await boardService.Value.GetBoardsListAsync();
+                        if (boards.Data is null)
                         {
                             return new(OperationResult.NotFound)
                             {
@@ -465,10 +450,10 @@ namespace GamaEdtech.Application.Service
                             };
                         }
 
-                        school.SchoolBoards = [.. requestDto.BoardCodes.Select(t => new SchoolBoard {
-                            BoardId = boards.Data.List.FirstOrDefault(b => b.Code == t)!.Id,
-                            CreationUserId=requestDto.UserId,
-                            CreationDate=requestDto.Date,
+                        school.SchoolBoards = [.. requestDto.Boards.Select(t => new SchoolBoard {
+                            BoardId = t,
+                            CreationUserId = requestDto.UserId,
+                            CreationDate = requestDto.Date,
                         })];
                     }
                     repository.Add(school);
@@ -1476,8 +1461,8 @@ namespace GamaEdtech.Application.Service
                     WebSite = contributionResult.Data.Data.WebSite,
                     ZipCode = contributionResult.Data.Data.ZipCode,
                     Id = requestDto.SchoolId,
-                    Tags = contributionResult.Data.Data!.Tags,
-                    BoardCodes = contributionResult.Data.Data!.BoardCodes,
+                    Tags = contributionResult.Data.Data.Tags,
+                    Boards = contributionResult.Data.Data.Boards,
                     UserId = contributionResult.Data.CreationUserId,
                     Date = contributionResult.Data.CreationDate,
                     Tuition = contributionResult.Data.Data.Tuition,
