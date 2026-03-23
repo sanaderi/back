@@ -187,7 +187,7 @@ namespace GamaEdtech.Infrastructure.Provider.Core
                     PhoneNumber = response.Data.Phone,
                     Gender = MapGender(response.Data.Sex),
                     Grade = response.Data.Grade.ValueOf<int?>(),
-                    CoreId = response.Data.CoreId.ValueOf<int?>(),
+                    CoreId = response.Data.CoreId,
                     Group = response.Data.Group,
                 };
                 if (!string.IsNullOrEmpty(response.Data.Avatar))

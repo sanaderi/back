@@ -1191,7 +1191,7 @@ namespace GamaEdtech.Application.Service
         {
             try
             {
-                const string endpoint = "https://core.gamatrain.com/";
+                const string endpoint = "https://gama.ir/";
                 var data = await new JsonWebTokenHandler().ValidateTokenAsync(requestDto.Token, new TokenValidationParameters
                 {
                     ValidateIssuer = true,

@@ -26,6 +26,6 @@ namespace GamaEdtech.Data.Dto.Provider.Core
         public int? Group { get; set; }
 
         [JsonPropertyName("id")]
-        public string? CoreId { get; set; }
+        public int? CoreId { get; set; }
     }
 }
