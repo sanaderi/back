@@ -10,6 +10,7 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
 
         [Display]
         [Required]
+        [TimeZoneId]
         public string? DefaultTimeZoneId { get; set; }
 
         [Display]

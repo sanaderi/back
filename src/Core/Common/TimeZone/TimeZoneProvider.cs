@@ -1,4 +1,4 @@
-﻿namespace GamaEdtech.Common.TimeZone
+namespace GamaEdtech.Common.TimeZone
 {
     using System;
     using System.Collections.Generic;
@@ -11,8 +11,6 @@
 
     public class TimeZoneProvider(Lazy<ICacheProvider> cacheProvider) : ITimeZoneProvider
     {
-        private readonly Lazy<ICacheProvider> cacheProvider = cacheProvider;
-
         public IEnumerable<TimeZoneDto>? GetTimeZones() => cacheProvider.Value.Get(TimeZoneIdClaim, () =>
                                                                         TimeZoneInfo.GetSystemTimeZones().Select(t => new TimeZoneDto
                                                                         {

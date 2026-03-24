@@ -2,38 +2,38 @@ namespace GamaEdtech.Common.Localization
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
-    using System.Globalization;
     using System.Threading.Tasks;
 
     using GamaEdtech.Common.Core;
-    using GamaEdtech.Common.Core.Extensions.Collections;
+    using GamaEdtech.Common.Core.Extensions.Collections.Generic;
 
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Localization;
+    using Microsoft.Extensions.DependencyInjection;
 
-    public class RouteValueRequestCultureProvider(CultureInfo[] cultures) : IRequestCultureProvider
+    public class RouteValueRequestCultureProvider() : IRequestCultureProvider
     {
-        private readonly CultureInfo[] cultures = cultures;
-
-        public Task<ProviderCultureResult?> DetermineProviderCultureResult([NotNull] HttpContext httpContext)
+        public async Task<ProviderCultureResult?> DetermineProviderCultureResult([NotNull] HttpContext httpContext)
         {
             var path = httpContext.Request.Path;
 
             if (string.IsNullOrEmpty(path))
             {
-                return Task.FromResult<ProviderCultureResult?>(new ProviderCultureResult(Constants.DefaultLanguageCode));
+                return new ProviderCultureResult(Constants.DefaultLanguageCode);
             }
 
             var routeValues = httpContext.Request.Path.Value?.Split('/');
             if (routeValues is null || routeValues.Length <= 1)
             {
-                return Task.FromResult<ProviderCultureResult?>(new ProviderCultureResult(Constants.DefaultLanguageCode));
+                return new ProviderCultureResult(Constants.DefaultLanguageCode);
             }
 
-            var exists = cultures.Exists(t => t.Name.Equals(routeValues[1], StringComparison.OrdinalIgnoreCase));
-            return !exists
-                ? Task.FromResult<ProviderCultureResult?>(new ProviderCultureResult(Constants.DefaultLanguageCode))
-                : Task.FromResult<ProviderCultureResult?>(new ProviderCultureResult(routeValues[1]));
+            var lst = await httpContext.RequestServices.GetRequiredService<ILanguageService>().GetActiveLanguagesAsync();
+
+            var exists = lst.Exists(t => t!.Equals(routeValues[1], StringComparison.OrdinalIgnoreCase));
+            return exists
+                ? new ProviderCultureResult(routeValues[1])
+                : new ProviderCultureResult(Constants.DefaultLanguageCode);
         }
     }
 }

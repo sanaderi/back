@@ -38,9 +38,9 @@ namespace GamaEdtech.Presentation.Api
         {
             get
             {
-                if (!Globals.CurrentCulture.TwoLetterISOLanguageName.Equals("fa", StringComparison.OrdinalIgnoreCase))
+                if (Globals.CurrentCulture.TwoLetterISOLanguageName.Equals("fa", StringComparison.OrdinalIgnoreCase))
                 {
-                    CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = Globals.GetCulture("fa");
+                    CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = Globals.GetCulture(Globals.CurrentCulture);
                 }
                 return ServicesList;
             }

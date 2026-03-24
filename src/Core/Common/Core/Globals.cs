@@ -399,19 +399,14 @@ namespace GamaEdtech.Common.Core
             return dictionary;
         }
 
-        public static CultureInfo GetCulture(string name)
+        public static CultureInfo GetCulture([NotNull] CultureInfo culture)
         {
-            if (string.IsNullOrEmpty(name))
+            if (!culture.Name.StartsWith("fa", StringComparison.InvariantCultureIgnoreCase))
             {
-                return new CultureInfo(Constants.DefaultLanguageCode);
+                return culture;
             }
 
-            if (!name.StartsWith("fa", StringComparison.InvariantCultureIgnoreCase))
-            {
-                return new CultureInfo(name, false);
-            }
-
-            var persianCalture = new CultureInfo(name, false);
+            var persianCalture = new CultureInfo(culture.Name, false);
             var info = persianCalture.DateTimeFormat;
             var monthNames = new[] { "فروردين", "ارديبهشت", "خرداد", "تير", "مرداد", "شهريور", "مهر", "آبان", "آذر", "دي", "بهمن", "اسفند", string.Empty };
             var shortestDayNames = new[] { "ى", "د", "س", "چ", "پ", "ج", "ش" };
