@@ -14,7 +14,7 @@ namespace GamaEdtech.Common.Localization
         public IReadOnlyList<string?> GetActiveLanguages()
         {
             var uow = unitOfWorkProvider.Value.CreateUnitOfWork();
-            var lst = uow.GetRepository<Language, int>().GetManyQueryable(t => t.IsEnable).Select(t => t.Code).ToList();
+            var lst = uow.GetRepository<Language, int>().GetManyQueryable(t => t.IsEnable).OrderByDescending(t => t.IsDefault).Select(t => t.Code).ToList();
 
             return lst?.Count > 0 ? lst : [Constants.DefaultLanguageCode];
         }
@@ -22,7 +22,7 @@ namespace GamaEdtech.Common.Localization
         public async Task<IReadOnlyList<string?>> GetActiveLanguagesAsync()
         {
             var uow = unitOfWorkProvider.Value.CreateUnitOfWork();
-            var lst = await uow.GetRepository<Language, int>().GetManyQueryable(t => t.IsEnable).Select(t => t.Code).ToListAsync();
+            var lst = await uow.GetRepository<Language, int>().GetManyQueryable(t => t.IsEnable).OrderByDescending(t => t.IsDefault).Select(t => t.Code).ToListAsync();
 
             return lst?.Count > 0 ? lst : [Constants.DefaultLanguageCode];
         }

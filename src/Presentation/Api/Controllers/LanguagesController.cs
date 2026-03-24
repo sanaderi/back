@@ -1,7 +1,5 @@
 namespace GamaEdtech.Presentation.Api.Controllers
 {
-    using System.Globalization;
-
     using Asp.Versioning;
 
     using GamaEdtech.Application.Interface;
@@ -33,6 +31,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         Name = t.Name,
                         Code = t.Code,
                         Icon = t.Icon,
+                        IsDefault = t.IsDefault,
                     }),
                 });
             }
@@ -73,12 +72,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
         {
             try
             {
-                var result = CultureInfo.GetCultures(CultureTypes.AllCultures);
                 return Ok<IEnumerable<CultureViewModel>>(new()
                 {
-                    Data = result is null
-                    ? []
-                    : result.Where(t => !string.IsNullOrEmpty(t.Name)).Select(t => new CultureViewModel
+                    Data = Globals.AllCultures.Select(t => new CultureViewModel
                     {
                         Code = t.Name,
                         DisplayName = t.NativeName,

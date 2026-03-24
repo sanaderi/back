@@ -40,6 +40,8 @@ namespace GamaEdtech.Common.Core
 
         public static DbProviderType ProviderType { get; set; }
 
+        public static IEnumerable<CultureInfo> AllCultures => CultureInfo.GetCultures(CultureTypes.AllCultures).Where(t => !string.IsNullOrEmpty(t.Name)).Select(GetCulture);
+
         public static string? GetClientIpAddress(this HttpContext? httpContext)
         {
             var ip = httpContext?.Connection?.RemoteIpAddress?.ToString();

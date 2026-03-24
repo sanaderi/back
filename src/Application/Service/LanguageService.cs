@@ -38,6 +38,7 @@ namespace GamaEdtech.Application.Service
                     Code = t.Code,
                     Icon = t.Icon,
                     IsEnable = t.IsEnable,
+                    IsDefault = t.IsDefault,
                 }).ToListAsync();
                 return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
             }
@@ -60,6 +61,7 @@ namespace GamaEdtech.Application.Service
                     Code = t.Code,
                     Icon = t.Icon,
                     IsEnable = t.IsEnable,
+                    IsDefault = t.IsDefault,
                 }).ToListAsync();
                 return new(OperationResult.Succeeded) { Data = lst };
             }
@@ -82,6 +84,7 @@ namespace GamaEdtech.Application.Service
                     Code = t.Code,
                     Icon = t.Icon,
                     IsEnable = t.IsEnable,
+                    IsDefault = t.IsDefault,
                 }).FirstOrDefaultAsync();
 
                 return language is null
@@ -103,8 +106,15 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                using var trn = uow.CreateTransactionScope();
+
                 var repository = uow.GetRepository<Language, int>();
                 Language? language = null;
+
+                if (requestDto.IsDefault)
+                {
+                    _ = await repository.GetManyQueryable().ExecuteUpdateAsync(t => t.SetProperty(p => p.IsDefault, false));
+                }
 
                 if (requestDto.Id.HasValue)
                 {
@@ -121,6 +131,7 @@ namespace GamaEdtech.Application.Service
                     language.Code = requestDto.Code;
                     language.Icon = requestDto.Icon;
                     language.IsEnable = requestDto.IsEnable;
+                    language.IsDefault = requestDto.IsDefault;
 
                     _ = repository.Update(language);
                 }
@@ -132,11 +143,13 @@ namespace GamaEdtech.Application.Service
                         Code = requestDto.Code,
                         Icon = requestDto.Icon,
                         IsEnable = requestDto.IsEnable,
+                        IsDefault = requestDto.IsDefault,
                     };
                     repository.Add(language);
                 }
 
                 _ = await uow.SaveChangesAsync();
+                trn.Complete();
 
                 return new(OperationResult.Succeeded) { Data = language.Id };
             }

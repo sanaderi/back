@@ -19,5 +19,9 @@ namespace GamaEdtech.Presentation.ViewModel.Language
         [Display]
         [Required]
         public bool? IsEnable { get; set; }
+
+        [Display]
+        [Required]
+        public bool? IsDefault { get; set; }
     }
 }

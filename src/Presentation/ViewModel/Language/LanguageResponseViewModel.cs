@@ -7,5 +7,6 @@ namespace GamaEdtech.Presentation.ViewModel.Language
         public string? Code { get; set; }
         public string? Icon { get; set; }
         public bool IsEnable { get; set; }
+        public bool IsDefault { get; set; }
     }
 }

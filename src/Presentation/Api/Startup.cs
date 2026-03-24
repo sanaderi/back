@@ -184,14 +184,6 @@ namespace GamaEdtech.Presentation.Api
 
         protected override void ConfigureCore([NotNull] IApplicationBuilder app, IWebHostEnvironment env)
         {
-            _ = app.Use(async (context, next) =>
-            {
-                context.Response.Headers.Server = "";
-                CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
-
-                await next(context);
-            });
-
             _ = app.UseSwagger();
             _ = app.UseSwaggerUI(options =>
             {

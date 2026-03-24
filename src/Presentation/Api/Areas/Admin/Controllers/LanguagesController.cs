@@ -41,6 +41,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             Code = t.Code,
                             Icon = t.Icon,
                             IsEnable = t.IsEnable,
+                            IsDefault = t.IsDefault,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }
@@ -68,6 +69,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         Code = result.Data.Code,
                         Icon = result.Data.Icon,
                         IsEnable = result.Data.IsEnable,
+                        IsDefault = result.Data.IsDefault,
                     }
                 });
             }
@@ -90,6 +92,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     Code = request.Code,
                     Icon = request.Icon,
                     IsEnable = request.IsEnable.GetValueOrDefault(),
+                    IsDefault = request.IsDefault.GetValueOrDefault(),
                 });
                 return Ok<ManageLanguageResponseViewModel>(new(result.Errors)
                 {
@@ -116,6 +119,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     Code = request.Code,
                     Icon = request.Icon,
                     IsEnable = request.IsEnable.GetValueOrDefault(),
+                    IsDefault = request.IsDefault.GetValueOrDefault(),
                 });
                 return Ok<ManageLanguageResponseViewModel>(new(result.Errors)
                 {

@@ -6,6 +6,7 @@ namespace GamaEdtech.Data.Dto.Language
         public string? Name { get; set; }
         public string? Code { get; set; }
         public bool IsEnable { get; set; }
+        public bool IsDefault { get; set; }
         public string? Icon { get; set; }
     }
 }

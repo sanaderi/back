@@ -7,6 +7,7 @@ namespace GamaEdtech.Common.Localization
     using GamaEdtech.Common.DataAnnotation;
     using GamaEdtech.Common.DataAnnotation.Schema;
 
+    using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Language))]
@@ -31,9 +32,16 @@ namespace GamaEdtech.Common.Localization
         [Column(nameof(IsEnable), DataType.Boolean)]
         public bool IsEnable { get; set; }
 
+        [Column(nameof(IsDefault), DataType.Boolean)]
+        public bool IsDefault { get; set; }
+
         [Column(nameof(Icon), DataType.UnicodeMaxString)]
         public string? Icon { get; set; }
 
-        public void Configure([NotNull] EntityTypeBuilder<Language> builder) => _ = builder.HasIndex(t => t.Code).IsUnique(true);
+        public void Configure([NotNull] EntityTypeBuilder<Language> builder)
+        {
+            _ = builder.HasIndex(t => t.Code).IsUnique(true);
+            _ = builder.HasIndex(t => t.IsDefault).IsUnique(true).HasFilter($"([{DbProviderFactories.GetFactory.GetObjectName(nameof(IsDefault), pluralize: false)}] = 1)");
+        }
     }
 }

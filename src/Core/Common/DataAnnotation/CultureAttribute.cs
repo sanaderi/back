@@ -2,7 +2,6 @@ namespace GamaEdtech.Common.DataAnnotation
 {
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
-    using System.Globalization;
     using System.Linq;
 
     using GamaEdtech.Common.Core;
@@ -23,10 +22,10 @@ namespace GamaEdtech.Common.DataAnnotation
                 return true;
             }
 
-            var cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
+            var cultures = Globals.AllCultures;
             return value is IEnumerable<string> lst
-                ? lst.All(t => string.IsNullOrEmpty(t) || cultures.Exists(c => c.Name.Equals(t, StringComparison.OrdinalIgnoreCase)))
-                : cultures.Exists(t => t.Name == value.ToString());
+                ? lst.All(t => string.IsNullOrEmpty(t) || cultures.Any(c => c.Name.Equals(t, StringComparison.OrdinalIgnoreCase)))
+                : cultures.Any(t => t.Name.Equals(value.ToString(), StringComparison.OrdinalIgnoreCase));
         }
 
         public void AddValidation([NotNull] ClientModelValidationContext context)
