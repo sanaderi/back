@@ -60,4 +60,4 @@ jobs:
           key: ${{ secrets.SANDBOX_VPS_SSH_KEY }}
           script: |
             cd /home/ubuntu/stagegamacoreapp
-            systemctl restart stagegamacoreapp.service
+            sudo systemctl restart stagegamacoreapp.service
