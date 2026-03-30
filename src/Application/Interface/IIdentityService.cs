@@ -47,3 +47,4 @@ namespace GamaEdtech.Application.Interface
         Task<ResultData<GenerateUserTokenResponseDto>> GenerateTokenByCoreTokenAsync([NotNull] GenerateTokenByCoreTokenRequestDto requestDto);
     }
 }
+
