@@ -14,7 +14,7 @@ namespace GamaEdtech.Common.Localization
     public class Language : IEntity<Language, int>
     {
         [System.ComponentModel.DataAnnotations.Key]
-        [Column(nameof(Id), DataType.Long)]
+        [Column(nameof(Id), DataType.Int)]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Required]
         public int Id { get; set; }
