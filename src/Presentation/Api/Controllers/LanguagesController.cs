@@ -1,5 +1,7 @@
 namespace GamaEdtech.Presentation.Api.Controllers
 {
+    using System.Globalization;
+
     using Asp.Versioning;
 
     using GamaEdtech.Application.Interface;
@@ -32,6 +34,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         Code = t.Code,
                         Icon = t.Icon,
                         IsDefault = t.IsDefault,
+                        Rtl = new CultureInfo(t.Code!).TextInfo.IsRightToLeft,
                     }),
                 });
             }
