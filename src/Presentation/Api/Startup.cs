@@ -38,9 +38,9 @@ namespace GamaEdtech.Presentation.Api
         {
             get
             {
-                if (!Globals.CurrentCulture.TwoLetterISOLanguageName.Equals("fa", StringComparison.OrdinalIgnoreCase))
+                if (Globals.CurrentCulture.TwoLetterISOLanguageName.Equals("fa", StringComparison.OrdinalIgnoreCase))
                 {
-                    CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = Globals.GetCulture("fa");
+                    CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = Globals.GetCulture(Globals.CurrentCulture);
                 }
                 return ServicesList;
             }
@@ -184,14 +184,6 @@ namespace GamaEdtech.Presentation.Api
 
         protected override void ConfigureCore([NotNull] IApplicationBuilder app, IWebHostEnvironment env)
         {
-            _ = app.Use(async (context, next) =>
-            {
-                context.Response.Headers.Server = "";
-                CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
-
-                await next(context);
-            });
-
             _ = app.UseSwagger();
             _ = app.UseSwaggerUI(options =>
             {

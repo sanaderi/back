@@ -6,7 +6,6 @@ namespace GamaEdtech.Common.Core
 
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.AspNetCore.Routing;
     using Microsoft.Extensions.Logging;
 
     [ApiController]

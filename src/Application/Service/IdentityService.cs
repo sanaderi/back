@@ -950,58 +950,6 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        private async Task<string> GetTimeZoneIdAsync(int userId)
-        {
-            try
-            {
-                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var timeZoneId = await uow.GetRepository<ApplicationUserClaim, int>().GetManyQueryable(t => t.UserId == userId && t.ClaimType == TimeZoneIdClaim)
-                    .Select(t => t.ClaimValue).FirstOrDefaultAsync();
-
-                return !string.IsNullOrEmpty(timeZoneId) ? timeZoneId : UtcTimeZoneId;
-            }
-            catch
-            {
-                return UtcTimeZoneId;
-            }
-        }
-
-        private static IEnumerable<Error> MapUserManagerErrors(IdentityResult result)
-        {
-            foreach (var error in result.Errors)
-            {
-                yield return new Error { Message = error.Description };
-            }
-        }
-
-        private static string? GenerateDeviceHash(HttpContext? httpContext)
-        {
-            var ip = httpContext.GetClientIpAddress();
-            var userAgent = httpContext.UserAgent();
-
-            var byteValue = Encoding.UTF8.GetBytes(ip + userAgent);
-            var byteHash = SHA256.HashData(byteValue);
-            return Convert.ToBase64String(byteHash);
-        }
-
-        private ResultData<T> ValidateUser<T>(ApplicationUser? user)
-        {
-            IEnumerable<Error> errors = [];
-            if (user is null)
-            {
-                errors = [new() { Message = Localizer.Value["UserNotFound"] }];
-            }
-            else if (!user.Enabled)
-            {
-                errors = [new() { Message = Localizer.Value["UserNotEnabled"] }];
-            }
-
-            return new(user?.Enabled == true ? OperationResult.Succeeded : OperationResult.NotValid)
-            {
-                Errors = errors,
-            };
-        }
-
         public async Task<ResultData<string>> GenerateReferralUserAsync()
         {
             try
@@ -1280,6 +1228,58 @@ namespace GamaEdtech.Application.Service
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
             }
+        }
+
+        private async Task<string> GetTimeZoneIdAsync(int userId)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var timeZoneId = await uow.GetRepository<ApplicationUserClaim, int>().GetManyQueryable(t => t.UserId == userId && t.ClaimType == TimeZoneIdClaim)
+                    .Select(t => t.ClaimValue).FirstOrDefaultAsync();
+
+                return !string.IsNullOrEmpty(timeZoneId) ? timeZoneId : UtcTimeZoneId;
+            }
+            catch
+            {
+                return UtcTimeZoneId;
+            }
+        }
+
+        private static IEnumerable<Error> MapUserManagerErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                yield return new Error { Message = error.Description };
+            }
+        }
+
+        private static string? GenerateDeviceHash(HttpContext? httpContext)
+        {
+            var ip = httpContext.GetClientIpAddress();
+            var userAgent = httpContext.UserAgent();
+
+            var byteValue = Encoding.UTF8.GetBytes(ip + userAgent);
+            var byteHash = SHA256.HashData(byteValue);
+            return Convert.ToBase64String(byteHash);
+        }
+
+        private ResultData<T> ValidateUser<T>(ApplicationUser? user)
+        {
+            IEnumerable<Error> errors = [];
+            if (user is null)
+            {
+                errors = [new() { Message = Localizer.Value["UserNotFound"] }];
+            }
+            else if (!user.Enabled)
+            {
+                errors = [new() { Message = Localizer.Value["UserNotEnabled"] }];
+            }
+
+            return new(user?.Enabled == true ? OperationResult.Succeeded : OperationResult.NotValid)
+            {
+                Errors = errors,
+            };
         }
     }
 }
