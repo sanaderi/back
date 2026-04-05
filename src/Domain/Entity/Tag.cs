@@ -13,7 +13,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Tag))]
-    public class Tag : VersionableEntity<ApplicationUser, int, int?>, IEntity<Tag, long>
+    public class Tag : VersionableEntity<ApplicationUser, int, int?>, IEntity<Tag, long>, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

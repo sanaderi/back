@@ -416,7 +416,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             CreationDate = item.CreationDate,
                             SchoolId = item.IdentifierId.GetValueOrDefault(),
                             Status = item.Status,
-                            FileUri = fileService.Value.GetFileUri(item.Data?.FileId, ContainerType.School).Data,
+                            FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = item.Data?.FileId, ContainerType = ContainerType.School, }),
                             FileType = item.Data?.FileType,
                             IsDefault = item.Data?.IsDefault ?? false,
                         });
@@ -460,19 +460,19 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 }
 
                 string? tagName = null;
-                if (contributionResult.Data.Data!.TagId.HasValue)
+                if (contributionResult.Data.Data.TagId.HasValue)
                 {
-                    tagName = (await tagService.Value.GetTagNameAsync(new IdEqualsSpecification<Tag, long>(contributionResult.Data.Data!.TagId.Value))).Data;
+                    tagName = (await tagService.Value.GetTagNameAsync(new IdEqualsSpecification<Tag, long>(contributionResult.Data.Data.TagId.Value))).Data;
                 }
 
                 SchoolImageContributionReviewViewModel result = new()
                 {
                     Id = contributionResult.Data.Id,
-                    FileUri = fileService.Value.GetFileUri(contributionResult.Data.Data!.FileId, ContainerType.School).Data,
-                    FileType = contributionResult.Data.Data!.FileType,
-                    SchoolId = contributionResult.Data.Data!.SchoolId,
-                    IsDefault = contributionResult.Data.Data!.IsDefault,
-                    TagId = contributionResult.Data.Data!.TagId,
+                    FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.FileId, ContainerType = ContainerType.School, }),
+                    FileType = contributionResult.Data.Data.FileType,
+                    SchoolId = contributionResult.Data.Data.SchoolId,
+                    IsDefault = contributionResult.Data.Data.IsDefault,
+                    TagId = contributionResult.Data.Data.TagId,
                     TagName = tagName,
                     SchoolName = schoolResult.Data?.Name,
                 };
@@ -613,7 +613,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             SchoolId = item.Data?.SchoolId,
                             Description = item.Data?.Description,
                             Status = item.Status,
-                            FileUri = fileService.Value.GetFileUri(item.Data?.FileId, ContainerType.School).Data,
+                            FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = item.Data?.FileId, ContainerType = ContainerType.School, }),
                         });
                     }
                 }
@@ -657,8 +657,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 RemoveSchoolImageContributionReviewViewModel result = new()
                 {
                     Id = contributionResult.Data.Id,
-                    FileUri = fileService.Value.GetFileUri(contributionResult.Data.Data.FileId, ContainerType.School).Data,
-                    SchoolId = contributionResult.Data.Data!.SchoolId,
+                    FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.FileId, ContainerType = ContainerType.School, }),
+                    SchoolId = contributionResult.Data.Data.SchoolId,
                     SchoolName = schoolResult.Data?.Name,
                 };
 

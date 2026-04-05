@@ -10,7 +10,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.DataAccess.UnitOfWork;
     using GamaEdtech.Common.Service;
     using GamaEdtech.Common.Service.Factory;
-    using GamaEdtech.Data.Dto.School;
+    using GamaEdtech.Data.Dto.File;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Infrastructure.Interface;
 
@@ -34,24 +34,39 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public ResultData<Uri?> GetFileUri(string? id, ContainerType containerType)
+        public async Task<Uri?> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
-                return id is null ? new(OperationResult.Succeeded) { Data = null } : FileProvider.GetFileUri(id, containerType);
+                if (string.IsNullOrEmpty(requestDto.FileId))
+                {
+                    return null;
+                }
+
+                var result = await FileProvider.GetFileUriAsync(requestDto);
+                return result.Data;
             }
             catch (Exception exc)
             {
                 Logger.Value.LogException(exc);
-                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, }] };
+                return null;
             }
         }
 
-        public async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
+        public async Task<ResultData<string?>> CreateFileAsync([NotNull] CreateFileRequestDto requestDto)
         {
             try
             {
-                return await FileProvider.UploadFileAsync(requestDto);
+                using MemoryStream stream = new();
+                await requestDto.File.CopyToAsync(stream);
+
+                return await FileProvider.UploadFileAsync(new()
+                {
+                    File = stream.ToArray(),
+                    ContainerType = ContainerType.School,
+                    FileExtension = Path.GetExtension(requestDto.File.FileName),
+                    ContentType = requestDto.File.ContentType,
+                });
             }
             catch (Exception exc)
             {

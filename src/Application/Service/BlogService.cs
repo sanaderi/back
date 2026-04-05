@@ -2,7 +2,6 @@ namespace GamaEdtech.Application.Service
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
-    using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -59,18 +58,26 @@ namespace GamaEdtech.Application.Service
                     t.VisibilityType,
                 }).ToListAsync();
 
-                var result = blogs.Select(t => new PostsDto
+                List<PostsDto> result = new(blogs.Count);
+                for (var i = 0; i < blogs.Count; i++)
                 {
-                    Id = t.Id,
-                    DislikeCount = t.DislikeCount,
-                    LikeCount = t.LikeCount,
-                    Summary = t.Summary,
-                    Title = t.Title,
-                    Slug = t.Slug,
-                    ImageUri = fileService.Value.GetFileUri(t.ImageId, ContainerType.Post).Data,
-                    PublishDate = t.PublishDate,
-                    VisibilityType = t.VisibilityType,
-                });
+                    result.Add(new()
+                    {
+                        Id = blogs[i].Id,
+                        DislikeCount = blogs[i].DislikeCount,
+                        LikeCount = blogs[i].LikeCount,
+                        Summary = blogs[i].Summary,
+                        Title = blogs[i].Title,
+                        Slug = blogs[i].Slug,
+                        ImageUri = await fileService.Value.GetFileUriAsync(new()
+                        {
+                            FileId = blogs[i].ImageId,
+                            ContainerType = ContainerType.Post,
+                        }),
+                        PublishDate = blogs[i].PublishDate,
+                        VisibilityType = blogs[i].VisibilityType,
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = new() { List = result, TotalRecordsCount = lst.TotalRecordsCount } };
             }
@@ -145,8 +152,8 @@ namespace GamaEdtech.Application.Service
                     Slug = post.Slug,
                     Summary = post.Summary,
                     Body = post.Body,
-                    ImageUri = fileService.Value.GetFileUri(post.ImageId, ContainerType.Post).Data,
-                    PodcastUri = fileService.Value.GetFileUri(post.PodcastId, ContainerType.Post).Data,
+                    ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.ImageId, ContainerType = ContainerType.Post, }),
+                    PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.PodcastId, ContainerType = ContainerType.Post, }),
                     LikeCount = post.LikeCount,
                     DislikeCount = post.DislikeCount,
                     CreationUser = post.CreationUser,
@@ -193,7 +200,7 @@ namespace GamaEdtech.Application.Service
                     }
                 }
 
-                ISpecification<Post> slugSpecification = new SlugEqualsSpecification(requestDto.Slug!);
+                ISpecification<Post> slugSpecification = new SlugEqualsSpecification(requestDto.Slug);
                 if (requestDto.ContributionId.HasValue)
                 {
                     identifierId = (await contributionService.Value.GetIdentifierIdAsync(new IdEqualsSpecification<Contribution, long>(requestDto.ContributionId.Value))).Data;
@@ -591,18 +598,18 @@ namespace GamaEdtech.Application.Service
                     _ = await ManagePostAsync(new()
                     {
                         Body = result.Data.Data!.Body,
-                        CreationUserId = result.Data.Data!.CreationUserId.GetValueOrDefault(),
-                        CreationDate = result.Data.Data!.CreationDate.GetValueOrDefault(),
-                        ImageId = result.Data.Data!.ImageId,
-                        PodcastId = result.Data.Data!.PodcastId,
-                        RemovePodcast = result.Data.Data!.RemovePodcast,
-                        Title = result.Data.Data!.Title,
-                        Slug = result.Data.Data!.Slug,
-                        Summary = result.Data.Data!.Summary,
-                        PublishDate = result.Data.Data!.PublishDate.GetValueOrDefault(),
-                        VisibilityType = result.Data.Data!.VisibilityType!,
-                        Keywords = result.Data.Data!.Keywords,
-                        Tags = result.Data.Data!.Tags,
+                        CreationUserId = result.Data.Data.CreationUserId.GetValueOrDefault(),
+                        CreationDate = result.Data.Data.CreationDate.GetValueOrDefault(),
+                        ImageId = result.Data.Data.ImageId,
+                        PodcastId = result.Data.Data.PodcastId,
+                        RemovePodcast = result.Data.Data.RemovePodcast,
+                        Title = result.Data.Data.Title,
+                        Slug = result.Data.Data.Slug,
+                        Summary = result.Data.Data.Summary,
+                        PublishDate = result.Data.Data.PublishDate.GetValueOrDefault(),
+                        VisibilityType = result.Data.Data.VisibilityType!,
+                        Keywords = result.Data.Data.Keywords,
+                        Tags = result.Data.Data.Tags,
                         Id = postId.Value,
                     });
                 }
@@ -611,20 +618,20 @@ namespace GamaEdtech.Application.Service
                     Post post = new()
                     {
                         Body = result.Data.Data!.Body,
-                        CreationUserId = result.Data.Data!.CreationUserId.GetValueOrDefault(),
-                        CreationDate = result.Data.Data!.CreationDate.GetValueOrDefault(),
-                        ImageId = result.Data.Data!.ImageId,
-                        PodcastId = result.Data.Data!.PodcastId,
-                        Title = result.Data.Data!.Title,
-                        Slug = result.Data.Data!.Slug,
-                        Summary = result.Data.Data!.Summary,
-                        PublishDate = result.Data.Data!.PublishDate.GetValueOrDefault(),
-                        VisibilityType = result.Data.Data!.VisibilityType!,
-                        Keywords = result.Data.Data!.Keywords,
-                        PostTags = result.Data.Data!.Tags?.Select(t => new PostTag
+                        CreationUserId = result.Data.Data.CreationUserId.GetValueOrDefault(),
+                        CreationDate = result.Data.Data.CreationDate.GetValueOrDefault(),
+                        ImageId = result.Data.Data.ImageId,
+                        PodcastId = result.Data.Data.PodcastId,
+                        Title = result.Data.Data.Title,
+                        Slug = result.Data.Data.Slug,
+                        Summary = result.Data.Data.Summary,
+                        PublishDate = result.Data.Data.PublishDate.GetValueOrDefault(),
+                        VisibilityType = result.Data.Data.VisibilityType!,
+                        Keywords = result.Data.Data.Keywords,
+                        PostTags = result.Data.Data.Tags?.Select(t => new PostTag
                         {
-                            CreationUserId = result.Data.Data!.CreationUserId.GetValueOrDefault(),
-                            CreationDate = result.Data.Data!.CreationDate.GetValueOrDefault(),
+                            CreationUserId = result.Data.Data.CreationUserId.GetValueOrDefault(),
+                            CreationDate = result.Data.Data.CreationDate.GetValueOrDefault(),
                             TagId = t,
                         }).ToList(),
                     };
@@ -700,14 +707,10 @@ namespace GamaEdtech.Application.Service
                 return (null, null);
             }
 
-            using MemoryStream stream = new();
-            await file.CopyToAsync(stream);
-
-            var fileId = await fileService.Value.UploadFileAsync(new()
+            var fileId = await fileService.Value.CreateFileAsync(new()
             {
-                File = stream.ToArray(),
+                File = file,
                 ContainerType = ContainerType.Post,
-                FileExtension = Path.GetExtension(file.FileName),
             });
 
             return fileId.OperationResult is OperationResult.Succeeded

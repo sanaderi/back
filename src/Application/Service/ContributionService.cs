@@ -40,7 +40,7 @@ namespace GamaEdtech.Application.Service
                     t.CategoryType,
                     t.IdentifierId,
                     t.Status,
-                    CreationUser = t.CreationUser!.FirstName + " " + t.CreationUser.LastName,
+                    CreationUser = t.CreationUser.FirstName + " " + t.CreationUser.LastName,
                     t.CreationDate,
                     t.LastModifyDate,
                     Data = includeData ? t.Data : null,

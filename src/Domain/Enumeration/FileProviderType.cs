@@ -14,6 +14,9 @@ namespace GamaEdtech.Domain.Enumeration
         [Display]
         public static readonly FileProviderType Youtube = new(nameof(Youtube), 2);
 
+        [Display]
+        public static readonly FileProviderType AmazonS3 = new(nameof(AmazonS3), 3);
+
         public FileProviderType()
         {
         }
