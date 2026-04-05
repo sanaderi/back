@@ -6,7 +6,8 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
-    using GamaEdtech.Data.Dto.School;
+    using GamaEdtech.Data.Dto.File;
+    using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Infrastructure.Interface;
 
@@ -23,7 +24,8 @@ namespace GamaEdtech.Infrastructure.Provider.File
     {
         public FileProviderType ProviderType => FileProviderType.Youtube;
 
-        public ResultData<Uri?> GetFileUri(string id, ContainerType containerType) => throw new NotImplementedException();
+        public Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto) => throw new NotImplementedException();
+
         public Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto) => throw new NotImplementedException();
 
         public async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)

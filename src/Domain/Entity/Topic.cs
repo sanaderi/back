@@ -11,7 +11,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Topic))]
-    public class Topic : VersionableEntity<ApplicationUser, int, int?>, IEntity<Topic, int>
+    public class Topic : VersionableEntity<ApplicationUser, int, int?>, IEntity<Topic, int>, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Int)]

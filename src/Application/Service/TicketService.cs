@@ -115,7 +115,7 @@ namespace GamaEdtech.Application.Service
                     Subject = ticket.Subject,
                     Body = ticket.Body,
                     Receivers = ticket.Receivers,
-                    FileUri = fileService.Value.GetFileUri(ticket.FileId, ContainerType.Ticket).Data,
+                    FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = ticket.FileId, ContainerType = ContainerType.Ticket, }),
                 };
 
                 return new(OperationResult.Succeeded) { Data = result };
@@ -205,15 +205,19 @@ namespace GamaEdtech.Application.Service
                     t.Receivers,
                 }).ToListAsync();
 
-                var result = lst.Select(t => new TicketReplyDto
+                List<TicketReplyDto> result = new(lst.Count);
+                for (var i = 0; i < lst.Count; i++)
                 {
-                    Id = t.Id,
-                    Body = t.Body,
-                    CreationDate = t.CreationDate,
-                    CreationUser = t.CreationUser,
-                    Receivers = t.Receivers,
-                    FileUri = fileService.Value.GetFileUri(t.FileId, ContainerType.Ticket).Data,
-                });
+                    result.Add(new()
+                    {
+                        Id = lst[i].Id,
+                        Body = lst[i].Body,
+                        CreationDate = lst[i].CreationDate,
+                        CreationUser = lst[i].CreationUser,
+                        Receivers = lst[i].Receivers,
+                        FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = lst[i].FileId, ContainerType = ContainerType.Ticket, }),
+                    });
+                }
                 return new(OperationResult.Succeeded) { Data = result };
             }
             catch (Exception exc)
@@ -455,14 +459,10 @@ namespace GamaEdtech.Application.Service
                 return (null, null);
             }
 
-            using MemoryStream stream = new();
-            await file.CopyToAsync(stream);
-
-            var fileId = await fileService.Value.UploadFileAsync(new()
+            var fileId = await fileService.Value.CreateFileAsync(new()
             {
-                File = stream.ToArray(),
+                File = file,
                 ContainerType = ContainerType.Ticket,
-                FileExtension = Path.GetExtension(file.FileName),
             });
 
             return fileId.OperationResult is OperationResult.Succeeded

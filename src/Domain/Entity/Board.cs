@@ -11,7 +11,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Board))]
-    public class Board : VersionableEntity<ApplicationUser, int, int?>, IEntity<Board, int>
+    public class Board : VersionableEntity<ApplicationUser, int, int?>, IEntity<Board, int>, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Int)]

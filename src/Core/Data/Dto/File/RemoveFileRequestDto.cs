@@ -2,11 +2,9 @@ namespace GamaEdtech.Data.Dto.File
 {
     using GamaEdtech.Domain.Enumeration;
 
-    using Microsoft.AspNetCore.Http;
-
-    public sealed class CreateFileRequestDto
+    public sealed class RemoveFileRequestDto
     {
-        public required IFormFile File { get; set; }
+        public required string? FileId { get; set; }
         public required ContainerType ContainerType { get; set; }
     }
 }

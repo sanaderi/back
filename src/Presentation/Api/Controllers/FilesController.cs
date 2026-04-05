@@ -1,5 +1,7 @@
 namespace GamaEdtech.Presentation.Api.Controllers
 {
+    using System.Threading.Tasks;
+
     using Asp.Versioning;
 
     using GamaEdtech.Application.Interface;
@@ -15,20 +17,19 @@ namespace GamaEdtech.Presentation.Api.Controllers
         : ApiControllerBase<FilesController>(logger)
     {
         [HttpGet("{id}"), Produces<ApiResponse<string>>()]
-        public IActionResult GetFile([FromRoute] string id)
+        public async Task<IActionResult> GetFile([FromRoute] string id)
         {
             try
             {
-                var result = fileService.Value.GetFileUri(id, ContainerType.Default);
-                return result.OperationResult is Constants.OperationResult.Succeeded
-                    ? Redirect(result.Data!.ToString())
-                    : Ok<string?>(new(result.Errors));
+                var result = await fileService.Value.GetFileUriAsync(new() { FileId = id, ContainerType = ContainerType.Default, });
+                return result is null
+                    ? Ok<string>(new())
+                    : Redirect(result.ToString());
             }
             catch (Exception exc)
             {
                 Logger.Value.LogException(exc);
-
-                return Ok<string?>(new(new Error { Message = exc.Message }));
+                return Ok<string>(new(new Error { Message = exc.Message }));
             }
         }
     }

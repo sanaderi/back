@@ -112,16 +112,16 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
 
                 PostContributionResponseViewModel result = new()
                 {
-                    Title = contributionResult.Data.Data!.Title,
-                    Summary = contributionResult.Data.Data!.Summary,
-                    Body = contributionResult.Data.Data!.Body,
-                    ImageUri = fileService.Value.GetFileUri(contributionResult.Data.Data!.ImageId, ContainerType.Post).Data,
-                    PodcastUri = fileService.Value.GetFileUri(contributionResult.Data.Data!.PodcastId, ContainerType.Post).Data,
-                    Tags = contributionResult.Data.Data!.Tags,
-                    PublishDate = contributionResult.Data.Data!.PublishDate.GetValueOrDefault(),
-                    VisibilityType = contributionResult.Data.Data!.VisibilityType!,
-                    Keywords = contributionResult.Data.Data!.Keywords,
-                    Slug = contributionResult.Data.Data!.Slug,
+                    Title = contributionResult.Data.Data.Title,
+                    Summary = contributionResult.Data.Data.Summary,
+                    Body = contributionResult.Data.Data.Body,
+                    ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.ImageId, ContainerType = ContainerType.Post, }),
+                    PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.PodcastId, ContainerType = ContainerType.Post, }),
+                    Tags = contributionResult.Data.Data.Tags,
+                    PublishDate = contributionResult.Data.Data.PublishDate.GetValueOrDefault(),
+                    VisibilityType = contributionResult.Data.Data.VisibilityType!,
+                    Keywords = contributionResult.Data.Data.Keywords,
+                    Slug = contributionResult.Data.Data.Slug,
                 };
 
                 return Ok(new ApiResponse<PostContributionResponseViewModel>

@@ -16,7 +16,7 @@ namespace GamaEdtech.Domain.Entity
     using NetTopologySuite.Geometries;
 
     [Table(nameof(School))]
-    public class School : VersionableEntity<ApplicationUser, int, int?>, IEntity<School, long>, IDeletable
+    public class School : VersionableEntity<ApplicationUser, int, int?>, IEntity<School, long>, IDeletable, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

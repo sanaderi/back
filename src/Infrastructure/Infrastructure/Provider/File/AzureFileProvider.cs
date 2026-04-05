@@ -7,7 +7,8 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
-    using GamaEdtech.Data.Dto.School;
+    using GamaEdtech.Data.Dto.File;
+    using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Infrastructure.Interface;
 
@@ -20,14 +21,14 @@ namespace GamaEdtech.Infrastructure.Provider.File
     {
         public FileProviderType ProviderType => FileProviderType.Azure;
 
-        public ResultData<Uri?> GetFileUri(string id, ContainerType containerType)
+        public async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
-                var url = GetClient(containerType, id)
+                var url = GetClient(requestDto.ContainerType, requestDto.FileId!)
                     .GenerateSasUri(Azure.Storage.Sas.BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(10));
 
-                return new(OperationResult.Succeeded) { Data = url };
+                return new(OperationResult.Succeeded) { Data = await Task.FromResult(url) };
             }
             catch (Exception exc)
             {
@@ -75,20 +76,9 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
         private BlobClient GetClient([NotNull] ContainerType containerType, string fileId)
         {
-            var key = "FileProvider:Azure:ContainerName";
-            if (containerType == ContainerType.School)
-            {
-                key = "FileProvider:Azure:SchoolContainerName";
-            }
-            else if (containerType == ContainerType.Post)
-            {
-                key = "FileProvider:Azure:PostContainerName";
-            }
-
-            var container = configuration.Value.GetValue<string>(key);
             var connection = configuration.Value.GetValue<string>("FileProvider:Azure:ConnectionString");
 
-            return new BlobClient(connection, container, fileId);
+            return new BlobClient(connection, containerType.Name.ToLowerInvariant(), fileId);
         }
     }
 }

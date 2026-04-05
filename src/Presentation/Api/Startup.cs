@@ -60,6 +60,7 @@ namespace GamaEdtech.Presentation.Api
                 options.InstanceName = Configuration.GetValue<string>("Cache:InstanceName");
                 options.Configuration = Configuration.GetValue<string>("Cache:Configuration");
             });
+            _ = services.AddResponseCaching();
 
             _ = services.AddApiVersioning(config =>
             {
@@ -200,6 +201,8 @@ namespace GamaEdtech.Presentation.Api
             _ = app.UseCors(AllowCorsPolicy);
             _ = app.UseCookiePolicy(new CookiePolicyOptions { Secure = CookieSecurePolicy.Always });
 
+            _ = app.UseOutputCache();
+            _ = app.UseResponseCaching();
             _ = app.UseHealthChecks("/healthz");
 
             _ = app.UseHangfireDashboard();

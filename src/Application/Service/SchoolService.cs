@@ -86,20 +86,32 @@ namespace GamaEdtech.Application.Service
                     t.FileId,
                 }).ToListAsync();
 
-                var lst = schools.Select(t => new SchoolsDto
+                List<SchoolsDto> lst = new(schools.Count);
+                for (var i = 0; i < schools.Count; i++)
                 {
-                    Id = t.Id,
-                    Name = t.Name,
-                    LocalName = t.LocalName,
-                    DefaultImageUri = t.DefaultImageId.HasValue ? fileService.Value.GetFileUri(files.Find(c => c.Id == t.DefaultImageId)?.FileId, ContainerType.School).Data : null,
-                });
+                    lst.Add(new()
+                    {
+                        Id = schools[i].Id,
+                        Name = schools[i].Name,
+                        LocalName = schools[i].LocalName,
+                        DefaultImageUri = schools[i].DefaultImageId.HasValue ? await fileService.Value.GetFileUriAsync(new()
+                        {
+                            FileId = files.Find(c => c.Id == schools[i].DefaultImageId)?.FileId,
+                            ContainerType = ContainerType.School,
+                        }) : null,
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
             }
             catch (Exception exc)
             {
                 Logger.Value.LogException(exc);
-                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+                return new(OperationResult.Failed)
+                {
+                    Errors = [new () { Message = exc.Message
+    },]
+                };
             }
         }
 
@@ -171,23 +183,31 @@ namespace GamaEdtech.Application.Service
                     t.FileId,
                 }).ToListAsync();
 
-                var result = items.Select(t => new SchoolInfoDto
+                List<SchoolInfoDto> result = new(items.Count);
+                for (var i = 0; i < items.Count; i++)
                 {
-                    Id = t.Id,
-                    Name = t.Name,
-                    CityTitle = titles.Data?.Find(c => c.Key == t.CityId).Value,
-                    Coordinates = t.Coordinates,
-                    CountryTitle = titles.Data?.Find(c => c.Key == t.CountryId).Value,
-                    StateTitle = titles.Data?.Find(c => c.Key == t.StateId).Value,
-                    Distance = t.Distance,
-                    LastModifyDate = t.LastModifyDate,
-                    Score = t.Score,
-                    HasEmail = !string.IsNullOrEmpty(t.Email),
-                    HasPhoneNumber = !string.IsNullOrEmpty(t.PhoneNumber),
-                    HasWebSite = !string.IsNullOrEmpty(t.WebSite),
-                    DefaultImageId = t.DefaultImageId,
-                    DefaultImageUri = t.DefaultImageId.HasValue ? fileService.Value.GetFileUri(files.Find(c => c.Id == t.DefaultImageId)?.FileId, ContainerType.School).Data : null,
-                });
+                    result.Add(new()
+                    {
+                        Id = items[i].Id,
+                        Name = items[i].Name,
+                        CityTitle = titles.Data?.Find(c => c.Key == items[i].CityId).Value,
+                        Coordinates = items[i].Coordinates,
+                        CountryTitle = titles.Data?.Find(c => c.Key == items[i].CountryId).Value,
+                        StateTitle = titles.Data?.Find(c => c.Key == items[i].StateId).Value,
+                        Distance = items[i].Distance,
+                        LastModifyDate = items[i].LastModifyDate,
+                        Score = items[i].Score,
+                        HasEmail = !string.IsNullOrEmpty(items[i].Email),
+                        HasPhoneNumber = !string.IsNullOrEmpty(items[i].PhoneNumber),
+                        HasWebSite = !string.IsNullOrEmpty(items[i].WebSite),
+                        DefaultImageId = items[i].DefaultImageId,
+                        DefaultImageUri = await fileService.Value.GetFileUriAsync(new()
+                        {
+                            FileId = files.Find(c => c.Id == items[i].DefaultImageId)?.FileId,
+                            ContainerType = ContainerType.School,
+                        }),
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = new() { List = result, TotalRecordsCount = total } };
             }
@@ -275,7 +295,7 @@ namespace GamaEdtech.Application.Service
                     Quarter = school.Quarter,
                     OsmId = school.OsmId,
                     Tuition = school.Tuition,
-                    DefaultImageUri = fileService.Value.GetFileUri(school.DefaultImageId, ContainerType.School).Data,
+                    DefaultImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = school.DefaultImageId, ContainerType = ContainerType.School, }),
                     Tags = school.Tags,
                     Boards = school.Boards,
                     Description = school.Description,
@@ -862,33 +882,36 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var result = await uow.GetRepository<SchoolImage>().GetManyQueryable(specification)
-                    .Select(t => new
-                    {
-                        t.Id,
-                        t.FileId,
-                        t.CreationUserId,
-                        CreationUser = t.CreationUser.FirstName + " " + t.CreationUser.LastName,
-                        TagName = t.Tag != null ? t.Tag.Name : null,
-                        TagIcon = t.Tag != null ? t.Tag.Icon : null,
-                        t.TagId,
-                        t.IsDefault,
-                    }).ToListAsync();
+                var result = await uow.GetRepository<SchoolImage>().GetManyQueryable(specification).Select(t => new
+                {
+                    t.Id,
+                    t.FileId,
+                    t.CreationUserId,
+                    CreationUser = t.CreationUser.FirstName + " " + t.CreationUser.LastName,
+                    TagName = t.Tag != null ? t.Tag.Name : null,
+                    TagIcon = t.Tag != null ? t.Tag.Icon : null,
+                    t.TagId,
+                    t.IsDefault,
+                }).ToListAsync();
 
+                List<SchoolImageInfoDto> lst = new(result.Count);
+                for (var i = 0; i < result.Count; i++)
+                {
+                    lst.Add(new()
+                    {
+                        Id = result[i].Id,
+                        FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = result[i].FileId, ContainerType = ContainerType.School, }),
+                        CreationUserId = result[i].CreationUserId,
+                        CreationUser = result[i].CreationUser,
+                        TagName = result[i].TagName,
+                        TagIcon = result[i].TagIcon,
+                        TagId = result[i].TagId,
+                        IsDefault = result[i].IsDefault,
+                    });
+                }
                 return new(OperationResult.Succeeded)
                 {
-                    Data = result.Select(t =>
-                        new SchoolImageInfoDto
-                        {
-                            Id = t.Id,
-                            FileUri = fileService.Value.GetFileUri(t.FileId, ContainerType.School).Data,
-                            CreationUserId = t.CreationUserId,
-                            CreationUser = t.CreationUser,
-                            TagName = t.TagName,
-                            TagIcon = t.TagIcon,
-                            TagId = t.TagId,
-                            IsDefault = t.IsDefault,
-                        })
+                    Data = lst,
                 };
             }
             catch (Exception exc)
@@ -913,14 +936,10 @@ namespace GamaEdtech.Application.Service
                     }
                 }
 
-                using MemoryStream stream = new();
-                await requestDto.File.CopyToAsync(stream);
-
-                var fileId = await fileService.Value.UploadFileAsync(new()
+                var fileId = await fileService.Value.CreateFileAsync(new()
                 {
-                    File = stream.ToArray(),
+                    File = requestDto.File,
                     ContainerType = ContainerType.School,
-                    FileExtension = Path.GetExtension(requestDto.File.FileName),
                 });
                 if (fileId.OperationResult is not OperationResult.Succeeded)
                 {
@@ -964,6 +983,8 @@ namespace GamaEdtech.Application.Service
                     try
                     {
                         GeoLocation gps = default;
+                        using MemoryStream stream = new();
+                        await requestDto.File.CopyToAsync(stream);
                         var exists = ImageMetadataReader.ReadMetadata(stream).OfType<GpsDirectory>().FirstOrDefault()?.TryGetGeoLocation(out gps);
                         if (exists == true)
                         {
@@ -1362,14 +1383,10 @@ namespace GamaEdtech.Application.Service
 
                 if (requestDto.File is not null)
                 {
-                    using MemoryStream stream = new();
-                    await requestDto.File.CopyToAsync(stream);
-
-                    var fileId = await fileService.Value.UploadFileAsync(new()
+                    var fileId = await fileService.Value.CreateFileAsync(new()
                     {
-                        File = stream.ToArray(),
+                        File = requestDto.File,
                         ContainerType = ContainerType.School,
-                        FileExtension = Path.GetExtension(requestDto.File.FileName),
                     });
                     if (fileId.OperationResult is not OperationResult.Succeeded)
                     {

@@ -12,7 +12,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Subject))]
-    public class Subject : VersionableEntity<ApplicationUser, int, int?>, IEntity<Subject, int>
+    public class Subject : VersionableEntity<ApplicationUser, int, int?>, IEntity<Subject, int>, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Int)]

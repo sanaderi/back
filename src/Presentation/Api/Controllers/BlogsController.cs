@@ -31,6 +31,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         : ApiControllerBase<BlogsController>(logger)
     {
         [HttpGet("posts"), Produces<ApiResponse<ListDataSource<PostsResponseViewModel>>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 120)]
         public async Task<IActionResult<ListDataSource<PostsResponseViewModel>>> GetPosts([NotNull, FromQuery] PostsRequestViewModel request)
         {
             try
@@ -91,6 +92,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("posts/random"), Produces<ApiResponse<ListDataSource<PostsResponseViewModel>>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
         public async Task<IActionResult<ListDataSource<PostsResponseViewModel>>> GetRandomPosts([NotNull, FromQuery] RandomPostsRequestViewModel request) => await GetPosts(new()
         {
             PagingDto = new()
@@ -101,6 +103,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         });
 
         [HttpGet("posts/{postId:long}"), Produces<ApiResponse<PostResponseViewModel>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 300)]
         public async Task<IActionResult<PostResponseViewModel>> GetPost([FromRoute] long postId)
         {
             try
@@ -228,7 +231,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             try
             {
                 var slug = Globals.Slugify(title);
-                var result = await GenerateSlugAsync(slug!);
+                var result = await GenerateSlugAsync(slug);
 
                 return Ok<string>(new()
                 {
@@ -242,7 +245,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 return Ok<string>(new(new Error { Message = exc.Message }));
             }
 
-            async Task<string> GenerateSlugAsync(string slug)
+            async Task<string?> GenerateSlugAsync(string? slug)
             {
                 var result = await blogService.Value.PostExistsAsync(new SlugEqualsSpecification(slug));
                 if (result.OperationResult is Constants.OperationResult.Succeeded && !result.Data)
@@ -257,7 +260,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpGet("slugs/validate"), Produces<ApiResponse<bool>>()]
         [Permission(policy: null)]
-        public async Task<IActionResult<bool>> ValidateSlug([FromQuery, Required] string slug)
+        public async Task<IActionResult<bool>> ValidateSlug([FromQuery, Required] string? slug)
         {
             try
             {
@@ -329,7 +332,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 PostContributionResponseViewModel? viewModel = null;
                 if (result.Data?.Data is not null)
                 {
-                    viewModel = result.Data.Data is null ? null : MapFrom(result.Data.Data);
+                    viewModel = result.Data.Data is null ? null : await MapFromAsync(result.Data.Data);
                 }
 
                 return Ok<PostContributionResponseViewModel>(new(result.Errors)
@@ -337,14 +340,14 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Data = viewModel,
                 });
 
-                PostContributionResponseViewModel MapFrom(PostContributionDto dto) => new()
+                async Task<PostContributionResponseViewModel> MapFromAsync(PostContributionDto dto) => new()
                 {
                     Title = dto.Title,
                     Summary = dto.Summary,
                     Body = dto.Body,
                     Tags = dto.Tags,
-                    ImageUri = fileService.Value.GetFileUri(dto.ImageId, ContainerType.Post).Data,
-                    PodcastUri = fileService.Value.GetFileUri(dto.PodcastId, ContainerType.Post).Data,
+                    ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = dto.ImageId, ContainerType = ContainerType.Post, }),
+                    PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = dto.PodcastId, ContainerType = ContainerType.Post, }),
                     PublishDate = dto.PublishDate.GetValueOrDefault(),
                     VisibilityType = dto.VisibilityType!,
                     Keywords = dto.Keywords,
