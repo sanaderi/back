@@ -75,9 +75,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     baseSpecification = baseSpecification is null ? specification : baseSpecification.And(specification);
                 }
 
-                if (request.BoardCodes is not null)
+                if (request.Boards is not null)
                 {
-                    var specification = new BoardCodeContainsSpecification(request.BoardCodes);
+                    var specification = new BoardIdContainsSpecification(request.Boards);
                     baseSpecification = baseSpecification is null ? specification : baseSpecification.And(specification);
                 }
 
@@ -600,7 +600,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         WebSite = request.WebSite,
                         ZipCode = request.ZipCode,
                         Tags = request.Tags,
-                        BoardCodes = request.BoardCodes,
+                        Boards = request.Boards,
                         DefaultImageId = request.DefaultImageId,
                         Tuition = request.Tuition,
                         Description = request.Description,
@@ -650,7 +650,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         WebSite = request.WebSite,
                         ZipCode = request.ZipCode,
                         Tags = request.Tags,
-                        BoardCodes = request.BoardCodes,
+                        Boards = request.Boards,
                         DefaultImageId = request.DefaultImageId,
                         Tuition = request.Tuition,
                         Description = request.Description,
@@ -700,7 +700,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         WebSite = request.WebSite,
                         ZipCode = request.ZipCode,
                         Tags = request.Tags,
-                        BoardCodes = request.BoardCodes,
+                        Boards = request.Boards,
                         Tuition = request.Tuition,
                         Description = request.Description,
                         Comment = request.Comment is null ? null : new()
@@ -835,7 +835,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     WebSite = dto.WebSite,
                     ZipCode = dto.ZipCode,
                     Tags = dto.Tags,
-                    BoardCodes = dto.BoardCodes,
+                    Boards = dto.Boards,
                     Tuition = dto.Tuition,
                     Description = dto.Description,
                 };

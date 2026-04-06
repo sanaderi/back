@@ -13,7 +13,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Post))]
-    public class Post : VersionableEntity<ApplicationUser, int, int?>, IEntity<Post, long>
+    public class Post : VersionableEntity<ApplicationUser, int, int?>, IEntity<Post, long>, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

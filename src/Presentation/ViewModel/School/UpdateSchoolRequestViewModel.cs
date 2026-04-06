@@ -65,7 +65,7 @@ namespace GamaEdtech.Presentation.ViewModel.School
         public IEnumerable<long>? Tags { get; set; }
 
         [Display]
-        public IEnumerable<int?>? BoardCodes { get; set; }
+        public IEnumerable<int>? Boards { get; set; }
 
         [Display]
         public decimal? Tuition { get; set; }

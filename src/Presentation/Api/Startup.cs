@@ -38,9 +38,9 @@ namespace GamaEdtech.Presentation.Api
         {
             get
             {
-                if (!Globals.CurrentCulture.TwoLetterISOLanguageName.Equals("fa", StringComparison.OrdinalIgnoreCase))
+                if (Globals.CurrentCulture.TwoLetterISOLanguageName.Equals("fa", StringComparison.OrdinalIgnoreCase))
                 {
-                    CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = Globals.GetCulture("fa");
+                    CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = Globals.GetCulture(Globals.CurrentCulture);
                 }
                 return ServicesList;
             }
@@ -60,6 +60,7 @@ namespace GamaEdtech.Presentation.Api
                 options.InstanceName = Configuration.GetValue<string>("Cache:InstanceName");
                 options.Configuration = Configuration.GetValue<string>("Cache:Configuration");
             });
+            _ = services.AddOutputCache();
 
             _ = services.AddApiVersioning(config =>
             {
@@ -184,14 +185,6 @@ namespace GamaEdtech.Presentation.Api
 
         protected override void ConfigureCore([NotNull] IApplicationBuilder app, IWebHostEnvironment env)
         {
-            _ = app.Use(async (context, next) =>
-            {
-                context.Response.Headers.Server = "";
-                CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
-
-                await next(context);
-            });
-
             _ = app.UseSwagger();
             _ = app.UseSwaggerUI(options =>
             {
@@ -208,6 +201,7 @@ namespace GamaEdtech.Presentation.Api
             _ = app.UseCors(AllowCorsPolicy);
             _ = app.UseCookiePolicy(new CookiePolicyOptions { Secure = CookieSecurePolicy.Always });
 
+            _ = app.UseOutputCache();
             _ = app.UseHealthChecks("/healthz");
 
             _ = app.UseHangfireDashboard();

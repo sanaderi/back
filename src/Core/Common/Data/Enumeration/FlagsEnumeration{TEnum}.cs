@@ -43,7 +43,7 @@ namespace GamaEdtech.Common.Data.Enumeration
             get
             {
                 var names = this.GetNames();
-                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names!.Contains(t.Name)).Select(Globals.GetLocalizedDisplayName));
+                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names.Contains(t.Name)).Select(Globals.GetLocalizedDisplayName));
             }
         }
 
@@ -52,7 +52,7 @@ namespace GamaEdtech.Common.Data.Enumeration
             get
             {
                 var names = this.GetNames();
-                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names!.Contains(t.Name)).Select(Globals.GetLocalizedShortName));
+                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names.Contains(t.Name)).Select(Globals.GetLocalizedShortName));
             }
         }
 
@@ -61,7 +61,7 @@ namespace GamaEdtech.Common.Data.Enumeration
             get
             {
                 var names = this.GetNames();
-                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names!.Contains(t.Name)).Select(Globals.GetLocalizedDescription));
+                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names.Contains(t.Name)).Select(Globals.GetLocalizedDescription));
             }
         }
 
@@ -70,7 +70,7 @@ namespace GamaEdtech.Common.Data.Enumeration
             get
             {
                 var names = this.GetNames();
-                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names!.Contains(t.Name)).Select(Globals.GetLocalizedPromt));
+                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names.Contains(t.Name)).Select(Globals.GetLocalizedPromt));
             }
         }
 
@@ -79,7 +79,7 @@ namespace GamaEdtech.Common.Data.Enumeration
             get
             {
                 var names = this.GetNames();
-                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names!.Contains(t.Name)).Select(Globals.GetLocalizedGroupName));
+                return string.Join(", ", GetType().GetFields(BindingFlags.Public | BindingFlags.Static).Where(t => names.Contains(t.Name)).Select(Globals.GetLocalizedGroupName));
             }
         }
 

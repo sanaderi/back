@@ -14,6 +14,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.DataAccess.Specification.Impl;
     using GamaEdtech.Common.DataAccess.UnitOfWork;
     using GamaEdtech.Common.Service;
+    using GamaEdtech.Data.Dto.ApplicationSettings;
     using GamaEdtech.Data.Dto.Board;
     using GamaEdtech.Data.Dto.Contribution;
     using GamaEdtech.Data.Dto.School;
@@ -40,8 +41,8 @@ namespace GamaEdtech.Application.Service
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public class SchoolService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<FileService>> localizer
-        , Lazy<ILogger<FileService>> logger, Lazy<IFileService> fileService, Lazy<IContributionService> contributionService, Lazy<IIdentityService> identityService
+    public class SchoolService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<FileService>> localizer, Lazy<IEmailService> emailService
+        , Lazy<ILogger<FileService>> logger, Lazy<IFileService> fileService, Lazy<IContributionService> contributionService, Lazy<IIdentityService> identityService, Lazy<IApplicationSettingsService> applicationSettingsService
         , Lazy<IConfiguration> configuration, Lazy<ITagService> tagService, Lazy<IReactionService> reactionService, Lazy<ILocationService> locationService, Lazy<IBoardService> boardService)
         : LocalizableServiceBase<FileService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), ISchoolService, ISiteMapHandler
     {
@@ -85,20 +86,32 @@ namespace GamaEdtech.Application.Service
                     t.FileId,
                 }).ToListAsync();
 
-                var lst = schools.Select(t => new SchoolsDto
+                List<SchoolsDto> lst = new(schools.Count);
+                for (var i = 0; i < schools.Count; i++)
                 {
-                    Id = t.Id,
-                    Name = t.Name,
-                    LocalName = t.LocalName,
-                    DefaultImageUri = t.DefaultImageId.HasValue ? fileService.Value.GetFileUri(files.Find(c => c.Id == t.DefaultImageId)?.FileId, ContainerType.School).Data : null,
-                });
+                    lst.Add(new()
+                    {
+                        Id = schools[i].Id,
+                        Name = schools[i].Name,
+                        LocalName = schools[i].LocalName,
+                        DefaultImageUri = schools[i].DefaultImageId.HasValue ? await fileService.Value.GetFileUriAsync(new()
+                        {
+                            FileId = files.Find(c => c.Id == schools[i].DefaultImageId)?.FileId,
+                            ContainerType = ContainerType.School,
+                        }) : null,
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
             }
             catch (Exception exc)
             {
                 Logger.Value.LogException(exc);
-                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+                return new(OperationResult.Failed)
+                {
+                    Errors = [new () { Message = exc.Message
+    },]
+                };
             }
         }
 
@@ -170,23 +183,31 @@ namespace GamaEdtech.Application.Service
                     t.FileId,
                 }).ToListAsync();
 
-                var result = items.Select(t => new SchoolInfoDto
+                List<SchoolInfoDto> result = new(items.Count);
+                for (var i = 0; i < items.Count; i++)
                 {
-                    Id = t.Id,
-                    Name = t.Name,
-                    CityTitle = titles.Data?.Find(c => c.Key == t.CityId).Value,
-                    Coordinates = t.Coordinates,
-                    CountryTitle = titles.Data?.Find(c => c.Key == t.CountryId).Value,
-                    StateTitle = titles.Data?.Find(c => c.Key == t.StateId).Value,
-                    Distance = t.Distance,
-                    LastModifyDate = t.LastModifyDate,
-                    Score = t.Score,
-                    HasEmail = !string.IsNullOrEmpty(t.Email),
-                    HasPhoneNumber = !string.IsNullOrEmpty(t.PhoneNumber),
-                    HasWebSite = !string.IsNullOrEmpty(t.WebSite),
-                    DefaultImageId = t.DefaultImageId,
-                    DefaultImageUri = t.DefaultImageId.HasValue ? fileService.Value.GetFileUri(files.Find(c => c.Id == t.DefaultImageId)?.FileId, ContainerType.School).Data : null,
-                });
+                    result.Add(new()
+                    {
+                        Id = items[i].Id,
+                        Name = items[i].Name,
+                        CityTitle = titles.Data?.Find(c => c.Key == items[i].CityId).Value,
+                        Coordinates = items[i].Coordinates,
+                        CountryTitle = titles.Data?.Find(c => c.Key == items[i].CountryId).Value,
+                        StateTitle = titles.Data?.Find(c => c.Key == items[i].StateId).Value,
+                        Distance = items[i].Distance,
+                        LastModifyDate = items[i].LastModifyDate,
+                        Score = items[i].Score,
+                        HasEmail = !string.IsNullOrEmpty(items[i].Email),
+                        HasPhoneNumber = !string.IsNullOrEmpty(items[i].PhoneNumber),
+                        HasWebSite = !string.IsNullOrEmpty(items[i].WebSite),
+                        DefaultImageId = items[i].DefaultImageId,
+                        DefaultImageUri = await fileService.Value.GetFileUriAsync(new()
+                        {
+                            FileId = files.Find(c => c.Id == items[i].DefaultImageId)?.FileId,
+                            ContainerType = ContainerType.School,
+                        }),
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = new() { List = result, TotalRecordsCount = total } };
             }
@@ -274,7 +295,7 @@ namespace GamaEdtech.Application.Service
                     Quarter = school.Quarter,
                     OsmId = school.OsmId,
                     Tuition = school.Tuition,
-                    DefaultImageUri = fileService.Value.GetFileUri(school.DefaultImageId, ContainerType.School).Data,
+                    DefaultImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = school.DefaultImageId, ContainerType = ContainerType.School, }),
                     Tags = school.Tags,
                     Boards = school.Boards,
                     Description = school.Description,
@@ -377,12 +398,12 @@ namespace GamaEdtech.Application.Service
                         }
                     }
 
-                    if (requestDto.BoardCodes?.Any() == true)
+                    if (requestDto.Boards?.Any() == true)
                     {
                         var schoolBoardRepository = uow.GetRepository<SchoolBoard>();
 
-                        var removedBoards = school.SchoolBoards?.Where(t => requestDto.BoardCodes is null || !requestDto.BoardCodes.Contains(t.Board.Code));
-                        var newBoards = requestDto.BoardCodes?.Where(t => school.SchoolBoards is null || school.SchoolBoards.All(s => s.Board.Code != t));
+                        var removedBoards = school.SchoolBoards?.Where(t => !requestDto.Boards.Contains(t.BoardId));
+                        var newBoards = requestDto.Boards?.Where(t => school.SchoolBoards is null || school.SchoolBoards.All(s => s.BoardId != t));
 
                         if (removedBoards is not null)
                         {
@@ -394,27 +415,12 @@ namespace GamaEdtech.Application.Service
 
                         if (newBoards is not null)
                         {
-                            var boards = await boardService.Value.GetBoardsAsync(null);
-                            if (boards.Data.List is null)
-                            {
-                                return new(OperationResult.NotFound)
-                                {
-                                    Errors = [new() { Message = Localizer.Value["BoardsNotFound"] },],
-                                };
-                            }
-
                             foreach (var item in newBoards)
                             {
-                                var boardId = boards.Data.List.FirstOrDefault(t => t.Code == item)?.Id;
-                                if (!boardId.HasValue)
-                                {
-                                    continue;
-                                }
-
                                 schoolBoardRepository.Add(new SchoolBoard
                                 {
                                     SchoolId = requestDto.Id.Value,
-                                    BoardId = boardId.Value,
+                                    BoardId = item,
                                     CreationDate = requestDto.Date,
                                     CreationUserId = requestDto.UserId,
                                 });
@@ -453,10 +459,10 @@ namespace GamaEdtech.Application.Service
                             CreationDate=requestDto.Date,
                         })];
                     }
-                    if (requestDto.BoardCodes is not null)
+                    if (requestDto.Boards is not null)
                     {
-                        var boards = await boardService.Value.GetBoardsAsync(null);
-                        if (boards.Data.List is null)
+                        var boards = await boardService.Value.GetBoardsListAsync();
+                        if (boards.Data is null)
                         {
                             return new(OperationResult.NotFound)
                             {
@@ -464,10 +470,10 @@ namespace GamaEdtech.Application.Service
                             };
                         }
 
-                        school.SchoolBoards = [.. requestDto.BoardCodes.Select(t => new SchoolBoard {
-                            BoardId = boards.Data.List.FirstOrDefault(b => b.Code == t)!.Id,
-                            CreationUserId=requestDto.UserId,
-                            CreationDate=requestDto.Date,
+                        school.SchoolBoards = [.. requestDto.Boards.Select(t => new SchoolBoard {
+                            BoardId = t,
+                            CreationUserId = requestDto.UserId,
+                            CreationDate = requestDto.Date,
                         })];
                     }
                     repository.Add(school);
@@ -786,7 +792,6 @@ namespace GamaEdtech.Application.Service
                 var result = await contributionService.Value.ConfirmContributionAsync<SchoolCommentContributionDto>(new()
                 {
                     Specification = contributionSpecification,
-                    NotifyUser = requestDto.NotifyUser,
                 });
                 if (result.Data is null)
                 {
@@ -797,6 +802,23 @@ namespace GamaEdtech.Application.Service
 
                 //this is temporary
                 _ = await UpdateSchoolScoreAsync(result.Data.Data!.SchoolId);
+
+                if (requestDto.NotifyUser)
+                {
+                    var name = await GetSchoolsNameAsync(new IdEqualsSpecification<School, long>(result.Data.Data!.SchoolId));
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.SchoolCommentContributionConfirmationEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", result.Data.FullName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_NAME]", name.Data?[0].Value, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_ID]", result.Data.Data.SchoolId.ToString(), StringComparison.OrdinalIgnoreCase)
+                        .Replace("[COMMENT]", result.Data.Data.Comment, StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "School Image Contribution Confirmation",
+                        Body = template!,
+                        EmailAddresses = [result.Data.Email],
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = true };
             }
@@ -860,33 +882,36 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var result = await uow.GetRepository<SchoolImage>().GetManyQueryable(specification)
-                    .Select(t => new
-                    {
-                        t.Id,
-                        t.FileId,
-                        t.CreationUserId,
-                        CreationUser = t.CreationUser.FirstName + " " + t.CreationUser.LastName,
-                        TagName = t.Tag != null ? t.Tag.Name : null,
-                        TagIcon = t.Tag != null ? t.Tag.Icon : null,
-                        t.TagId,
-                        t.IsDefault,
-                    }).ToListAsync();
+                var result = await uow.GetRepository<SchoolImage>().GetManyQueryable(specification).Select(t => new
+                {
+                    t.Id,
+                    t.FileId,
+                    t.CreationUserId,
+                    CreationUser = t.CreationUser.FirstName + " " + t.CreationUser.LastName,
+                    TagName = t.Tag != null ? t.Tag.Name : null,
+                    TagIcon = t.Tag != null ? t.Tag.Icon : null,
+                    t.TagId,
+                    t.IsDefault,
+                }).ToListAsync();
 
+                List<SchoolImageInfoDto> lst = new(result.Count);
+                for (var i = 0; i < result.Count; i++)
+                {
+                    lst.Add(new()
+                    {
+                        Id = result[i].Id,
+                        FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = result[i].FileId, ContainerType = ContainerType.School, }),
+                        CreationUserId = result[i].CreationUserId,
+                        CreationUser = result[i].CreationUser,
+                        TagName = result[i].TagName,
+                        TagIcon = result[i].TagIcon,
+                        TagId = result[i].TagId,
+                        IsDefault = result[i].IsDefault,
+                    });
+                }
                 return new(OperationResult.Succeeded)
                 {
-                    Data = result.Select(t =>
-                        new SchoolImageInfoDto
-                        {
-                            Id = t.Id,
-                            FileUri = fileService.Value.GetFileUri(t.FileId, ContainerType.School).Data,
-                            CreationUserId = t.CreationUserId,
-                            CreationUser = t.CreationUser,
-                            TagName = t.TagName,
-                            TagIcon = t.TagIcon,
-                            TagId = t.TagId,
-                            IsDefault = t.IsDefault,
-                        })
+                    Data = lst,
                 };
             }
             catch (Exception exc)
@@ -911,14 +936,10 @@ namespace GamaEdtech.Application.Service
                     }
                 }
 
-                using MemoryStream stream = new();
-                await requestDto.File.CopyToAsync(stream);
-
-                var fileId = await fileService.Value.UploadFileAsync(new()
+                var fileId = await fileService.Value.CreateFileAsync(new()
                 {
-                    File = stream.ToArray(),
+                    File = requestDto.File,
                     ContainerType = ContainerType.School,
-                    FileExtension = Path.GetExtension(requestDto.File.FileName),
                 });
                 if (fileId.OperationResult is not OperationResult.Succeeded)
                 {
@@ -962,6 +983,8 @@ namespace GamaEdtech.Application.Service
                     try
                     {
                         GeoLocation gps = default;
+                        using MemoryStream stream = new();
+                        await requestDto.File.CopyToAsync(stream);
                         var exists = ImageMetadataReader.ReadMetadata(stream).OfType<GpsDirectory>().FirstOrDefault()?.TryGetGeoLocation(out gps);
                         if (exists == true)
                         {
@@ -1001,7 +1024,6 @@ namespace GamaEdtech.Application.Service
                 var result = await contributionService.Value.ConfirmContributionAsync<SchoolImageContributionDto>(new()
                 {
                     Specification = contributionSpecification,
-                    NotifyUser = requestDto.NotifyUser,
                 });
                 if (result.Data is null)
                 {
@@ -1034,6 +1056,22 @@ namespace GamaEdtech.Application.Service
                 }
 
                 await UpdateSchoolLastModifyDateAsync(uow, result.Data.CreationUserId, schoolImage.SchoolId);
+
+                if (requestDto.NotifyUser)
+                {
+                    var name = await GetSchoolsNameAsync(new IdEqualsSpecification<School, long>(result.Data.Data!.SchoolId));
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.SchoolImageContributionConfirmationEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", result.Data.FullName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_NAME]", name.Data?[0].Value, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_ID]", result.Data.Data.SchoolId.ToString(), StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "School Image Contribution Confirmation",
+                        Body = template!,
+                        EmailAddresses = [result.Data.Email],
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = true };
             }
@@ -1241,7 +1279,6 @@ namespace GamaEdtech.Application.Service
                 var result = await contributionService.Value.ConfirmContributionAsync<RemoveSchoolImageContributionDto?>(new()
                 {
                     Specification = contributionSpecification,
-                    NotifyUser = requestDto.NotifyUser,
                 });
                 if (result.Data is null)
                 {
@@ -1276,6 +1313,22 @@ namespace GamaEdtech.Application.Service
                 _ = await uow.SaveChangesAsync();
 
                 await UpdateSchoolLastModifyDateAsync(uow, result.Data.CreationUserId, schoolImage.SchoolId);
+
+                if (requestDto.NotifyUser)
+                {
+                    var name = await GetSchoolsNameAsync(new IdEqualsSpecification<School, long>(schoolImage.SchoolId));
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.RemoveSchoolImageContributionConfirmationEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", result.Data.FullName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_NAME]", name.Data?[0].Value, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_ID]", schoolImage.SchoolId.ToString(), StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "Remove School Image Contribution Confirmation",
+                        Body = template!,
+                        EmailAddresses = [result.Data.Email],
+                    });
+                }
 
                 trn.Complete();
                 return new(OperationResult.Succeeded) { Data = true };
@@ -1330,14 +1383,10 @@ namespace GamaEdtech.Application.Service
 
                 if (requestDto.File is not null)
                 {
-                    using MemoryStream stream = new();
-                    await requestDto.File.CopyToAsync(stream);
-
-                    var fileId = await fileService.Value.UploadFileAsync(new()
+                    var fileId = await fileService.Value.CreateFileAsync(new()
                     {
-                        File = stream.ToArray(),
+                        File = requestDto.File,
                         ContainerType = ContainerType.School,
-                        FileExtension = Path.GetExtension(requestDto.File.FileName),
                     });
                     if (fileId.OperationResult is not OperationResult.Succeeded)
                     {
@@ -1406,7 +1455,6 @@ namespace GamaEdtech.Application.Service
                 var contributionResult = await contributionService.Value.ConfirmContributionAsync<SchoolContributionDto>(new()
                 {
                     Specification = contributionSpecification,
-                    NotifyUser = requestDto.NotifyUser,
                 });
                 if (contributionResult.Data is null)
                 {
@@ -1430,8 +1478,8 @@ namespace GamaEdtech.Application.Service
                     WebSite = contributionResult.Data.Data.WebSite,
                     ZipCode = contributionResult.Data.Data.ZipCode,
                     Id = requestDto.SchoolId,
-                    Tags = contributionResult.Data.Data!.Tags,
-                    BoardCodes = contributionResult.Data.Data!.BoardCodes,
+                    Tags = contributionResult.Data.Data.Tags,
+                    Boards = contributionResult.Data.Data.Boards,
                     UserId = contributionResult.Data.CreationUserId,
                     Date = contributionResult.Data.CreationDate,
                     Tuition = contributionResult.Data.Data.Tuition,
@@ -1487,6 +1535,22 @@ namespace GamaEdtech.Application.Service
                 {
                     contributionResult.Data.Data.Comment.SchoolId = manageSchoolResult.Data;
                     await CreateSchoolCommentAsync(contributionResult.Data.Data.Comment);
+                }
+
+                if (requestDto.NotifyUser)
+                {
+                    var name = await GetSchoolsNameAsync(new IdEqualsSpecification<School, long>(manageSchoolResult.Data));
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.SchoolContributionConfirmationEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", contributionResult.Data.FullName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_NAME]", name.Data?[0].Value, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_ID]", manageSchoolResult.Data.ToString(), StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "School Contribution Confirmation",
+                        Body = template!,
+                        EmailAddresses = [contributionResult.Data.Email],
+                    });
                 }
 
                 return new(OperationResult.Succeeded) { Data = true };
@@ -1566,7 +1630,6 @@ namespace GamaEdtech.Application.Service
                 var result = await contributionService.Value.ConfirmContributionAsync<string>(new()
                 {
                     Specification = specification,
-                    NotifyUser = requestDto.NotifyUser,
                 });
                 if (result.Data is null)
                 {
@@ -1584,6 +1647,22 @@ namespace GamaEdtech.Application.Service
                 school.IsDeleted = true;
                 _ = repository.Update(school);
                 _ = await uow.SaveChangesAsync();
+
+                if (requestDto.NotifyUser)
+                {
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.SchoolIssuesContributionConfirmationEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", result.Data.FullName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_NAME]", school.Name, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_ID]", school.Id.ToString(), StringComparison.OrdinalIgnoreCase)
+                        .Replace("[ISSUES]", school.Name, StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "School Issue Contribution Confirmation",
+                        Body = template!,
+                        EmailAddresses = [result.Data.Email],
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = true };
             }

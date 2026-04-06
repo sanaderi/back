@@ -14,28 +14,28 @@ namespace GamaEdtech.Common.Localization
         {
             get
             {
-                var supportedCultures = CultureExtensions.AtomicValues.Select(Globals.GetCulture).ToArray();
+                var supportedCultures = Globals.AllCultures.ToList();
                 return new RequestLocalizationOptions
                 {
                     DefaultRequestCulture = new RequestCulture(Constants.DefaultLanguageCode),
                     SupportedCultures = supportedCultures,
                     SupportedUICultures = supportedCultures,
-                    RequestCultureProviders = [new RouteValueRequestCultureProvider(supportedCultures)],
+                    RequestCultureProviders = [new RouteValueRequestCultureProvider()],
                 };
             }
         }
 
         public static void ConfigureRequestLocalization(this IServiceCollection services)
         {
-            var supportedCultures = CultureExtensions.AtomicValues.Select(Globals.GetCulture).ToArray();
-
+            var supportedCultures = Globals.AllCultures.ToList();
             _ = services.Configure<RequestLocalizationOptions>(options =>
             {
                 options.DefaultRequestCulture = new RequestCulture(Constants.DefaultLanguageCode);
                 options.SupportedCultures = supportedCultures;
                 options.SupportedUICultures = supportedCultures;
 
-                options.RequestCultureProviders.Insert(0, new RouteValueRequestCultureProvider(supportedCultures));
+                //options.RequestCultureProviders.Insert(0, new RouteValueRequestCultureProvider())
+                options.RequestCultureProviders = [new RouteValueRequestCultureProvider()];
             });
         }
     }

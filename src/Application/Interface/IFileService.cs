@@ -4,14 +4,13 @@ namespace GamaEdtech.Application.Interface
 
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAnnotation;
-    using GamaEdtech.Data.Dto.School;
-    using GamaEdtech.Domain.Enumeration;
+    using GamaEdtech.Data.Dto.File;
 
     [Injectable]
     public interface IFileService
     {
-        ResultData<Uri?> GetFileUri(string? id, ContainerType containerType);
-        Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto);
+        Task<Uri?> GetFileUriAsync([NotNull] FileUriRequestDto requestDto);
+        Task<ResultData<string?>> CreateFileAsync([NotNull] CreateFileRequestDto requestDto);
         Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto);
     }
 }

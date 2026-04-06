@@ -5,7 +5,8 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
-    using GamaEdtech.Data.Dto.School;
+    using GamaEdtech.Data.Dto.File;
+    using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Infrastructure.Interface;
 
@@ -21,12 +22,12 @@ namespace GamaEdtech.Infrastructure.Provider.File
     {
         public FileProviderType ProviderType => FileProviderType.Local;
 
-        public ResultData<Uri?> GetFileUri(string? id, [NotNull] ContainerType containerType)
+        public async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
-                var path = $"{GetDirectoryPath(containerType, false)}/{id}";
-                return new(OperationResult.Succeeded) { Data = new Uri(path) };
+                var path = $"{GetDirectoryPath(requestDto.ContainerType, false)}/{requestDto.FileId}";
+                return new(OperationResult.Succeeded) { Data = await Task.FromResult(new Uri(path)) };
             }
             catch (Exception exc)
             {

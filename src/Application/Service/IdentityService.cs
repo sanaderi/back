@@ -25,6 +25,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.Mapping;
     using GamaEdtech.Common.Service;
     using GamaEdtech.Common.Service.Factory;
+    using GamaEdtech.Data.Dto.ApplicationSettings;
     using GamaEdtech.Data.Dto.Identity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
@@ -49,8 +50,8 @@ namespace GamaEdtech.Application.Service
     using Void = Common.Data.Void;
 
     public class IdentityService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<IdentityService>> localizer, Lazy<ILogger<IdentityService>> logger
-            , Lazy<UserManager<ApplicationUser>> userManager, Lazy<IGenericFactory<IAuthenticationProvider, AuthenticationProvider>> genericFactory
-            , Lazy<SignInManager<ApplicationUser>> signInManager, Lazy<ICacheProvider> cacheProvider, Lazy<IConfiguration> configuration, Lazy<ICoreProvider> coreProvider)
+            , Lazy<UserManager<ApplicationUser>> userManager, Lazy<IGenericFactory<IAuthenticationProvider, AuthenticationProvider>> genericFactory, Lazy<IApplicationSettingsService> applicationSettingsService
+            , Lazy<SignInManager<ApplicationUser>> signInManager, Lazy<ICacheProvider> cacheProvider, Lazy<IConfiguration> configuration, Lazy<ICoreProvider> coreProvider, Lazy<IEmailService> emailService)
         : LocalizableServiceBase<IdentityService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IIdentityService, ITokenService
     {
         private const string RolesCacheKey = "Roles";
@@ -258,9 +259,9 @@ namespace GamaEdtech.Application.Service
                     Enabled = true,
                 };
                 var identityResult = await userManager.Value.CreateAsync(user, requestDto.Password);
-                return !identityResult.Succeeded
-                    ? new(OperationResult.NotValid) { Data = false, Errors = MapUserManagerErrors(identityResult) }
-                    : new(OperationResult.Succeeded) { Data = true };
+                return identityResult.Succeeded
+                    ? new(OperationResult.Succeeded) { Data = true }
+                    : new(OperationResult.NotValid) { Data = false, Errors = MapUserManagerErrors(identityResult) };
             }
             catch (UniqueConstraintException)
             {
@@ -271,6 +272,20 @@ namespace GamaEdtech.Application.Service
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
             }
+        }
+
+        public async Task SendRegistrationEmailAsync([NotNull] RegistrationEmailRequestDto requestDto)
+        {
+            var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.RegistrationEmailTemplate))).Data;
+            template = template?
+                .Replace("[RECEIVER_NAME]", requestDto.Username, StringComparison.OrdinalIgnoreCase);
+            _ = await emailService.Value.SendEmailAsync(new()
+            {
+                Subject = "Gamatrain Registration",
+                Body = template!,
+                EmailAddresses = [requestDto.Email],
+                From = emailService.Value.GetNoReplyEmail(),
+            });
         }
 
         public async Task<ResultData<SignInResponseDto>> SignInAsync([NotNull] SignInRequestDto requestDto)
@@ -935,58 +950,6 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        private async Task<string> GetTimeZoneIdAsync(int userId)
-        {
-            try
-            {
-                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var timeZoneId = await uow.GetRepository<ApplicationUserClaim, int>().GetManyQueryable(t => t.UserId == userId && t.ClaimType == TimeZoneIdClaim)
-                    .Select(t => t.ClaimValue).FirstOrDefaultAsync();
-
-                return !string.IsNullOrEmpty(timeZoneId) ? timeZoneId : UtcTimeZoneId;
-            }
-            catch
-            {
-                return UtcTimeZoneId;
-            }
-        }
-
-        private static IEnumerable<Error> MapUserManagerErrors(IdentityResult result)
-        {
-            foreach (var error in result.Errors)
-            {
-                yield return new Error { Message = error.Description };
-            }
-        }
-
-        private static string? GenerateDeviceHash(HttpContext? httpContext)
-        {
-            var ip = httpContext.GetClientIpAddress();
-            var userAgent = httpContext.UserAgent();
-
-            var byteValue = Encoding.UTF8.GetBytes(ip + userAgent);
-            var byteHash = SHA256.HashData(byteValue);
-            return Convert.ToBase64String(byteHash);
-        }
-
-        private ResultData<T> ValidateUser<T>(ApplicationUser? user)
-        {
-            IEnumerable<Error> errors = [];
-            if (user is null)
-            {
-                errors = [new() { Message = Localizer.Value["UserNotFound"] }];
-            }
-            else if (!user.Enabled)
-            {
-                errors = [new() { Message = Localizer.Value["UserNotEnabled"] }];
-            }
-
-            return new(user?.Enabled == true ? OperationResult.Succeeded : OperationResult.NotValid)
-            {
-                Errors = errors,
-            };
-        }
-
         public async Task<ResultData<string>> GenerateReferralUserAsync()
         {
             try
@@ -1266,5 +1229,58 @@ namespace GamaEdtech.Application.Service
                 return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
             }
         }
+
+        private async Task<string> GetTimeZoneIdAsync(int userId)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var timeZoneId = await uow.GetRepository<ApplicationUserClaim, int>().GetManyQueryable(t => t.UserId == userId && t.ClaimType == TimeZoneIdClaim)
+                    .Select(t => t.ClaimValue).FirstOrDefaultAsync();
+
+                return !string.IsNullOrEmpty(timeZoneId) ? timeZoneId : UtcTimeZoneId;
+            }
+            catch
+            {
+                return UtcTimeZoneId;
+            }
+        }
+
+        private static IEnumerable<Error> MapUserManagerErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                yield return new Error { Message = error.Description };
+            }
+        }
+
+        private static string? GenerateDeviceHash(HttpContext? httpContext)
+        {
+            var ip = httpContext.GetClientIpAddress();
+            var userAgent = httpContext.UserAgent();
+
+            var byteValue = Encoding.UTF8.GetBytes(ip + userAgent);
+            var byteHash = SHA256.HashData(byteValue);
+            return Convert.ToBase64String(byteHash);
+        }
+
+        private ResultData<T> ValidateUser<T>(ApplicationUser? user)
+        {
+            IEnumerable<Error> errors = [];
+            if (user is null)
+            {
+                errors = [new() { Message = Localizer.Value["UserNotFound"] }];
+            }
+            else if (!user.Enabled)
+            {
+                errors = [new() { Message = Localizer.Value["UserNotEnabled"] }];
+            }
+
+            return new(user?.Enabled == true ? OperationResult.Succeeded : OperationResult.NotValid)
+            {
+                Errors = errors,
+            };
+        }
     }
 }
+
