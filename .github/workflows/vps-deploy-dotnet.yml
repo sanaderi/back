@@ -49,8 +49,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
           source: '.'
-          target: '/var/www/gamacoreapp'
+          target: '/var/www/gamaapp'
 
       - name: Restart application on VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -58,6 +59,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
           script: |
-            cd /var/www/gamacoreapp
-            systemctl restart gamacoreapp.service
+            cd /var/www/gamaapp
+            systemctl restart gamaapp.service

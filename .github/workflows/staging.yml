@@ -49,8 +49,9 @@ jobs:
           host: ${{ secrets.SANDBOX_VPS_HOST }}
           username: ${{ secrets.SANDBOX_VPS_USER }}
           key: ${{ secrets.SANDBOX_VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
           source: '.'
-          target: '/home/ubuntu/stagegamacoreapp'
+          target: '/var/www/stagegamacoreapp'
 
       - name: Restart application on VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -58,6 +59,7 @@ jobs:
           host: ${{ secrets.SANDBOX_VPS_HOST }}
           username: ${{ secrets.SANDBOX_VPS_USER }}
           key: ${{ secrets.SANDBOX_VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
           script: |
-            cd /home/ubuntu/stagegamacoreapp
+            cd /var/www/stagegamacoreapp
             sudo systemctl restart stagegamacoreapp.service
