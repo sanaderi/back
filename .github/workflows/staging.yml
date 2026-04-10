@@ -49,7 +49,7 @@ jobs:
           host: ${{ secrets.SANDBOX_VPS_HOST }}
           username: ${{ secrets.SANDBOX_VPS_USER }}
           key: ${{ secrets.SANDBOX_VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
+          port: ${{ secrets.SANDBOX_VPS_PORT }}
           source: '.'
           target: '/var/www/stagegamacoreapp'
 
@@ -59,7 +59,7 @@ jobs:
           host: ${{ secrets.SANDBOX_VPS_HOST }}
           username: ${{ secrets.SANDBOX_VPS_USER }}
           key: ${{ secrets.SANDBOX_VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
+          port: ${{ secrets.SANDBOX_VPS_PORT }}
           script: |
             cd /var/www/stagegamacoreapp
             sudo systemctl restart stagegamacoreapp.service
