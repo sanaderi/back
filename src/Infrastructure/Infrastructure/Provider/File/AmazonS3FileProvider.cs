@@ -26,10 +26,11 @@ namespace GamaEdtech.Infrastructure.Provider.File
         {
             try
             {
+                var key = $"{requestDto.ContainerType.Name.ToLowerInvariant()}/{requestDto.FileId}";
                 var url = await Client.GetPreSignedURLAsync(new GetPreSignedUrlRequest
                 {
                     BucketName = BucketName,
-                    Key = requestDto.FileId,
+                    Key = key,
                     Expires = DateTime.Now.AddMinutes(10),
                 });
 
@@ -46,12 +47,12 @@ namespace GamaEdtech.Infrastructure.Provider.File
         {
             try
             {
-                var name = $"{Guid.NewGuid():N}{requestDto.FileExtension}";
+                var key = $"{requestDto.ContainerType.Name.ToLowerInvariant()}/{Guid.NewGuid():N}{requestDto.FileExtension}";
 
                 InitiateMultipartUploadRequest initiateRequest = new()
                 {
                     BucketName = BucketName,
-                    Key = name,
+                    Key = key,
                     ContentType = requestDto.ContentType,
                 };
                 var initResponse = await Client.InitiateMultipartUploadAsync(initiateRequest);
@@ -66,7 +67,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
                     UploadPartRequest uploadRequest = new()
                     {
                         BucketName = BucketName,
-                        Key = name,
+                        Key = key,
                         UploadId = initResponse.UploadId,
                         PartNumber = partNumber,
                         PartSize = partSize,
@@ -83,7 +84,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
                 CompleteMultipartUploadRequest completeRequest = new()
                 {
                     BucketName = BucketName,
-                    Key = name,
+                    Key = key,
                     UploadId = initResponse.UploadId
                 };
                 completeRequest.AddPartETags(uploadResponses);
@@ -108,7 +109,8 @@ namespace GamaEdtech.Infrastructure.Provider.File
                     return new(OperationResult.Succeeded) { Data = true };
                 }
 
-                _ = await Client.DeleteObjectAsync(BucketName, requestDto.FileId);
+                var key = $"{requestDto.ContainerType.Name.ToLowerInvariant()}/{requestDto.FileId}";
+                _ = await Client.DeleteObjectAsync(BucketName, key);
 
                 return new(OperationResult.Succeeded) { Data = true };
             }

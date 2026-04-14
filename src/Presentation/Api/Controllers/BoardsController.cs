@@ -15,6 +15,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         : ApiControllerBase<BoardsController>(logger)
     {
         [HttpGet, Produces<ApiResponse<IEnumerable<BoardsListResponseViewModel>>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 300)]
         public async Task<IActionResult<IEnumerable<BoardsListResponseViewModel>>> GetBoards()
         {
             try
