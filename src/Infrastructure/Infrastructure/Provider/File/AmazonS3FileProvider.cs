@@ -11,22 +11,21 @@ namespace GamaEdtech.Infrastructure.Provider.File
     using GamaEdtech.Data.Dto.File;
     using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
-    using GamaEdtech.Infrastructure.Interface;
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class AmazonS3FileProvider(Lazy<ILogger<AmazonS3FileProvider>> logger, Lazy<IConfiguration> configuration) : IFileProvider
+    public sealed class AmazonS3FileProvider(Lazy<ILogger<AmazonS3FileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase
     {
-        public FileProviderType ProviderType => FileProviderType.AmazonS3;
+        public override FileProviderType ProviderType => FileProviderType.AmazonS3;
 
-        public async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
+        public override async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
-                var key = $"{requestDto.ContainerType.Name.ToLowerInvariant()}/{requestDto.FileId}";
+                var key = $"{GenerateBlobContainerName(requestDto.ContainerType)}/{requestDto.FileId}";
                 var url = await Client.GetPreSignedURLAsync(new GetPreSignedUrlRequest
                 {
                     BucketName = BucketName,
@@ -43,11 +42,12 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        public async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
+        public override async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
         {
             try
             {
-                var key = $"{requestDto.ContainerType.Name.ToLowerInvariant()}/{Guid.NewGuid():N}{requestDto.FileExtension}";
+                var name = GenerateBlobFileName(requestDto.FileExtension);
+                var key = $"{GenerateBlobContainerName(requestDto.ContainerType)}/{name}";
 
                 InitiateMultipartUploadRequest initiateRequest = new()
                 {
@@ -89,9 +89,9 @@ namespace GamaEdtech.Infrastructure.Provider.File
                 };
                 completeRequest.AddPartETags(uploadResponses);
 
-                var completeUploadResponse = await Client.CompleteMultipartUploadAsync(completeRequest);
+                _ = await Client.CompleteMultipartUploadAsync(completeRequest);
 
-                return new(OperationResult.Succeeded) { Data = completeUploadResponse.Key };
+                return new(OperationResult.Succeeded) { Data = name };
             }
             catch (Exception exc)
             {
@@ -100,7 +100,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        public async Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto)
+        public override async Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto)
         {
             try
             {
@@ -109,7 +109,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
                     return new(OperationResult.Succeeded) { Data = true };
                 }
 
-                var key = $"{requestDto.ContainerType.Name.ToLowerInvariant()}/{requestDto.FileId}";
+                var key = $"{GenerateBlobContainerName(requestDto.ContainerType)}/{requestDto.FileId}";
                 _ = await Client.DeleteObjectAsync(BucketName, key);
 
                 return new(OperationResult.Succeeded) { Data = true };

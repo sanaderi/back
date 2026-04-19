@@ -82,5 +82,8 @@ namespace GamaEdtech.Presentation.ViewModel.School
 
         [Display]
         public IFormFile? File { get; set; }
+
+        [Display]
+        public IEnumerable<SchoolLocalizedValueViewModel>? LocalizedValues { get; set; }
     }
 }

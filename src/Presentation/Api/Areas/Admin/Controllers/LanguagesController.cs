@@ -152,5 +152,26 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 return Ok<bool>(new() { Errors = [new() { Message = exc.Message }] });
             }
         }
+
+        [HttpGet("cultures"), Produces<ApiResponse<IEnumerable<CultureViewModel>>>()]
+        public IActionResult<IEnumerable<CultureViewModel>> GetCultures()
+        {
+            try
+            {
+                return Ok<IEnumerable<CultureViewModel>>(new()
+                {
+                    Data = Globals.AllCultures.Select(t => new CultureViewModel
+                    {
+                        Code = t.Name,
+                        DisplayName = t.NativeName,
+                    }),
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return Ok<IEnumerable<CultureViewModel>>(new(new Error { Message = exc.Message }));
+            }
+        }
     }
 }

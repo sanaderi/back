@@ -122,6 +122,13 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     VisibilityType = contributionResult.Data.Data.VisibilityType!,
                     Keywords = contributionResult.Data.Data.Keywords,
                     Slug = contributionResult.Data.Data.Slug,
+                    LocalizedValues = contributionResult.Data.Data.LocalizedValues?.Select(t => new PostLocalizedValueViewModel
+                    {
+                        LanguageId = t.LanguageId,
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
 
                 return Ok(new ApiResponse<PostContributionResponseViewModel>
@@ -203,6 +210,13 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     Tags = request.Tags,
                     Title = request.Title,
                     VisibilityType = request.VisibilityType,
+                    LocalizedValues = request.LocalizedValues?.Select(t => new PostLocalizedValueDto
+                    {
+                        LanguageId = t.LanguageId.GetValueOrDefault(),
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
                 var result = await blogService.Value.ManagePostAsync(dto);
 

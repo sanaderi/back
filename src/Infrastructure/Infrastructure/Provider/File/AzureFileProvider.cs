@@ -10,18 +10,17 @@ namespace GamaEdtech.Infrastructure.Provider.File
     using GamaEdtech.Data.Dto.File;
     using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
-    using GamaEdtech.Infrastructure.Interface;
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class AzureFileProvider(Lazy<ILogger<AzureFileProvider>> logger, Lazy<IConfiguration> configuration) : IFileProvider
+    public sealed class AzureFileProvider(Lazy<ILogger<AzureFileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase
     {
-        public FileProviderType ProviderType => FileProviderType.Azure;
+        public override FileProviderType ProviderType => FileProviderType.Azure;
 
-        public async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
+        public override async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
@@ -37,11 +36,11 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        public async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
+        public override async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
         {
             try
             {
-                var name = $"{Guid.NewGuid():N}{requestDto.FileExtension}";
+                var name = GenerateBlobFileName(requestDto.FileExtension);
 
                 _ = await GetClient(requestDto.ContainerType, name).UploadAsync(new BinaryData(requestDto.File));
 
@@ -54,7 +53,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        public async Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto)
+        public override async Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto)
         {
             try
             {
@@ -78,7 +77,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
         {
             var connection = configuration.Value.GetValue<string>("FileProvider:Azure:ConnectionString");
 
-            return new BlobClient(connection, containerType.Name.ToLowerInvariant(), fileId);
+            return new BlobClient(connection, GenerateBlobContainerName(containerType), fileId);
         }
     }
 }

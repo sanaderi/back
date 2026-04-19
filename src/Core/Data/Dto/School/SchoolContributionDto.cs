@@ -28,5 +28,6 @@ namespace GamaEdtech.Data.Dto.School
         public SchoolCommentContributionDto? Comment { get; set; }
         public string? ImageFileId { get; set; }
         public bool IsDefault { get; set; }
+        public IEnumerable<SchoolLocalizedValueDto>? LocalizedValues { get; set; }
     }
 }

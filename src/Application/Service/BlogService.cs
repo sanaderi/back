@@ -36,7 +36,7 @@ namespace GamaEdtech.Application.Service
 
     public class BlogService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<BlogService>> localizer
         , Lazy<ILogger<BlogService>> logger, Lazy<IReactionService> reactionService, Lazy<IFileService> fileService, Lazy<IIdentityService> identityService, Lazy<IEmailService> emailService
-        , Lazy<IContributionService> contributionService, Lazy<ITagService> tagService, Lazy<IConfiguration> configuration, Lazy<IApplicationSettingsService> applicationSettingsService)
+        , Lazy<IContributionService> contributionService, Lazy<ITagService> tagService, Lazy<IConfiguration> configuration, Lazy<IApplicationSettingsService> applicationSettingsService, Lazy<IContentLocalizationService> contentLocalizationService)
         : LocalizableServiceBase<BlogService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IBlogService, ISiteMapHandler
     {
         public async Task<ResultData<ListDataSource<PostsDto>>> GetPostsAsync(ListRequestDto<Post>? requestDto = null)
@@ -58,6 +58,13 @@ namespace GamaEdtech.Application.Service
                     t.VisibilityType,
                 }).ToListAsync();
 
+                var ids = blogs.Select(t => t.Id);
+                var localizedValues = await contentLocalizationService.Value.GetLocalizedValuesAsync(new()
+                {
+                    ContentIds = ids,
+                    ContentType = nameof(Post),
+                });
+
                 List<PostsDto> result = new(blogs.Count);
                 for (var i = 0; i < blogs.Count; i++)
                 {
@@ -66,8 +73,8 @@ namespace GamaEdtech.Application.Service
                         Id = blogs[i].Id,
                         DislikeCount = blogs[i].DislikeCount,
                         LikeCount = blogs[i].LikeCount,
-                        Summary = blogs[i].Summary,
-                        Title = blogs[i].Title,
+                        Summary = localizedValues.Data?.Find(t => t.ContentId == blogs[i].Id && t.Name == nameof(Post.Summary))?.Value ?? blogs[i].Summary,
+                        Title = localizedValues.Data?.Find(t => t.ContentId == blogs[i].Id && t.Name == nameof(Post.Title))?.Value ?? blogs[i].Title,
                         Slug = blogs[i].Slug,
                         ImageUri = await fileService.Value.GetFileUriAsync(new()
                         {
@@ -146,12 +153,18 @@ namespace GamaEdtech.Application.Service
                 var nextId = await repository.GetManyQueryable(new PublishDateSpecification()).Where(t => t.Id > post.Id).OrderBy(t => t.Id).Select(t => (long?)t.Id).FirstOrDefaultAsync();
                 var previousId = await repository.GetManyQueryable(new PublishDateSpecification()).Where(t => t.Id > post.Id).OrderByDescending(t => t.Id).Select(t => (long?)t.Id).FirstOrDefaultAsync();
 
+                var localizedValues = await contentLocalizationService.Value.GetLocalizedValuesAsync(new()
+                {
+                    ContentIds = [post.Id],
+                    ContentType = nameof(Post),
+                });
+
                 PostDto result = new()
                 {
-                    Title = post.Title,
+                    Summary = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Summary))?.Value ?? post.Summary,
+                    Title = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Title))?.Value ?? post.Title,
+                    Body = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Body))?.Value ?? post.Body,
                     Slug = post.Slug,
-                    Summary = post.Summary,
-                    Body = post.Body,
                     ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.ImageId, ContainerType = ContainerType.Post, }),
                     PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.PodcastId, ContainerType = ContainerType.Post, }),
                     LikeCount = post.LikeCount,
@@ -259,6 +272,7 @@ namespace GamaEdtech.Application.Service
                     VisibilityType = requestDto.VisibilityType,
                     Keywords = requestDto.Keywords,
                     Draft = requestDto.Draft,
+                    LocalizedValues = requestDto.LocalizedValues,
                 };
 
                 var contributionResult = await contributionService.Value.ManageContributionAsync(new ManageContributionRequestDto<PostContributionDto>
@@ -643,6 +657,41 @@ namespace GamaEdtech.Application.Service
                     _ = await contributionService.Value.UpdateIdentifierIdAsync(requestDto.ContributionId, post.Id);
                 }
 
+                if (result.Data.Data.LocalizedValues is not null)
+                {
+                    foreach (var item in result.Data.Data.LocalizedValues)
+                    {
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Title),
+                            Value = item.Title,
+                        });
+
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Summary),
+                            Value = item.Summary,
+                        });
+
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Body),
+                            Value = item.Body,
+                        });
+                    }
+                }
+
+                scope.Complete();
+
                 if (requestDto.NotifyUser)
                 {
                     var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.PostContributionConfirmationEmailTemplate))).Data;
@@ -657,8 +706,6 @@ namespace GamaEdtech.Application.Service
                         EmailAddresses = [result.Data.Email],
                     });
                 }
-
-                scope.Complete();
 
                 return new(OperationResult.Succeeded) { Data = true };
             }
