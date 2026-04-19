@@ -1,8 +1,8 @@
-﻿namespace GamaEdtech.Common.Data
+namespace GamaEdtech.Common.Data
 {
     using System.Collections.Generic;
 
-    public class PagingDto
+    public sealed class PagingDto
     {
         public PageFilter? PageFilter { get; set; }
 

@@ -55,5 +55,8 @@ namespace GamaEdtech.Presentation.ViewModel.Blog
 
         [Display]
         public bool Draft { get; set; }
+
+        [Display]
+        public IEnumerable<PostLocalizedValueViewModel>? LocalizedValues { get; set; }
     }
 }

@@ -604,6 +604,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         DefaultImageId = request.DefaultImageId,
                         Tuition = request.Tuition,
                         Description = request.Description,
+                        LocalizedValues = request.LocalizedValues?.Select(t => new SchoolLocalizedValueDto
+                        {
+                            LanguageId = t.LanguageId.GetValueOrDefault(),
+                            Description = t.Description,
+                            Name = t.Name,
+                            Address = t.Address,
+                        }),
                     },
                 });
 
@@ -654,6 +661,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         DefaultImageId = request.DefaultImageId,
                         Tuition = request.Tuition,
                         Description = request.Description,
+                        LocalizedValues = request.LocalizedValues?.Select(t => new SchoolLocalizedValueDto
+                        {
+                            LanguageId = t.LanguageId.GetValueOrDefault(),
+                            Description = t.Description,
+                            Name = t.Name,
+                            Address = t.Address,
+                        }),
                     },
                 });
 
@@ -717,6 +731,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             CreationDate = DateTimeOffset.UtcNow,
                             CreationUserId = User.UserId(),
                         },
+                        LocalizedValues = request.LocalizedValues?.Select(t => new SchoolLocalizedValueDto
+                        {
+                            LanguageId = t.LanguageId.GetValueOrDefault(),
+                            Description = t.Description,
+                            Name = t.Name,
+                            Address = t.Address,
+                        }),
                     },
                 });
 
@@ -838,6 +859,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Boards = dto.Boards,
                     Tuition = dto.Tuition,
                     Description = dto.Description,
+                    LocalizedValues = dto.LocalizedValues?.Select(t => new SchoolLocalizedValueViewModel
+                    {
+                        LanguageId = t.LanguageId,
+                        Description = t.Description,
+                        Name = t.Name,
+                        Address = t.Address,
+                    }),
                 };
     }
 }

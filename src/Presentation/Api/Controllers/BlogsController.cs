@@ -353,6 +353,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Keywords = dto.Keywords,
                     Slug = dto.Slug,
                     PostId = result.Data.IdentifierId,
+                    LocalizedValues = dto.LocalizedValues?.Select(t => new PostLocalizedValueViewModel
+                    {
+                        LanguageId = t.LanguageId,
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
             }
             catch (Exception exc)
@@ -383,6 +390,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     VisibilityType = request.VisibilityType!,
                     Keywords = request.Keywords,
                     Draft = request.Draft,
+                    LocalizedValues = request.LocalizedValues?.Select(t => new PostLocalizedValueDto
+                    {
+                        LanguageId = t.LanguageId.GetValueOrDefault(),
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
                 var result = await blogService.Value.ManagePostContributionAsync(dto);
 
@@ -427,6 +441,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     VisibilityType = request.VisibilityType,
                     Keywords = request.Keywords,
                     Draft = request.Draft,
+                    LocalizedValues = request.LocalizedValues?.Select(t => new PostLocalizedValueDto
+                    {
+                        LanguageId = t.LanguageId.GetValueOrDefault(),
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
                 var result = await blogService.Value.ManagePostContributionAsync(dto);
 

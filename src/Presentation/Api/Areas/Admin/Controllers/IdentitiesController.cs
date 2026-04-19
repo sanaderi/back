@@ -43,6 +43,27 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 {
                     specification = new HasReferralSpecification(request.HasReferral.Value);
                 }
+
+                if (!string.IsNullOrEmpty(request.FirstName))
+                {
+                    specification = new FirstNameContainsSpecification(request.FirstName);
+                }
+
+                if (!string.IsNullOrEmpty(request.LastName))
+                {
+                    specification = new LastNameContainsSpecification(request.LastName);
+                }
+
+                if (!string.IsNullOrEmpty(request.Email))
+                {
+                    specification = new EmailEqualsSpecification(request.Email);
+                }
+
+                if (!string.IsNullOrEmpty(request.ReferralId))
+                {
+                    specification = new ReferralIdEqualsSpecification(request.ReferralId);
+                }
+
                 var result = await identityService.Value.GetUsersAsync(new()
                 {
                     PagingDto = request.PagingDto,

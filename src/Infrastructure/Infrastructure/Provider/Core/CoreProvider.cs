@@ -118,7 +118,8 @@ namespace GamaEdtech.Infrastructure.Provider.Core
                     return new(OperationResult.Failed) { Errors = [new() { Message = response.Message, }] };
                 }
 
-                var qr = QRCodeImageBuilder.GetPngBytes($"https://core.gamatrain.com/azmoon/detail/{response.Data.Exam.Code}");
+                var examDetailsUrl = string.Format(configuration.Value.GetValue<string>("Core:ExamDetailsUrl")!, response.Data.Exam.Code);
+                var qr = QRCodeImageBuilder.GetPngBytes(examDetailsUrl);
 
                 ExamInformationResponseDto result = new()
                 {

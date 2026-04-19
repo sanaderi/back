@@ -78,9 +78,7 @@ namespace GamaEdtech.Common.Hosting
                 using var scope = host.Services.CreateScope();
                 if (scope.ServiceProvider.GetService(typeof(IEntityContext)) is DbContext context)
                 {
-                    using var trn = await context.Database.BeginTransactionAsync();
                     await context.Database.MigrateAsync();
-                    await trn.CommitAsync();
                 }
             }
 

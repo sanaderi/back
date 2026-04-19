@@ -10,5 +10,18 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         [Display]
         public bool? HasReferral { get; set; }
+
+        [Display]
+        public string? FirstName { get; set; }
+
+        [Display]
+        public string? LastName { get; set; }
+
+        [Display]
+        [EmailAddress]
+        public string? Email { get; set; }
+
+        [Display]
+        public string? ReferralId { get; set; }
     }
 }
