@@ -8,5 +8,8 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public string? PhoneNumber { get; set; }
         public DateTimeOffset? RegistrationDate { get; set; }
         public bool Enabled { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? ReferralId { get; set; }
     }
 }
