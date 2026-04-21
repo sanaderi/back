@@ -74,6 +74,8 @@ namespace GamaEdtech.Application.Service
                     UserName = t.UserName,
                     RegistrationDate = t.RegistrationDate,
                     ReferralId = t.ReferralId,
+                    FirstName = t.FirstName,
+                    LastName = t.LastName,
                 }).ToListAsync();
                 return new(OperationResult.Succeeded) { Data = new ListDataSource<ApplicationUserDto> { List = users, TotalRecordsCount = result.TotalRecordsCount } };
             }
@@ -125,6 +127,9 @@ namespace GamaEdtech.Application.Service
                     PhoneNumber = t.PhoneNumber,
                     UserName = t.UserName,
                     RegistrationDate = t.RegistrationDate,
+                    FirstName = t.FirstName,
+                    LastName = t.LastName,
+                    ReferralId = t.ReferralId,
                 }).FirstOrDefaultAsync();
 
                 return user is null
