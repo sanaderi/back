@@ -987,6 +987,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("tinyint")
                         .HasColumnName("Currency");
 
+                    b.Property<byte>("Gateway")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Gateway");
+
                     b.Property<string>("SourceWallet")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar")
@@ -1011,11 +1015,11 @@ namespace GamaEdtech.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TransactionId")
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TransactionId", "Gateway")
                         .IsUnique()
                         .HasFilter("[TransactionId] IS NOT NULL");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Payments");
                 });

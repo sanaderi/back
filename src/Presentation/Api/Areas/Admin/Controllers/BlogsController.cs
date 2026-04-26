@@ -13,7 +13,6 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Common.DataAnnotation;
     using GamaEdtech.Common.Identity;
     using GamaEdtech.Data.Dto.Blog;
-    using GamaEdtech.Data.Dto.Contribution;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
@@ -173,14 +172,15 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
         {
             try
             {
-                var result = await contributionService.Value.RejectContributionAsync(new RejectContributionRequestDto
+                var result = await contributionService.Value.RejectContributionAsync<PostContributionDto>(new()
                 {
                     Id = contributionId,
+                    UserId = User.UserId(),
                     Comment = request.Comment,
                 });
                 return Ok(new ApiResponse<bool>(result.Errors)
                 {
-                    Data = result.Data,
+                    Data = result.Data is not null,
                 });
             }
             catch (Exception exc)

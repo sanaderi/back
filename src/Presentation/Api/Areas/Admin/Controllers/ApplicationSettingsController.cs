@@ -56,6 +56,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         SchoolIssuesContributionConfirmationEmailTemplate = result.Data.SchoolIssuesContributionConfirmationEmailTemplate,
                         PostContributionConfirmationEmailTemplate = result.Data.PostContributionConfirmationEmailTemplate,
                         RegistrationEmailTemplate = result.Data.RegistrationEmailTemplate,
+                        SchoolContributionRejectionEmailTemplate = result.Data.SchoolContributionRejectionEmailTemplate,
                     }
                 });
             }
@@ -97,6 +98,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     SchoolIssuesContributionConfirmationEmailTemplate = request.SchoolIssuesContributionConfirmationEmailTemplate,
                     PostContributionConfirmationEmailTemplate = request.PostContributionConfirmationEmailTemplate,
                     RegistrationEmailTemplate = request.RegistrationEmailTemplate,
+                    SchoolContributionRejectionEmailTemplate = request.SchoolContributionRejectionEmailTemplate,
                 });
                 return Ok<bool>(new(result.Errors) { Data = result.Data });
             }

@@ -11,7 +11,7 @@ namespace GamaEdtech.Application.Interface
     public interface IPaymentService
     {
         Task<ResultData<ListDataSource<PaymentDto>>> GetPaymentsAsync(ListRequestDto<Payment>? requestDto = null);
-        Task<ResultData<long>> CreatePaymentAsync([NotNull] CreatePaymentRequestDto requestDto);
+        Task<ResultData<CreatePaymentResponseDto>> CreatePaymentAsync([NotNull] CreatePaymentRequestDto requestDto);
         Task<ResultData<bool>> VerifyPaymentAsync([NotNull] VerifyPaymentRequestDto requestDto);
     }
 }

@@ -16,5 +16,16 @@ namespace GamaEdtech.Presentation.ViewModel.Payment
         [Required]
         [JsonConverter(typeof(EnumerationConverter<Currency, byte>))]
         public Currency? Currency { get; set; }
+
+        [Display]
+        [Required]
+        [JsonConverter(typeof(EnumerationConverter<PaymentGateway, byte>))]
+        public PaymentGateway? Gateway { get; set; }
+
+        [Display]
+        public string? Title { get; set; }
+
+        [Display]
+        public string? Description { get; set; }
     }
 }
