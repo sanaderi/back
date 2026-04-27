@@ -277,20 +277,54 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> RejectContributionAsync([NotNull] RejectContributionRequestDto requestDto)
+        public async Task<ResultData<ContributionDto<T>>> RejectContributionAsync<T>([NotNull] RejectContributionRequestDto requestDto)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var repository = uow.GetRepository<Contribution>();
-                var userId = HttpContextAccessor.Value.HttpContext?.User.UserId();
+
                 var affectedRows = await repository.GetManyQueryable(t => t.Id == requestDto.Id && t.Status == Status.Review).ExecuteUpdateAsync(t => t
                     .SetProperty(p => p.Status, Status.Rejected)
                     .SetProperty(p => p.Comment, requestDto.Comment)
-                    .SetProperty(p => p.LastModifyUserId, userId)
+                    .SetProperty(p => p.LastModifyUserId, requestDto.UserId)
                     .SetProperty(p => p.LastModifyDate, DateTimeOffset.UtcNow));
+                if (affectedRows == 0)
+                {
+                    return new(OperationResult.NotFound)
+                    {
+                        Errors = [new() { Message = Localizer.Value["ContributionNotFound"] },],
+                    };
+                }
 
-                return new(OperationResult.Succeeded) { Data = affectedRows > 0 };
+                var contribution = await repository.GetManyQueryable(t => t.Id == requestDto.Id).Select(t => new
+                {
+                    t.Id,
+                    t.CategoryType,
+                    t.Data,
+                    t.Comment,
+                    t.CreationDate,
+                    t.IdentifierId,
+                    t.CreationUserId,
+                    t.CreationUser.Email,
+                    FullName = t.CreationUser.FirstName + " " + t.CreationUser.LastName,
+                }).FirstOrDefaultAsync();
+
+                return new(OperationResult.Succeeded)
+                {
+                    Data = new ContributionDto<T>
+                    {
+                        Id = contribution!.Id,
+                        Data = string.IsNullOrEmpty(contribution.Data) ? default : JsonSerializer.Deserialize<T>(contribution.Data),
+                        Comment = contribution.Comment,
+                        CreationUserId = contribution.CreationUserId,
+                        Email = contribution.Email!,
+                        FullName = contribution.FullName,
+                        CreationDate = contribution.CreationDate,
+                        CategoryType = contribution.CategoryType,
+                        IdentifierId = contribution.IdentifierId,
+                    }
+                };
             }
             catch (Exception exc)
             {
@@ -394,8 +428,7 @@ namespace GamaEdtech.Application.Service
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed)
                 {
-                    Errors = [new () { Message = exc.Message
-    },]
+                    Errors = [new() { Message = exc.Message },]
                 };
             }
         }

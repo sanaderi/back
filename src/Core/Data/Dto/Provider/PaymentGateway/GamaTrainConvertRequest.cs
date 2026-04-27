@@ -1,4 +1,4 @@
-namespace GamaEdtech.Data.Dto.Provider.CryptoCurrency
+namespace GamaEdtech.Data.Dto.Provider.PaymentGateway
 {
     using System.Text.Json.Serialization;
 

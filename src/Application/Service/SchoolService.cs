@@ -1612,6 +1612,42 @@ namespace GamaEdtech.Application.Service
             }
         }
 
+        public async Task<ResultData<bool>> RejectSchoolContributionAsync([NotNull] RejectContributionRequestDto requestDto)
+        {
+            try
+            {
+                var contributionResult = await contributionService.Value.RejectContributionAsync<SchoolContributionDto>(requestDto);
+                if (contributionResult.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(contributionResult.OperationResult) { Errors = contributionResult.Errors };
+                }
+
+                if (contributionResult.Data!.IdentifierId.HasValue)
+                {
+                    var name = await GetSchoolsNameAsync(new IdEqualsSpecification<School, long>(contributionResult.Data.IdentifierId.Value));
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.SchoolContributionRejectionEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", contributionResult.Data.FullName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_NAME]", name.Data?[0].Value, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[REJECTION_REASON]", contributionResult.Data.Comment, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[SCHOOL_ID]", contributionResult.Data.IdentifierId.Value.ToString(), StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "School Contribution Rejection",
+                        Body = template!,
+                        EmailAddresses = [contributionResult.Data.Email],
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = true };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
         #endregion
 
         #region Issues
