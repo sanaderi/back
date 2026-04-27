@@ -28,6 +28,10 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public GenderType? Gender { get; set; }
 
         [Display]
+        [JsonConverter(typeof(EnumerationConverter<ProfileVisibility, byte>))]
+        public ProfileVisibility? ProfileVisibility { get; set; }
+
+        [Display]
         public int? Board { get; set; }
 
         [Display]

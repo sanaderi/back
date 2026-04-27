@@ -848,6 +848,7 @@ namespace GamaEdtech.Application.Service
                     t.CoreId,
                     t.WalletId,
                     t.ProfileUpdated,
+                    t.ProfileVisibility,
                     Roles = t.UserRoles != null ? t.UserRoles.Select(u => u.Role!.Name!) : null,
                 }).FirstOrDefaultAsync();
 
@@ -874,6 +875,7 @@ namespace GamaEdtech.Application.Service
                             WalletId = data.WalletId,
                             ProfileUpdated = data.ProfileUpdated,
                             Roles = data.Roles?.ListToFlagsEnum<Role>(),
+                            ProfileVisibility = data.ProfileVisibility,
                         },
                     };
             }
@@ -912,6 +914,7 @@ namespace GamaEdtech.Application.Service
                 user.Group = requestDto.Group ?? user.Group;
                 user.CoreId = requestDto.CoreId ?? user.CoreId;
                 user.WalletId = requestDto.WalletId ?? user.WalletId;
+                user.ProfileVisibility = requestDto.ProfileVisibility ?? user.ProfileVisibility;
                 user.ProfileUpdated = true;
 
                 var updateResult = await userManager.Value.UpdateAsync(user);

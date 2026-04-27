@@ -320,6 +320,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         WalletId = result.Data.WalletId,
                         ProfileUpdated = result.Data.ProfileUpdated,
                         Roles = result.Data.Roles,
+                        ProfileVisibility = result.Data.ProfileVisibility,
                     },
                 });
             }
@@ -349,6 +350,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Gender = request.Gender,
                     Group = request.Group,
                     WalletId = request.WalletId,
+                    ProfileVisibility = request.ProfileVisibility,
                     Avatar = await request.Avatar.ConvertImageToBase64Async(),
                 });
 
