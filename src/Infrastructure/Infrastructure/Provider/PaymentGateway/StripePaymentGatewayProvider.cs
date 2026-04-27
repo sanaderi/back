@@ -44,7 +44,7 @@ namespace GamaEdtech.Infrastructure.Provider.PaymentGateway
                 var sessionOptions = new SessionCreateOptions
                 {
                     Mode = "payment",
-                    UiMode = "hosted",
+                    UiMode = "hosted_page",
                     SuccessUrl = requestDto.CallbackUrl + "?transactionId={CHECKOUT_SESSION_ID}",
                     LineItems =
                     [

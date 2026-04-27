@@ -52,7 +52,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpPost("{id:long}/verify"), Produces(typeof(ApiResponse<bool>))]
+        [HttpGet("{id:long}/verify"), Produces(typeof(ApiResponse<bool>))]
         [Permission(policy: null)]
         public async Task<IActionResult<bool>> VerifyPayment([FromRoute] long id, string? transactionId)
         {
