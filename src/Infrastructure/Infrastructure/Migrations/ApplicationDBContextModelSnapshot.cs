@@ -698,6 +698,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("ProfileUpdated");
 
+                    b.Property<byte>("ProfileVisibility")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("ProfileVisibility");
+
                     b.Property<string>("ReferralId")
                         .HasMaxLength(10)
                         .HasColumnType("varchar")
@@ -771,6 +775,7 @@ namespace GamaEdtech.Infrastructure.Migrations
                             PhoneNumber = "09355028981",
                             PhoneNumberConfirmed = true,
                             ProfileUpdated = false,
+                            ProfileVisibility = (byte)0,
                             RegistrationDate = new DateTimeOffset(new DateTime(2023, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             SecurityStamp = "EAF1FA85-3DA1-4A40-90C6-65B97BF903F1",
                             TwoFactorEnabled = false,

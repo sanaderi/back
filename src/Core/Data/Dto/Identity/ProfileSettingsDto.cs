@@ -22,5 +22,6 @@ namespace GamaEdtech.Data.Dto.Identity
         public string? WalletId { get; set; }
         public bool ProfileUpdated { get; set; }
         public Role? Roles { get; set; }
+        public ProfileVisibility ProfileVisibility { get; set; }
     }
 }
