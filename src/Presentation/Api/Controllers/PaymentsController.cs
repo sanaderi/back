@@ -52,16 +52,16 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpGet("{id:long}/verify"), Produces(typeof(ApiResponse<bool>))]
+        [HttpPost("{id:long}/verify"), Produces(typeof(ApiResponse<bool>))]
         [Permission(policy: null)]
-        public async Task<IActionResult<bool>> VerifyPayment([FromRoute] long id, string? transactionId)
+        public async Task<IActionResult<bool>> VerifyPayment([FromRoute] long id, [NotNull] VerifyPaymentRequestViewModel request)
         {
             try
             {
                 var result = await paymentService.Value.VerifyPaymentAsync(new()
                 {
                     Id = id,
-                    TransactionId = transactionId,
+                    TransactionId = request.TransactionId,
                 });
 
                 return Ok<bool>(new(result.Errors)
