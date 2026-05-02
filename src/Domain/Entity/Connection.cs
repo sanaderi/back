@@ -10,6 +10,7 @@ namespace GamaEdtech.Domain.Entity
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
 
+    using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Connection))]
@@ -43,6 +44,9 @@ namespace GamaEdtech.Domain.Entity
         {
             _ = builder.OwnEnumeration<Connection, ConnectionStatus, byte>(t => t.Status);
             _ = builder.HasIndex(t => new { t.SourceUserId, t.DestinationUserId }).IsUnique(true);
+
+            _ = builder.HasOne(t => t.SourceUser).WithMany().HasForeignKey(t => t.SourceUserId).OnDelete(DeleteBehavior.NoAction);
+            _ = builder.HasOne(t => t.DestinationUser).WithMany().HasForeignKey(t => t.DestinationUserId).OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

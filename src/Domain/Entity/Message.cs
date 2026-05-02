@@ -8,6 +8,7 @@ namespace GamaEdtech.Domain.Entity
     using GamaEdtech.Common.DataAnnotation.Schema;
     using GamaEdtech.Domain.Entity.Identity;
 
+    using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Message))]
@@ -41,6 +42,8 @@ namespace GamaEdtech.Domain.Entity
 
         public void Configure([NotNull] EntityTypeBuilder<Message> builder)
         {
+            _ = builder.HasOne(t => t.Sender).WithMany().HasForeignKey(t => t.SenderId).OnDelete(DeleteBehavior.NoAction);
+            _ = builder.HasOne(t => t.Receiver).WithMany().HasForeignKey(t => t.ReceiverId).OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

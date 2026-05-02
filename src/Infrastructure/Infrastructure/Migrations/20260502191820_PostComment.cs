@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -29,14 +29,12 @@ namespace GamaEdtech.Infrastructure.Migrations
                         name: "FK_Connections_ApplicationUsers_DestinationUserId",
                         column: x => x.DestinationUserId,
                         principalTable: "ApplicationUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Connections_ApplicationUsers_SourceUserId",
                         column: x => x.SourceUserId,
                         principalTable: "ApplicationUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -80,14 +78,12 @@ namespace GamaEdtech.Infrastructure.Migrations
                         name: "FK_Messages_ApplicationUsers_ReceiverId",
                         column: x => x.ReceiverId,
                         principalTable: "ApplicationUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Messages_ApplicationUsers_SenderId",
                         column: x => x.SenderId,
                         principalTable: "ApplicationUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
