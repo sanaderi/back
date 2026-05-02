@@ -24,9 +24,9 @@ namespace GamaEdtech.Application.Service
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public class TagService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<FileService>> localizer
-        , Lazy<ILogger<FileService>> logger)
-        : LocalizableServiceBase<FileService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), ITagService
+    public class TagService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<TagService>> localizer
+        , Lazy<ILogger<TagService>> logger)
+        : LocalizableServiceBase<TagService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), ITagService
     {
         public async Task<ResultData<ListDataSource<TagsDto>>> GetTagsAsync(ListRequestDto<Tag>? requestDto = null)
         {

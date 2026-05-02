@@ -64,6 +64,11 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     specification = new ReferralIdEqualsSpecification(request.ReferralId);
                 }
 
+                if (request.Roles is not null)
+                {
+                    specification = new RoleEqualsSpecification(request.Roles);
+                }
+
                 var result = await identityService.Value.GetUsersAsync(new()
                 {
                     PagingDto = request.PagingDto,

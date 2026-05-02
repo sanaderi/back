@@ -24,9 +24,9 @@ namespace GamaEdtech.Application.Service
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public class SubjectService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<FileService>> localizer
-        , Lazy<ILogger<FileService>> logger)
-        : LocalizableServiceBase<FileService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), ISubjectService
+    public class SubjectService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<SubjectService>> localizer
+        , Lazy<ILogger<SubjectService>> logger)
+        : LocalizableServiceBase<SubjectService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), ISubjectService
     {
         public async Task<ResultData<ListDataSource<SubjectsDto>>> GetSubjectsAsync(ListRequestDto<Subject>? requestDto = null)
         {

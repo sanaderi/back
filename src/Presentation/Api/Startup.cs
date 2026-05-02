@@ -213,6 +213,7 @@ namespace GamaEdtech.Presentation.Api
             RecurringJob.RemoveIfExists("FetchCoreBoards");
             RecurringJob.AddOrUpdate<IBoardService>("SyncCoreBoards", t => t.SyncCoreBoardsAsync(), Cron.Daily(0, 20));
             RecurringJob.AddOrUpdate<IGlobalService>("GenerateSiteMap", t => t.GenerateSiteMapAsync(), Cron.Daily(0, 30));
+            RecurringJob.AddOrUpdate<IBlogService>("UpdatePostCommentReactions", t => t.UpdatePostCommentReactionsAsync(null), Cron.Daily(0, 35));
         }
     }
 }

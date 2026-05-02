@@ -50,6 +50,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         ExamIncorrectTestSubmissionPoints = result.Data.ExamIncorrectTestSubmissionPoints,
                         TicketConfirmationEmailTemplate = result.Data.TicketConfirmationEmailTemplate,
                         SchoolCommentContributionConfirmationEmailTemplate = result.Data.SchoolCommentContributionConfirmationEmailTemplate,
+                        PostCommentContributionConfirmationEmailTemplate = result.Data.PostCommentContributionConfirmationEmailTemplate,
                         SchoolImageContributionConfirmationEmailTemplate = result.Data.SchoolImageContributionConfirmationEmailTemplate,
                         RemoveSchoolImageContributionConfirmationEmailTemplate = result.Data.RemoveSchoolImageContributionConfirmationEmailTemplate,
                         SchoolContributionConfirmationEmailTemplate = result.Data.SchoolContributionConfirmationEmailTemplate,
@@ -57,6 +58,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         PostContributionConfirmationEmailTemplate = result.Data.PostContributionConfirmationEmailTemplate,
                         RegistrationEmailTemplate = result.Data.RegistrationEmailTemplate,
                         SchoolContributionRejectionEmailTemplate = result.Data.SchoolContributionRejectionEmailTemplate,
+                        SchoolImageContributionRejectionEmailTemplate = result.Data.SchoolImageContributionRejectionEmailTemplate,
                     }
                 });
             }
@@ -92,6 +94,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     ExamIncorrectTestSubmissionPoints = request.ExamIncorrectTestSubmissionPoints.GetValueOrDefault(),
                     TicketConfirmationEmailTemplate = request.TicketConfirmationEmailTemplate,
                     SchoolCommentContributionConfirmationEmailTemplate = request.SchoolCommentContributionConfirmationEmailTemplate,
+                    PostCommentContributionConfirmationEmailTemplate = request.PostCommentContributionConfirmationEmailTemplate,
                     SchoolImageContributionConfirmationEmailTemplate = request.SchoolImageContributionConfirmationEmailTemplate,
                     RemoveSchoolImageContributionConfirmationEmailTemplate = request.RemoveSchoolImageContributionConfirmationEmailTemplate,
                     SchoolContributionConfirmationEmailTemplate = request.SchoolContributionConfirmationEmailTemplate,
@@ -99,6 +102,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     PostContributionConfirmationEmailTemplate = request.PostContributionConfirmationEmailTemplate,
                     RegistrationEmailTemplate = request.RegistrationEmailTemplate,
                     SchoolContributionRejectionEmailTemplate = request.SchoolContributionRejectionEmailTemplate,
+                    SchoolImageContributionRejectionEmailTemplate = request.SchoolImageContributionRejectionEmailTemplate,
                 });
                 return Ok<bool>(new(result.Errors) { Data = result.Data });
             }

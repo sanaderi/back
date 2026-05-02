@@ -13,6 +13,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Domain.Specification;
+    using GamaEdtech.Domain.Specification.Payment;
     using GamaEdtech.Presentation.ViewModel.Payment;
 
     using Microsoft.AspNetCore.Mvc;
@@ -42,6 +43,12 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     specification = specification is null ? spec : specification.And(spec);
                 }
 
+                if (request.Gateway is not null)
+                {
+                    var spec = new GatewayEqualsSpecification(request.Gateway);
+                    specification = specification is null ? spec : specification.And(spec);
+                }
+
                 var result = await transactionService.Value.GetPaymentsAsync(new ListRequestDto<Payment>
                 {
                     PagingDto = request.PagingDto,
@@ -66,6 +73,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             Status = t.Status,
                             TransactionId = t.TransactionId,
                             VerifyDate = t.VerifyDate,
+                            Gateway = t.Gateway,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }

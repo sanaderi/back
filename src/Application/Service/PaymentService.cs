@@ -49,6 +49,7 @@ namespace GamaEdtech.Application.Service
                     SourceWallet = t.SourceWallet,
                     Comment = t.Comment,
                     TransactionId = t.TransactionId,
+                    Gateway = t.Gateway,
                 }).ToListAsync();
                 return new(OperationResult.Succeeded) { Data = new() { List = users, TotalRecordsCount = result.TotalRecordsCount } };
             }
@@ -87,9 +88,9 @@ namespace GamaEdtech.Application.Service
                     PaymentId = payment.Id,
                     CallbackUrl = $"{configuration.Value.GetValue<string>("PaymentGateway:CallbackBaseUrl")}/payments/{payment.Id}/verify",
                 });
-                if (result.OperationResult is OperationResult.Succeeded && result.Data is not null)
+                if (result.OperationResult is OperationResult.Succeeded)
                 {
-                    payment.TransactionId = result.Data.TransactionId;
+                    payment.TransactionId = result.Data?.TransactionId;
                     _ = await uow.SaveChangesAsync();
 
                     return new(OperationResult.Succeeded)
@@ -97,7 +98,7 @@ namespace GamaEdtech.Application.Service
                         Data = new()
                         {
                             PaymentId = payment.Id,
-                            Url = result.Data.Url,
+                            Url = result.Data?.Url,
                         }
                     };
                 }
