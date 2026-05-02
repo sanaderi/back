@@ -72,6 +72,11 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
 
         [Display]
         [Required]
+        [RequiredTokens("[RECEIVER_NAME]", "[POST_TITLE]", "[POST_ID]", "[COMMENT]")]
+        public string? PostCommentContributionConfirmationEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
         [RequiredTokens("[RECEIVER_NAME]", "[SCHOOL_NAME]", "[SCHOOL_ID]")]
         public string? SchoolImageContributionConfirmationEmailTemplate { get; set; }
 
@@ -109,5 +114,10 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
         [Required]
         [RequiredTokens("[RECEIVER_NAME]", "[SCHOOL_NAME]", "[SCHOOL_ID]", "[REJECTION_REASON]")]
         public string? SchoolContributionRejectionEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]", "[SCHOOL_NAME]", "[SCHOOL_ID]", "[REJECTION_REASON]")]
+        public string? SchoolImageContributionRejectionEmailTemplate { get; set; }
     }
 }

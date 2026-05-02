@@ -23,6 +23,9 @@ namespace GamaEdtech.Domain.Enumeration
         [Display]
         public static readonly SystemClaim AutoConfirmRemoveSchoolImage = new(5);
 
+        [Display]
+        public static readonly SystemClaim AutoConfirmPostComment = new(6);
+
         public SystemClaim()
         {
         }

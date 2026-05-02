@@ -1,7 +1,11 @@
 namespace GamaEdtech.Presentation.ViewModel.Identity
 {
+    using System.Text.Json.Serialization;
+
+    using GamaEdtech.Common.Converter;
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAnnotation;
+    using GamaEdtech.Domain.Enumeration;
 
     public sealed class UserListRequestViewModel
     {
@@ -23,5 +27,9 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         [Display]
         public string? ReferralId { get; set; }
+
+        [Display]
+        [JsonConverter(typeof(FlagsEnumerationConverter<Role>))]
+        public Role? Roles { get; set; }
     }
 }

@@ -23,6 +23,9 @@ namespace GamaEdtech.Domain.Enumeration
         [Display]
         public static readonly CategoryType RemoveSchoolImage = new(nameof(RemoveSchoolImage), 6, "RemoveSchoolImageContributionPoints");
 
+        [Display]
+        public static readonly CategoryType PostComment = new(nameof(PostComment), 7, "PostCommentContributionPoints");
+
         public string ApplicationSettingsName { get; }
 
         public CategoryType()

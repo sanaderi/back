@@ -47,5 +47,11 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         [Display]
         public string? WalletId { get; set; }
+
+        [Display]
+        public string? Biography { get; set; }
+
+        [Display]
+        public string? Skils { get; set; }
     }
 }

@@ -88,7 +88,7 @@ namespace GamaEdtech.Application.Service
 
                 await cacheProvider.Value.RemoveAsync(key);
 
-                var points = await applicationSettingsService.Value.GetSettingAsync<long>(EnumerationExtensions.ToEnumeration<CoinType, byte>(coin.Name).ApplicationSettingsName);
+                var points = await applicationSettingsService.Value.GetSettingAsync<long>(coin.Name.ToEnumeration<CoinType, byte>().ApplicationSettingsName);
                 if (points.Data > 0)
                 {
                     var transactionRequest = new CreateTransactionRequestDto

@@ -27,6 +27,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.Service.Factory;
     using GamaEdtech.Data.Dto.ApplicationSettings;
     using GamaEdtech.Data.Dto.Identity;
+    using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Domain.Specification;
@@ -262,6 +263,7 @@ namespace GamaEdtech.Application.Service
                     Email = requestDto.Email,
                     RegistrationDate = DateTime.UtcNow,
                     Enabled = true,
+                    ProfileVisibility = ProfileVisibility.Private,
                 };
                 var identityResult = await userManager.Value.CreateAsync(user, requestDto.Password);
                 return identityResult.Succeeded
@@ -509,11 +511,13 @@ namespace GamaEdtech.Application.Service
 
                 var token = await userManager.Value.GenerateUserTokenAsync(user, requestDto.TokenProvider, requestDto.Purpose);
                 var setTokenResult = await userManager.Value.SetAuthenticationTokenAsync(user, requestDto.TokenProvider, requestDto.Purpose, token);
+
                 return setTokenResult.Succeeded
                     ? new(OperationResult.Succeeded)
                     {
                         Data = new GenerateUserTokenResponseDto
                         {
+                            UserId = requestDto.UserId,
                             Token = $"{requestDto.UserId}{DelimiterAlternate}{token}",
                             ExpirationTime = DateTimeOffset.UtcNow.Add(ApiDataProtectorTokenProviderOptions.GetTokenLifespan(configuration.Value)),
                         }
@@ -1235,6 +1239,68 @@ namespace GamaEdtech.Application.Service
             {
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        public async Task<ResultData<Void>> AddLoginHistoryAsync([NotNull] LoginHistoryRequestDto requestDto)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                uow.GetRepository<LoginHistory>().Add(new()
+                {
+                    CreationDate = DateTimeOffset.UtcNow,
+                    UserId = requestDto.UserId,
+                    IpAddress = requestDto.IpAddress,
+                    UserAgent = requestDto.UserAgent,
+                });
+                _ = await uow.SaveChangesAsync();
+
+                return new(OperationResult.Succeeded);
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<PublicProfileResponseDto>> GetPublicProfileAsync([NotNull] PublicProfileRequestDto requestDto)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var repository = uow.GetRepository<ApplicationUser, int>();
+                var connectionRepository = uow.GetRepository<Connection>();
+
+                var connected = await connectionRepository.AnyAsync(t => t.SourceUserId == requestDto.UserId && t.DestinationUserId == requestDto.ProfileId && t.Status == ConnectionStatus.Confirmed);
+
+                var result = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId && (t.ProfileVisibility == ProfileVisibility.Public || (t.ProfileVisibility == ProfileVisibility.ConnectionsOnly && connected))).Select(t => new
+                {
+                    t.RegistrationDate,
+                }).FirstOrDefaultAsync();
+                if (result is null)
+                {
+                    return new(OperationResult.Succeeded) { Data = new() };
+                }
+
+                var lastLoginDate = await uow.GetRepository<LoginHistory>().GetManyQueryable(t => t.UserId == requestDto.ProfileId).OrderByDescending(t => t.CreationDate).Select(t => (DateTimeOffset?)t.CreationDate).FirstOrDefaultAsync();
+
+                return new(OperationResult.Succeeded)
+                {
+                    Data = new()
+                    {
+                        RegistrationDate = result.RegistrationDate,
+                        //PageViewsCount = 0,
+                        //Roles = null,
+                        OnlineStatus = OnlineStatus.Parse(lastLoginDate),
+                    }
+                };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
             }
         }
 

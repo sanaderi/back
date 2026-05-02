@@ -7,11 +7,8 @@ namespace GamaEdtech.Data.Dto.Identity
     public sealed class UpdateUserPermissionsRequestDto
     {
         public int UserId { get; set; }
-
         public required IEnumerable<string?> Permissions { get; set; }
-
         public SystemClaim? SystemClaims { get; set; }
-
         public Role? Roles { get; set; }
     }
 }

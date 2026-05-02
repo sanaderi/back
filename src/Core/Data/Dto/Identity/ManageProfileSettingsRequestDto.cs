@@ -17,5 +17,7 @@ namespace GamaEdtech.Data.Dto.Identity
         public string? Avatar { get; set; }
         public string? WalletId { get; set; }
         public ProfileVisibility? ProfileVisibility { get; set; }
+        public string? Biography { get; set; }
+        public string? Skils { get; set; }
     }
 }

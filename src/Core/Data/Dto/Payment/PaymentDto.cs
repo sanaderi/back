@@ -16,5 +16,6 @@ namespace GamaEdtech.Data.Dto.Payment
         public string? SourceWallet { get; set; }
         public string? Comment { get; set; }
         public string? TransactionId { get; set; }
+        public PaymentGateway Gateway { get; set; }
     }
 }

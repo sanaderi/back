@@ -1,15 +1,15 @@
 namespace GamaEdtech.Application.Interface
 {
+    using System.Diagnostics.CodeAnalysis;
+
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Common.DataAnnotation;
-
-    using Microsoft.AspNetCore.Authentication.Cookies;
-
-    using System.Diagnostics.CodeAnalysis;
     using GamaEdtech.Data.Dto.Identity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
+
+    using Microsoft.AspNetCore.Authentication.Cookies;
 
     [Injectable]
     public interface IIdentityService
@@ -45,6 +45,8 @@ namespace GamaEdtech.Application.Interface
         Task<ResultData<bool>> HasClaimAsync(int userId, SystemClaim claims);
         Task<ResultData<List<UserPointsDto>>> GetTop100UsersAsync(Top100UsersRequestDto? requestDto);
         Task<ResultData<GenerateUserTokenResponseDto>> GenerateTokenByCoreTokenAsync([NotNull] GenerateTokenByCoreTokenRequestDto requestDto);
+        Task<ResultData<Void>> AddLoginHistoryAsync([NotNull] LoginHistoryRequestDto requestDto);
+        Task<ResultData<PublicProfileResponseDto>> GetPublicProfileAsync([NotNull] PublicProfileRequestDto requestDto);
     }
 }
 

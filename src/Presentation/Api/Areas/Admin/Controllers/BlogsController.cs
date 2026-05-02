@@ -254,6 +254,161 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
+        #region Comments
+
+        [HttpGet("posts/comments/contributions"), Produces<ApiResponse<ListDataSource<PostCommentContributionListResponseViewModel>>>()]
+        public async Task<IActionResult<ListDataSource<PostCommentContributionListResponseViewModel>>> GetPostCommentContributionList([NotNull, FromQuery] PostCommentContributionListRequestViewModel request)
+        {
+            try
+            {
+                ISpecification<Contribution> specification = new CategoryTypeEqualsSpecification<Contribution>(CategoryType.PostComment);
+                if (request.Status is not null)
+                {
+                    specification = specification.And(new StatusEqualsSpecification<Contribution>(request.Status));
+                }
+
+                if (!string.IsNullOrEmpty(request.CommenterName))
+                {
+                    var userIds = await identityService.Value.GetUserIdsAsync(new NameContainsSpecification(request.CommenterName));
+                    if (userIds.Data?.Count > 0)
+                    {
+                        specification = specification.And(new CreationUserIdContainsSpecification<Contribution, ApplicationUser, int>(userIds.Data));
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(request.CommenterEmail))
+                {
+                    var userIds = await identityService.Value.GetUserIdsAsync(new EmailEqualsSpecification(request.CommenterEmail));
+                    if (userIds.Data?.Count > 0)
+                    {
+                        specification = specification.And(new CreationUserIdContainsSpecification<Contribution, ApplicationUser, int>(userIds.Data));
+                    }
+                }
+
+                if (request.StartDate.HasValue || request.EndDate.HasValue)
+                {
+                    specification = specification.And(new CreationDateBetweenSpecification<Contribution>(request.StartDate, request.EndDate));
+                }
+
+                var result = await contributionService.Value.GetContributionsAsync<PostCommentContributionDto>(new ListRequestDto<Contribution>
+                {
+                    PagingDto = request.PagingDto,
+                    Specification = specification,
+                });
+                return Ok(new ApiResponse<ListDataSource<PostCommentContributionListResponseViewModel>>(result.Errors)
+                {
+                    Data = result.Data.List is null ? new() : new()
+                    {
+                        List = result.Data.List.Select(t => new PostCommentContributionListResponseViewModel
+                        {
+                            Id = t.Id,
+                            CreationUser = t.CreationUser,
+                            CreationDate = t.CreationDate,
+                            PostId = t.IdentifierId.GetValueOrDefault(),
+                            Status = t.Status,
+                        }),
+                        TotalRecordsCount = result.Data.TotalRecordsCount,
+                    }
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok(new ApiResponse<ListDataSource<PostCommentContributionListResponseViewModel>>(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpGet("posts/comments/contributions/{contributionId:long}"), Produces<ApiResponse<PostCommentContributionReviewViewModel>>()]
+        public async Task<IActionResult<PostCommentContributionReviewViewModel>> GetPostCommentContribution([FromRoute] long contributionId)
+        {
+            try
+            {
+                var specification = new IdEqualsSpecification<Contribution, long>(contributionId)
+                    .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.PostComment));
+                var contributionResult = await contributionService.Value.GetContributionAsync<PostCommentContributionDto>(specification);
+                if (contributionResult.Data?.Data is null)
+                {
+                    return Ok(new ApiResponse<PostCommentContributionReviewViewModel>(contributionResult.Errors));
+                }
+
+                var postResult = await blogService.Value.GetPostAsync(new IdEqualsSpecification<Post, long>(contributionResult.Data.IdentifierId.GetValueOrDefault()));
+                if (postResult.OperationResult is not Constants.OperationResult.Succeeded)
+                {
+                    return Ok(new ApiResponse<PostCommentContributionReviewViewModel>(postResult.Errors));
+                }
+
+                PostCommentContributionReviewViewModel result = new()
+                {
+                    Id = contributionResult.Data.Id,
+                    PostId = contributionResult.Data.Data!.PostId,
+                    PostTitle = postResult.Data?.Title,
+                    Comment = contributionResult.Data.Data!.Comment,
+                };
+
+                return Ok(new ApiResponse<PostCommentContributionReviewViewModel>
+                {
+                    Data = result,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok(new ApiResponse<PostCommentContributionReviewViewModel>(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPatch("posts/comments/contributions/{contributionId:long}/confirm"), Produces<ApiResponse<bool>>()]
+        public async Task<IActionResult> ConfirmPostCommentContribution([FromRoute] long contributionId)
+        {
+            try
+            {
+                var result = await blogService.Value.ConfirmPostCommentContributionAsync(new ConfirmPostCommentContributionRequestDto
+                {
+                    ContributionId = contributionId,
+                    NotifyUser = true,
+                });
+
+                return Ok(new ApiResponse<bool>(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok(new ApiResponse<bool> { Errors = [new() { Message = exc.Message }] });
+            }
+        }
+
+        [HttpPatch("posts/comments/contributions/{contributionId:long}/reject"), Produces<ApiResponse<bool>>()]
+        public async Task<IActionResult> RejectPostCommentContribution([FromRoute] long contributionId, [NotNull, FromBody] RejectPostContributionRequestViewModel request)
+        {
+            try
+            {
+                var result = await contributionService.Value.RejectContributionAsync<PostCommentContributionDto>(new()
+                {
+                    Id = contributionId,
+                    UserId = User.UserId(),
+                    Comment = request.Comment,
+                });
+                return Ok(new ApiResponse<bool>(result.Errors)
+                {
+                    Data = result.Data is not null,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok(new ApiResponse<bool> { Errors = [new() { Message = exc.Message }] });
+            }
+        }
+
+        #endregion
+
         #region Site Map
 
         [HttpGet("site-maps"), Produces<ApiResponse<ListDataSource<SiteMapListResponseViewModel>>>()]
@@ -277,7 +432,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     return Ok(new ApiResponse<ListDataSource<SiteMapListResponseViewModel>>());
                 }
 
-                var names = await blogService.Value.GetPostsNameAsync(new IdContainsSpecification<Post, long>(result.Data.List.Select(t => t.IdentifierId)));
+                var names = await blogService.Value.GetPostsTitleAsync(new IdContainsSpecification<Post, long>(result.Data.List.Select(t => t.IdentifierId)));
                 if (names.OperationResult is not Constants.OperationResult.Succeeded)
                 {
                     return Ok(new ApiResponse<ListDataSource<SiteMapListResponseViewModel>>(names.Errors));
