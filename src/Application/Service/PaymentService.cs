@@ -199,11 +199,12 @@ namespace GamaEdtech.Application.Service
         {
             try
             {
+                const long pointMetrics = 1000000;
                 if (currency == Currency.GET)
                 {
                     return new(OperationResult.Succeeded)
                     {
-                        Data = (long)(amount * 2),
+                        Data = (long)(amount * 2 * pointMetrics),
                     };
                 }
 
@@ -221,7 +222,7 @@ namespace GamaEdtech.Application.Service
 
                 return response is null
                     ? new(OperationResult.Failed) { Errors = [new() { Message = Localizer.Value["GeneralError"], }] }
-                    : new(OperationResult.Succeeded) { Data = (long)response.Amount, };
+                    : new(OperationResult.Succeeded) { Data = (long)response.Amount * pointMetrics, };
             }
             catch (Exception exc)
             {
