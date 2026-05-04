@@ -43,6 +43,32 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 {
                     specification = new HasReferralSpecification(request.HasReferral.Value);
                 }
+
+                if (!string.IsNullOrEmpty(request.FirstName))
+                {
+                    specification = new FirstNameContainsSpecification(request.FirstName);
+                }
+
+                if (!string.IsNullOrEmpty(request.LastName))
+                {
+                    specification = new LastNameContainsSpecification(request.LastName);
+                }
+
+                if (!string.IsNullOrEmpty(request.Email))
+                {
+                    specification = new EmailEqualsSpecification(request.Email);
+                }
+
+                if (!string.IsNullOrEmpty(request.ReferralId))
+                {
+                    specification = new ReferralIdEqualsSpecification(request.ReferralId);
+                }
+
+                if (request.Roles is not null)
+                {
+                    specification = new RoleEqualsSpecification(request.Roles);
+                }
+
                 var result = await identityService.Value.GetUsersAsync(new()
                 {
                     PagingDto = request.PagingDto,
@@ -62,6 +88,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             Enabled = t.Enabled,
                             ReferralId = t.ReferralId,
                             RegistrationDate = t.RegistrationDate,
+                            FirstName = t.FirstName,
+                            LastName = t.LastName,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }
@@ -92,6 +120,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         PhoneNumber = result.Data.PhoneNumber,
                         Enabled = result.Data.Enabled,
                         RegistrationDate = result.Data.RegistrationDate,
+                        FirstName = result.Data.FirstName,
+                        LastName = result.Data.LastName,
+                        ReferralId = result.Data.ReferralId,
                     }
                 });
             }

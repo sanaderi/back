@@ -12,7 +12,6 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Common.DataAccess.Specification.Impl;
     using GamaEdtech.Common.DataAnnotation;
     using GamaEdtech.Common.Identity;
-    using GamaEdtech.Data.Dto.Contribution;
     using GamaEdtech.Data.Dto.School;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
@@ -366,14 +365,15 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
         {
             try
             {
-                var result = await contributionService.Value.RejectContributionAsync(new RejectContributionRequestDto
+                var result = await contributionService.Value.RejectContributionAsync<SchoolCommentContributionDto>(new()
                 {
                     Id = contributionId,
+                    UserId = User.UserId(),
                     Comment = request.Comment,
                 });
                 return Ok(new ApiResponse<bool>(result.Errors)
                 {
-                    Data = result.Data,
+                    Data = result.Data is not null,
                 });
             }
             catch (Exception exc)
@@ -515,15 +515,17 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
         }
 
         [HttpPatch("images/contributions/{contributionId:long}/reject"), Produces<ApiResponse<bool>>()]
-        public async Task<IActionResult> RejectSchoolImageContribution([FromRoute] long contributionId, [NotNull, FromBody] RejectSchoolContributionRequestViewModel request)
+        public async Task<IActionResult<bool>> RejectSchoolImageContribution([FromRoute] long contributionId, [NotNull, FromBody] RejectSchoolContributionRequestViewModel request)
         {
             try
             {
-                var result = await contributionService.Value.RejectContributionAsync(new RejectContributionRequestDto
+                var result = await schoolService.Value.RejectSchoolImageContributionAsync(new()
                 {
                     Id = contributionId,
+                    UserId = User.UserId(),
                     Comment = request.Comment,
                 });
+
                 return Ok(new ApiResponse<bool>(result.Errors)
                 {
                     Data = result.Data,
@@ -704,14 +706,15 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
         {
             try
             {
-                var result = await contributionService.Value.RejectContributionAsync(new RejectContributionRequestDto
+                var result = await contributionService.Value.RejectContributionAsync<RemoveSchoolImageContributionDto>(new()
                 {
                     Id = contributionId,
+                    UserId = User.UserId(),
                     Comment = request.Comment,
                 });
                 return Ok(new ApiResponse<bool>(result.Errors)
                 {
-                    Data = result.Data,
+                    Data = result.Data is not null,
                 });
             }
             catch (Exception exc)
@@ -841,9 +844,10 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
         {
             try
             {
-                var result = await contributionService.Value.RejectContributionAsync(new RejectContributionRequestDto
+                var result = await schoolService.Value.RejectSchoolContributionAsync(new()
                 {
                     Id = contributionId,
+                    UserId = User.UserId(),
                     Comment = request.Comment,
                 });
 
@@ -946,14 +950,15 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
         {
             try
             {
-                var result = await contributionService.Value.RejectContributionAsync(new RejectContributionRequestDto
+                var result = await contributionService.Value.RejectContributionAsync<string>(new()
                 {
                     Id = contributionId,
+                    UserId = User.UserId(),
                     Comment = request.Comment,
                 });
                 return Ok(new ApiResponse<bool>(result.Errors)
                 {
-                    Data = result.Data,
+                    Data = result.Data is not null,
                 });
             }
             catch (Exception exc)

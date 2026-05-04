@@ -38,6 +38,10 @@ namespace GamaEdtech.Domain.Entity
         [Required]
         public PaymentStatus Status { get; set; }
 
+        [Column(nameof(Gateway), DataType.Byte)]
+        [Required]
+        public PaymentGateway Gateway { get; set; }
+
         [Column(nameof(CreationDate), DataType.DateTimeOffset)]
         [Required]
         public DateTimeOffset CreationDate { get; set; }
@@ -62,7 +66,8 @@ namespace GamaEdtech.Domain.Entity
             _ = builder.Property(t => t.Amount).HasPrecision(36, 18);
             _ = builder.OwnEnumeration<Payment, Currency, byte>(t => t.Currency);
             _ = builder.OwnEnumeration<Payment, PaymentStatus, byte>(t => t.Status);
-            _ = builder.HasIndex(t => t.TransactionId).IsUnique();
+            _ = builder.OwnEnumeration<Payment, PaymentGateway, byte>(t => t.Gateway);
+            _ = builder.HasIndex(t => new { t.TransactionId, t.Gateway }).IsUnique();
         }
     }
 }

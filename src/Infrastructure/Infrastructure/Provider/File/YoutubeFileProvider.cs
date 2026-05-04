@@ -9,7 +9,6 @@ namespace GamaEdtech.Infrastructure.Provider.File
     using GamaEdtech.Data.Dto.File;
     using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
-    using GamaEdtech.Infrastructure.Interface;
 
     using Google.Apis.Auth.OAuth2;
     using Google.Apis.Services;
@@ -20,15 +19,15 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class YoutubeFileProvider(Lazy<ILogger<YoutubeFileProvider>> logger) : IFileProvider
+    public sealed class YoutubeFileProvider(Lazy<ILogger<YoutubeFileProvider>> logger) : FileProviderBase
     {
-        public FileProviderType ProviderType => FileProviderType.Youtube;
+        public override FileProviderType ProviderType => FileProviderType.Youtube;
 
-        public Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto) => throw new NotImplementedException();
+        public override Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto) => throw new NotImplementedException();
 
-        public Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto) => throw new NotImplementedException();
+        public override Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto) => throw new NotImplementedException();
 
-        public async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
+        public override async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
         {
             try
             {
@@ -69,7 +68,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
                     _ = fdfdf.Exception;
                 }
 
-                var name = $"{Guid.NewGuid():N}{requestDto.FileExtension}";
+                var name = GenerateBlobFileName(requestDto.FileExtension);
 
                 return new(OperationResult.Succeeded) { Data = name };
             }

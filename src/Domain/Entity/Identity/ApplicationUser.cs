@@ -160,6 +160,9 @@ namespace GamaEdtech.Domain.Entity.Identity
         [StringLength(50)]
         public string? WalletId { get; set; }
 
+        [Column(nameof(ProfileVisibility), DataType.Byte)]
+        public ProfileVisibility ProfileVisibility { get; set; }
+
         public ICollection<ApplicationUserClaim>? UserClaims { get; set; }
 
         public ICollection<ApplicationUserLogin>? UserLogins { get; set; }
@@ -171,6 +174,7 @@ namespace GamaEdtech.Domain.Entity.Identity
         public void Configure([NotNull] EntityTypeBuilder<ApplicationUser> builder)
         {
             _ = builder.OwnEnumeration<ApplicationUser, GenderType, byte>(t => t.Gender);
+            _ = builder.OwnEnumeration<ApplicationUser, ProfileVisibility, byte>(t => t.ProfileVisibility);
 
             _ = builder.HasIndex(e => e.NormalizedEmail)
                 .HasDatabaseName(DbProviderFactories.GetFactory.GetObjectName($"IX_{nameof(ApplicationUser)}_{nameof(NormalizedEmail)}"));
@@ -190,7 +194,7 @@ namespace GamaEdtech.Domain.Entity.Identity
             List<ApplicationUser> seedData =
             [
                 // Password: @Admin123
-                new ApplicationUser { Id = DefaultUserId, UserName = "admin", PasswordHash = "AQAAAAIAAYagAAAAEMLN3xqYWUja6ShSK0teeCYzziU6b+KghL4AiSXrb03Y3VbBfxKP7LUF3PZAJhQJ+Q==", NormalizedUserName = "ADMIN", Email = "admin@gamaedtech.com", NormalizedEmail = "ADMIN@GAMAEDTECH.COM", EmailConfirmed = true, ConcurrencyStamp = "5BABA139-4AE5-4C47-BC65-DE4849346A17", PhoneNumber = "09355028981", PhoneNumberConfirmed = true, SecurityStamp = "EAF1FA85-3DA1-4A40-90C6-65B97BF903F1", RegistrationDate = now, Enabled = true, Gender = GenderType.Male },
+                new ApplicationUser { Id = DefaultUserId, UserName = "admin", PasswordHash = "AQAAAAIAAYagAAAAEMLN3xqYWUja6ShSK0teeCYzziU6b+KghL4AiSXrb03Y3VbBfxKP7LUF3PZAJhQJ+Q==", NormalizedUserName = "ADMIN", Email = "admin@gamaedtech.com", NormalizedEmail = "ADMIN@GAMAEDTECH.COM", EmailConfirmed = true, ConcurrencyStamp = "5BABA139-4AE5-4C47-BC65-DE4849346A17", PhoneNumber = "09355028981", PhoneNumberConfirmed = true, SecurityStamp = "EAF1FA85-3DA1-4A40-90C6-65B97BF903F1", RegistrationDate = now, Enabled = true, Gender = GenderType.Male, ProfileVisibility = ProfileVisibility.Private },
             ];
             _ = builder.HasData(seedData);
         }

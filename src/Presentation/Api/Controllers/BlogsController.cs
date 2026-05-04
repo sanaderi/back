@@ -27,7 +27,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
     public class BlogsController(Lazy<ILogger<BlogsController>> logger, Lazy<IBlogService> blogService
-        , Lazy<IContributionService> contributionService, Lazy<IFileService> fileService)
+        , Lazy<IContributionService> contributionService, Lazy<IFileService> fileService, Lazy<IGlobalService> globalService)
         : ApiControllerBase<BlogsController>(logger)
     {
         [HttpGet("posts"), Produces<ApiResponse<ListDataSource<PostsResponseViewModel>>>()]
@@ -353,6 +353,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Keywords = dto.Keywords,
                     Slug = dto.Slug,
                     PostId = result.Data.IdentifierId,
+                    LocalizedValues = dto.LocalizedValues?.Select(t => new PostLocalizedValueViewModel
+                    {
+                        LanguageId = t.LanguageId,
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
             }
             catch (Exception exc)
@@ -383,6 +390,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     VisibilityType = request.VisibilityType!,
                     Keywords = request.Keywords,
                     Draft = request.Draft,
+                    LocalizedValues = request.LocalizedValues?.Select(t => new PostLocalizedValueDto
+                    {
+                        LanguageId = t.LanguageId.GetValueOrDefault(),
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
                 var result = await blogService.Value.ManagePostContributionAsync(dto);
 
@@ -427,6 +441,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     VisibilityType = request.VisibilityType,
                     Keywords = request.Keywords,
                     Draft = request.Draft,
+                    LocalizedValues = request.LocalizedValues?.Select(t => new PostLocalizedValueDto
+                    {
+                        LanguageId = t.LanguageId.GetValueOrDefault(),
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
                 var result = await blogService.Value.ManagePostContributionAsync(dto);
 
@@ -440,6 +461,131 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 Logger.Value.LogException(exc);
 
                 return Ok<ManagePostContributionResponseViewModel>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        #endregion
+
+        #region Comments
+
+        [HttpGet("posts/{postId:long}/comments"), Produces<ApiResponse<ListDataSource<PostCommentsResponseViewModel>>>()]
+        public async Task<IActionResult<ListDataSource<PostCommentsResponseViewModel>>> GetPostComments([FromRoute] long postId, [NotNull, FromQuery] PostCommentsRequestViewModel request)
+        {
+            try
+            {
+                var result = await blogService.Value.GetPostCommentsAsync(new ListRequestDto<PostComment>
+                {
+                    PagingDto = request.PagingDto,
+                    Specification = new PostIdEqualsSpecification<PostComment>(postId),
+                });
+                return Ok<ListDataSource<PostCommentsResponseViewModel>>(new(result.Errors)
+                {
+                    Data = result.Data.List is null ? new() : new()
+                    {
+                        List = result.Data.List.Select(t => new PostCommentsResponseViewModel
+                        {
+                            Id = t.Id,
+                            Comment = t.Comment,
+                            CreationDate = t.CreationDate,
+                            CreationUser = t.CreationUser,
+                            CreationUserAvatar = t.CreationUserAvatar,
+                            DislikeCount = t.DislikeCount,
+                            LikeCount = t.LikeCount,
+                        }),
+                        TotalRecordsCount = result.Data.TotalRecordsCount,
+                    }
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<ListDataSource<PostCommentsResponseViewModel>>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPost("posts/{postId:long}/comments"), Produces<ApiResponse<ManagePostCommentResponseViewModel>>()]
+        [Permission(policy: null)]
+        public async Task<IActionResult<ManagePostCommentResponseViewModel>> CreatePostComment([FromRoute] long postId, [NotNull] ManagePostCommentRequestViewModel request)
+        {
+            try
+            {
+                var validateCaptcha = await globalService.Value.VerifyCaptchaAsync(request.Captcha);
+                if (!validateCaptcha.Data)
+                {
+                    return Ok<ManagePostCommentResponseViewModel>(new(new Error { Message = "Invalid Captcha" }));
+                }
+
+                var result = await blogService.Value.CreatePostCommentContributionAsync(new()
+                {
+                    UserId = User.UserId(),
+                    PostId = postId,
+                    CommentContribution = new()
+                    {
+                        Comment = request.Comment,
+                        PostId = postId,
+                        CreationDate = DateTimeOffset.UtcNow,
+                        CreationUserId = User.UserId(),
+                    }
+                });
+                return Ok<ManagePostCommentResponseViewModel>(new(result.Errors)
+                {
+                    Data = new() { Id = result.Data, },
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<ManagePostCommentResponseViewModel>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPatch("posts/{postId:long}/comments/{commentId:long}/like"), Produces<ApiResponse<bool>>()]
+        [Permission(policy: null)]
+        public async Task<IActionResult<bool>> LikePostComment([FromRoute] long postId, [FromRoute] long commentId)
+        {
+            try
+            {
+                var result = await blogService.Value.LikePostCommentAsync(new()
+                {
+                    CommentId = commentId,
+                    PostId = postId,
+                });
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPatch("posts/{postId:long}/comments/{commentId:long}/dislike"), Produces<ApiResponse<bool>>()]
+        [Permission(policy: null)]
+        public async Task<IActionResult<bool>> DislikePostComment([FromRoute] long postId, [FromRoute] long commentId)
+        {
+            try
+            {
+                var result = await blogService.Value.DislikePostCommentAsync(new()
+                {
+                    CommentId = commentId,
+                    PostId = postId,
+                });
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
             }
         }
 

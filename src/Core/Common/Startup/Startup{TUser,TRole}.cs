@@ -94,7 +94,18 @@ namespace GamaEdtech.Common.Startup
                 _ = app.UseHttpsRedirection();
             }
 
-            _ = app.UseStaticFiles();
+            _ = app.UseStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = context =>
+                {
+                    // add time expires header
+                    const int durationInSeconds = 60 * 60 * 24 * 30; // Expires time. I set to 30 days
+                    context.Context.Response.Headers.CacheControl = $"public,max-age={durationInSeconds},immutable";
+                    context.Context.Response.Headers.Vary = "Accept";
+                    context.Context.Response.Headers.XContentTypeOptions = "nosniff";
+                    context.Context.Response.Headers.AccessControlAllowOrigin = "*";
+                }
+            });
             _ = app.UseRouting();
 
             if (startupOption.Authentication)

@@ -63,7 +63,7 @@ namespace GamaEdtech.Application.Service
                 return await FileProvider.UploadFileAsync(new()
                 {
                     File = stream.ToArray(),
-                    ContainerType = ContainerType.School,
+                    ContainerType = requestDto.ContainerType,
                     FileExtension = Path.GetExtension(requestDto.File.FileName),
                     ContentType = requestDto.File.ContentType,
                 });

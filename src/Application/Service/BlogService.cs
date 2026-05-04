@@ -36,7 +36,7 @@ namespace GamaEdtech.Application.Service
 
     public class BlogService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<BlogService>> localizer
         , Lazy<ILogger<BlogService>> logger, Lazy<IReactionService> reactionService, Lazy<IFileService> fileService, Lazy<IIdentityService> identityService, Lazy<IEmailService> emailService
-        , Lazy<IContributionService> contributionService, Lazy<ITagService> tagService, Lazy<IConfiguration> configuration, Lazy<IApplicationSettingsService> applicationSettingsService)
+        , Lazy<IContributionService> contributionService, Lazy<ITagService> tagService, Lazy<IConfiguration> configuration, Lazy<IApplicationSettingsService> applicationSettingsService, Lazy<IContentLocalizationService> contentLocalizationService)
         : LocalizableServiceBase<BlogService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IBlogService, ISiteMapHandler
     {
         public async Task<ResultData<ListDataSource<PostsDto>>> GetPostsAsync(ListRequestDto<Post>? requestDto = null)
@@ -58,6 +58,13 @@ namespace GamaEdtech.Application.Service
                     t.VisibilityType,
                 }).ToListAsync();
 
+                var ids = blogs.Select(t => t.Id);
+                var localizedValues = await contentLocalizationService.Value.GetLocalizedValuesAsync(new()
+                {
+                    ContentIds = ids,
+                    ContentType = nameof(Post),
+                });
+
                 List<PostsDto> result = new(blogs.Count);
                 for (var i = 0; i < blogs.Count; i++)
                 {
@@ -66,8 +73,8 @@ namespace GamaEdtech.Application.Service
                         Id = blogs[i].Id,
                         DislikeCount = blogs[i].DislikeCount,
                         LikeCount = blogs[i].LikeCount,
-                        Summary = blogs[i].Summary,
-                        Title = blogs[i].Title,
+                        Summary = localizedValues.Data?.Find(t => t.ContentId == blogs[i].Id && t.Name == nameof(Post.Summary))?.Value ?? blogs[i].Summary,
+                        Title = localizedValues.Data?.Find(t => t.ContentId == blogs[i].Id && t.Name == nameof(Post.Title))?.Value ?? blogs[i].Title,
                         Slug = blogs[i].Slug,
                         ImageUri = await fileService.Value.GetFileUriAsync(new()
                         {
@@ -88,7 +95,7 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<IReadOnlyList<KeyValuePair<long, string?>>>> GetPostsNameAsync([NotNull] ISpecification<Post> specification)
+        public async Task<ResultData<IReadOnlyList<KeyValuePair<long, string?>>>> GetPostsTitleAsync([NotNull] ISpecification<Post> specification)
         {
             try
             {
@@ -146,12 +153,18 @@ namespace GamaEdtech.Application.Service
                 var nextId = await repository.GetManyQueryable(new PublishDateSpecification()).Where(t => t.Id > post.Id).OrderBy(t => t.Id).Select(t => (long?)t.Id).FirstOrDefaultAsync();
                 var previousId = await repository.GetManyQueryable(new PublishDateSpecification()).Where(t => t.Id > post.Id).OrderByDescending(t => t.Id).Select(t => (long?)t.Id).FirstOrDefaultAsync();
 
+                var localizedValues = await contentLocalizationService.Value.GetLocalizedValuesAsync(new()
+                {
+                    ContentIds = [post.Id],
+                    ContentType = nameof(Post),
+                });
+
                 PostDto result = new()
                 {
-                    Title = post.Title,
+                    Summary = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Summary))?.Value ?? post.Summary,
+                    Title = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Title))?.Value ?? post.Title,
+                    Body = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Body))?.Value ?? post.Body,
                     Slug = post.Slug,
-                    Summary = post.Summary,
-                    Body = post.Body,
                     ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.ImageId, ContainerType = ContainerType.Post, }),
                     PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.PodcastId, ContainerType = ContainerType.Post, }),
                     LikeCount = post.LikeCount,
@@ -259,6 +272,7 @@ namespace GamaEdtech.Application.Service
                     VisibilityType = requestDto.VisibilityType,
                     Keywords = requestDto.Keywords,
                     Draft = requestDto.Draft,
+                    LocalizedValues = requestDto.LocalizedValues,
                 };
 
                 var contributionResult = await contributionService.Value.ManageContributionAsync(new ManageContributionRequestDto<PostContributionDto>
@@ -276,8 +290,8 @@ namespace GamaEdtech.Application.Service
 
                 if (!requestDto.Draft.GetValueOrDefault())
                 {
-                    var hasAutoConfirmSchoolComment = await identityService.Value.HasClaimAsync(requestDto.UserId, SystemClaim.AutoConfirmPost);
-                    if (hasAutoConfirmSchoolComment.Data || configuration.Value.GetValue<bool>("AutoConfirmPosts"))
+                    var hasAutoConfirmPostComment = await identityService.Value.HasClaimAsync(requestDto.UserId, SystemClaim.AutoConfirmPost);
+                    if (hasAutoConfirmPostComment.Data || configuration.Value.GetValue<bool>("AutoConfirmPosts"))
                     {
                         _ = await ConfirmPostContributionAsync(new()
                         {
@@ -643,6 +657,41 @@ namespace GamaEdtech.Application.Service
                     _ = await contributionService.Value.UpdateIdentifierIdAsync(requestDto.ContributionId, post.Id);
                 }
 
+                if (result.Data.Data.LocalizedValues is not null)
+                {
+                    foreach (var item in result.Data.Data.LocalizedValues)
+                    {
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Title),
+                            Value = item.Title,
+                        });
+
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Summary),
+                            Value = item.Summary,
+                        });
+
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Body),
+                            Value = item.Body,
+                        });
+                    }
+                }
+
+                scope.Complete();
+
                 if (requestDto.NotifyUser)
                 {
                     var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.PostContributionConfirmationEmailTemplate))).Data;
@@ -657,8 +706,6 @@ namespace GamaEdtech.Application.Service
                         EmailAddresses = [result.Data.Email],
                     });
                 }
-
-                scope.Complete();
 
                 return new(OperationResult.Succeeded) { Data = true };
             }
@@ -718,6 +765,242 @@ namespace GamaEdtech.Application.Service
                 : new(null, fileId.Errors);
         }
 
+        #region Comments
+
+        public async Task<ResultData<ListDataSource<PostCommentDto>>> GetPostCommentsAsync(ListRequestDto<PostComment>? requestDto = null)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var result = await uow.GetRepository<PostComment>().GetManyQueryable(requestDto?.Specification).FilterListAsync(requestDto?.PagingDto);
+                var users = await result.List.Select(t => new PostCommentDto
+                {
+                    Id = t.Id,
+                    Comment = t.Comment,
+                    CreationUser = t.CreationUser!.FirstName + " " + t.CreationUser.LastName,
+                    CreationUserAvatar = t.CreationUser!.Avatar,
+                    CreationDate = t.CreationDate,
+                    LikeCount = t.LikeCount,
+                    DislikeCount = t.DislikeCount,
+                }).ToListAsync();
+                return new(OperationResult.Succeeded) { Data = new() { List = users, TotalRecordsCount = result.TotalRecordsCount } };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> LikePostCommentAsync([NotNull] PostCommentReactionRequestDto requestDto)
+        {
+            try
+            {
+                var specification = new IdEqualsSpecification<PostComment, long>(requestDto.CommentId)
+                    .And(new PostIdEqualsSpecification<PostComment>(requestDto.PostId));
+                var exists = await CommentExistsAsync(specification);
+                if (!exists.Data)
+                {
+                    return new(OperationResult.NotFound)
+                    {
+                        Errors = [new() { Message = Localizer.Value["InvalidRequest"] },],
+                    };
+                }
+
+                var reactionResult = await reactionService.Value.ManageReactionAsync(new()
+                {
+                    CategoryType = CategoryType.PostComment,
+                    CreationDate = DateTimeOffset.UtcNow,
+                    CreationUserId = HttpContextAccessor.Value.HttpContext.UserId(),
+                    IdentifierId = requestDto.CommentId,
+                    IsLike = true,
+                });
+                if (reactionResult.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(OperationResult.Failed) { Errors = reactionResult.Errors };
+                }
+
+                var result = await UpdatePostCommentReactionsAsync(requestDto.CommentId);
+
+                return result;
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> DislikePostCommentAsync([NotNull] PostCommentReactionRequestDto requestDto)
+        {
+            try
+            {
+                var specification = new IdEqualsSpecification<PostComment, long>(requestDto.CommentId)
+                    .And(new PostIdEqualsSpecification<PostComment>(requestDto.PostId));
+                var exists = await CommentExistsAsync(specification);
+                if (!exists.Data)
+                {
+                    return new(OperationResult.NotFound)
+                    {
+                        Errors = [new() { Message = Localizer.Value["InvalidRequest"] },],
+                    };
+                }
+
+                var reactionResult = await reactionService.Value.ManageReactionAsync(new()
+                {
+                    CategoryType = CategoryType.PostComment,
+                    CreationDate = DateTimeOffset.UtcNow,
+                    CreationUserId = HttpContextAccessor.Value.HttpContext.UserId(),
+                    IdentifierId = requestDto.CommentId,
+                    IsLike = false,
+                });
+                if (reactionResult.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(OperationResult.Failed) { Errors = reactionResult.Errors };
+                }
+
+                var result = await UpdatePostCommentReactionsAsync(requestDto.CommentId);
+
+                return result;
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        public async Task<ResultData<long>> CreatePostCommentContributionAsync([NotNull] ManagePostCommentContributionRequestDto requestDto)
+        {
+            try
+            {
+                var commentSpecification = new PostIdEqualsSpecification<PostComment>(requestDto.PostId)
+                        .And(new CreationUserIdEqualsSpecification<PostComment, ApplicationUser, int>(requestDto.UserId));
+                var commentExists = await CommentExistsAsync(commentSpecification);
+                if (commentExists.Data)
+                {
+                    return new(OperationResult.Failed) { Errors = [new() { Message = "Comment Exists for Current User and Post", }] };
+                }
+
+                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(requestDto.UserId)
+                    .And(new IdentifierIdEqualsSpecification<Contribution>(requestDto.PostId))
+                    .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.PostComment))
+                    .And(
+                        new StatusEqualsSpecification<Contribution>(Status.Draft)
+                        .Or(new StatusEqualsSpecification<Contribution>(Status.Review))
+                    );
+                var contributionExists = await contributionService.Value.ExistsContributionAsync(contributionSpecification);
+                if (contributionExists.Data)
+                {
+                    return new(OperationResult.Failed) { Errors = [new() { Message = "there is a pending Comment", }] };
+                }
+
+                var contributionResult = await contributionService.Value.ManageContributionAsync(new ManageContributionRequestDto<PostCommentContributionDto>
+                {
+                    CategoryType = CategoryType.PostComment,
+                    IdentifierId = requestDto.PostId,
+                    Status = Status.Review,
+                    Data = requestDto.CommentContribution,
+                });
+                if (contributionResult.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(contributionResult.OperationResult) { Errors = contributionResult.Errors };
+                }
+
+                var hasAutoConfirmPostComment = await identityService.Value.HasClaimAsync(requestDto.UserId, SystemClaim.AutoConfirmPostComment);
+                if (hasAutoConfirmPostComment.Data || configuration.Value.GetValue<bool>("AutoConfirmComments"))
+                {
+                    _ = await ConfirmPostCommentContributionAsync(new()
+                    {
+                        ContributionId = contributionResult.Data,
+                        NotifyUser = false,
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = contributionResult.Data };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, }] };
+            }
+        }
+
+        private async Task CreatePostCommentAsync(PostCommentContributionDto dto)
+        {
+            var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+            var postCommentRepository = uow.GetRepository<PostComment>();
+            postCommentRepository.Add(new()
+            {
+                PostId = dto.PostId,
+                Comment = dto.Comment,
+                CreationUserId = dto.CreationUserId,
+                CreationDate = dto.CreationDate,
+            });
+            _ = await uow.SaveChangesAsync();
+        }
+
+        public async Task<ResultData<bool>> ConfirmPostCommentContributionAsync([NotNull] ConfirmPostCommentContributionRequestDto requestDto)
+        {
+            try
+            {
+                var contributionSpecification = new IdEqualsSpecification<Contribution, long>(requestDto.ContributionId)
+                    .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.PostComment));
+                var result = await contributionService.Value.ConfirmContributionAsync<PostCommentContributionDto>(new()
+                {
+                    Specification = contributionSpecification,
+                });
+                if (result.Data is null)
+                {
+                    return new(OperationResult.Failed) { Errors = result.Errors };
+                }
+
+                await CreatePostCommentAsync(result.Data.Data!);
+
+                if (requestDto.NotifyUser)
+                {
+                    var name = await GetPostsTitleAsync(new IdEqualsSpecification<Post, long>(result.Data.Data!.PostId));
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.PostCommentContributionConfirmationEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", result.Data.FullName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[POST_TITLE]", name.Data?[0].Value, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[POST_ID]", result.Data.Data.PostId.ToString(), StringComparison.OrdinalIgnoreCase)
+                        .Replace("[COMMENT]", result.Data.Data.Comment, StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "Post Comment Contribution Confirmation",
+                        Body = template!,
+                        EmailAddresses = [result.Data.Email],
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = true };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> CommentExistsAsync([NotNull] ISpecification<PostComment> specification)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var exists = await uow.GetRepository<PostComment>().AnyAsync(specification);
+
+                return new(OperationResult.Succeeded) { Data = exists };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        #endregion
+
         #region SiteMap
 
         public ItemType ItemType => ItemType.Blog;
@@ -747,6 +1030,27 @@ namespace GamaEdtech.Application.Service
                     LikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.Post.Value} AND r.IdentifierId=p.Id AND r.IsLike=1)
                     ,DislikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.Post.Value} AND r.IdentifierId=p.Id AND r.IsLike=0)
                 FROM Posts p {where}";
+                _ = await uow.ExecuteSqlCommandAsync(query);
+
+                return new(OperationResult.Succeeded) { Data = true };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> UpdatePostCommentReactionsAsync(long? postCommentId = null)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var where = postCommentId.HasValue ? $"WHERE c.Id={postCommentId.Value}" : "";
+                var query = $@"UPDATE c SET
+                    LikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.PostComment.Value} AND r.IdentifierId=c.Id AND r.IsLike=1)
+                    ,DislikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.PostComment.Value} AND r.IdentifierId=c.Id AND r.IsLike=0)
+                FROM PostComments c {where}";
                 _ = await uow.ExecuteSqlCommandAsync(query);
 
                 return new(OperationResult.Succeeded) { Data = true };

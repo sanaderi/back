@@ -48,7 +48,19 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     return Ok<AuthenticationResponseViewModel>(new(authenticateResult.Errors));
                 }
 
-                var signInResult = await identityService.Value.SignInAsync(new SignInRequestDto { RememberMe = request.RememberMe, User = authenticateResult.Data.User });
+                var signInResult = await identityService.Value.SignInAsync(new()
+                {
+                    User = authenticateResult.Data.User,
+                    RememberMe = request.RememberMe,
+                });
+
+                _ = await identityService.Value.AddLoginHistoryAsync(new()
+                {
+                    UserId = authenticateResult.Data.User.Id,
+                    IpAddress = HttpContext.GetClientIpAddress(),
+                    UserAgent = HttpContext.UserAgent(),
+                });
+
                 return Ok<AuthenticationResponseViewModel>(new(signInResult.Errors)
                 {
                     Data = signInResult.OperationResult is OperationResult.Succeeded ?
@@ -143,7 +155,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         {
             try
             {
-                var authenticateResult = await identityService.Value.AuthenticateAsync(new AuthenticationRequestDto
+                var authenticateResult = await identityService.Value.AuthenticateAsync(new()
                 {
                     Username = request.Username!,
                     Password = request.Password!,
@@ -154,12 +166,20 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     return Ok<GenerateTokenResponseViewModel>(new(authenticateResult.Errors));
                 }
 
-                var result = await identityService.Value.GenerateUserTokenAsync(new GenerateUserTokenRequestDto
+                var result = await identityService.Value.GenerateUserTokenAsync(new()
                 {
                     UserId = authenticateResult.Data.User.Id,
                     TokenProvider = PermissionConstants.ApiDataProtectorTokenProvider,
                     Purpose = PermissionConstants.ApiDataProtectorTokenProviderAccessToken,
                 });
+
+                _ = await identityService.Value.AddLoginHistoryAsync(new()
+                {
+                    UserId = authenticateResult.Data.User.Id,
+                    IpAddress = HttpContext.GetClientIpAddress(),
+                    UserAgent = HttpContext.UserAgent(),
+                });
+
                 return Ok<GenerateTokenResponseViewModel>(new(result.Errors)
                 {
                     Data = new()
@@ -191,13 +211,24 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     Token = request.Token,
                 });
+                if (result.OperationResult is not OperationResult.Succeeded || result.Data is null)
+                {
+                    return Ok<GenerateTokenResponseViewModel>(new(result.Errors));
+                }
+
+                _ = await identityService.Value.AddLoginHistoryAsync(new()
+                {
+                    UserId = result.Data.UserId,
+                    IpAddress = HttpContext.GetClientIpAddress(),
+                    UserAgent = HttpContext.UserAgent(),
+                });
 
                 return Ok<GenerateTokenResponseViewModel>(new(result.Errors)
                 {
                     Data = new()
                     {
-                        Token = result.Data?.Token,
-                        ExpirationTime = result.Data?.ExpirationTime,
+                        Token = result.Data.Token,
+                        ExpirationTime = result.Data.ExpirationTime,
                     }
                 });
             }
@@ -214,7 +245,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         {
             try
             {
-                var authenticateResult = await identityService.Value.AuthenticateAsync(new AuthenticationRequestDto
+                var authenticateResult = await identityService.Value.AuthenticateAsync(new()
                 {
                     Username = request.Code!,
                     AuthenticationProvider = AuthenticationProvider.Google,
@@ -230,6 +261,14 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     TokenProvider = PermissionConstants.ApiDataProtectorTokenProvider,
                     Purpose = PermissionConstants.ApiDataProtectorTokenProviderAccessToken,
                 });
+
+                _ = await identityService.Value.AddLoginHistoryAsync(new()
+                {
+                    UserId = authenticateResult.Data.User.Id,
+                    IpAddress = HttpContext.GetClientIpAddress(),
+                    UserAgent = HttpContext.UserAgent(),
+                });
+
                 return Ok<GenerateTokenResponseViewModel>(new(result.Errors)
                 {
                     Data = new()
@@ -311,7 +350,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         CityId = result.Data.CityId,
                         SchoolId = result.Data.SchoolId,
                         ReferralId = result.Data.ReferralId,
-                        Gender = result.Data.Gender?.Name,
+                        Gender = result.Data.Gender,
                         Grade = result.Data.Grade,
                         Board = result.Data.Board,
                         Avatar = result.Data.Avatar,
@@ -320,6 +359,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         WalletId = result.Data.WalletId,
                         ProfileUpdated = result.Data.ProfileUpdated,
                         Roles = result.Data.Roles,
+                        ProfileVisibility = result.Data.ProfileVisibility,
                     },
                 });
             }
@@ -328,6 +368,33 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 Logger.Value.LogException(exc);
 
                 return Ok<ProfileSettingsResponseViewModel>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpGet("profiles/{id:int}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
+        [AllowAnonymous]
+        public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] int id)
+        {
+            try
+            {
+                var result = await identityService.Value.GetPublicProfileAsync(new()
+                {
+                    ProfileId = id,
+                    UserId = User.UserId(),
+                });
+
+                return Ok<PublicProfileResponseViewModel>(new(result.Errors)
+                {
+                    Data = result.Data is null ? null : new()
+                    {
+                    },
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<PublicProfileResponseViewModel>(new(new Error { Message = exc.Message }));
             }
         }
 
@@ -349,7 +416,10 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Gender = request.Gender,
                     Group = request.Group,
                     WalletId = request.WalletId,
+                    ProfileVisibility = request.ProfileVisibility,
                     Avatar = await request.Avatar.ConvertImageToBase64Async(),
+                    Biography = request.Biography,
+                    Skils = request.Skils,
                 });
 
                 return Ok<bool>(new(result.Errors)

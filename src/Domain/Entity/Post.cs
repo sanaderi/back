@@ -72,6 +72,7 @@ namespace GamaEdtech.Domain.Entity
         public long ViewCount { get; set; }
 
         public virtual ICollection<PostTag>? PostTags { get; set; }
+        public virtual ICollection<PostComment> PostComments { get; set; } = [];
 
         public void Configure([NotNull] EntityTypeBuilder<Post> builder)
         {

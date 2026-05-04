@@ -24,5 +24,6 @@ namespace GamaEdtech.Data.Dto.Blog
         public bool RemovePodcast { get; set; }
         public IEnumerable<long>? Tags { get; set; }
         public string? Keywords { get; set; }
+        public IEnumerable<PostLocalizedValueDto>? LocalizedValues { get; set; }
     }
 }
