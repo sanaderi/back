@@ -49,6 +49,12 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     specification = specification is null ? spec : specification.And(spec);
                 }
 
+                if (request.Status is not null)
+                {
+                    var spec = new StatusEqualsSpecification(request.Status);
+                    specification = specification is null ? spec : specification.And(spec);
+                }
+
                 var result = await transactionService.Value.GetPaymentsAsync(new ListRequestDto<Payment>
                 {
                     PagingDto = request.PagingDto,

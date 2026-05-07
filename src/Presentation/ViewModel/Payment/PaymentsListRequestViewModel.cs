@@ -26,5 +26,9 @@ namespace GamaEdtech.Presentation.ViewModel.Payment
         [Display]
         [JsonConverter(typeof(EnumerationConverter<PaymentGateway, byte>))]
         public PaymentGateway? Gateway { get; set; }
+
+        [Display]
+        [JsonConverter(typeof(EnumerationConverter<PaymentStatus, byte>))]
+        public PaymentStatus? Status { get; set; }
     }
 }
