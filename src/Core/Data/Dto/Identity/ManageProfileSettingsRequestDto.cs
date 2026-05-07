@@ -18,6 +18,7 @@ namespace GamaEdtech.Data.Dto.Identity
         public string? WalletId { get; set; }
         public ProfileVisibility? ProfileVisibility { get; set; }
         public string? Biography { get; set; }
-        public string? Skils { get; set; }
+        public IEnumerable<string?>? Skills { get; set; }
+        public string? CurrentStatusSentence { get; set; }
     }
 }

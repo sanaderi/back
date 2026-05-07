@@ -8,8 +8,11 @@ namespace GamaEdtech.Presentation.ViewModel.Payment
 
     public sealed class CreatePaymentRequestViewModel
     {
+        public static decimal Zero => decimal.Zero;
+
         [Display]
         [Required]
+        [Compare(nameof(Zero), OperandType = Common.Core.Constants.OperandType.GreaterThan)]
         public decimal? Amount { get; set; }
 
         [Display]

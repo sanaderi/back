@@ -40,10 +40,14 @@ namespace GamaEdtech.Domain.Entity
         [Required]
         public ConnectionStatus Status { get; set; }
 
+        [Column(nameof(SubscribeToActivityFeed), DataType.Boolean)]
+        [Required]
+        public bool SubscribeToActivityFeed { get; set; }
+
         public void Configure([NotNull] EntityTypeBuilder<Connection> builder)
         {
             _ = builder.OwnEnumeration<Connection, ConnectionStatus, byte>(t => t.Status);
-            _ = builder.HasIndex(t => new { t.SourceUserId, t.DestinationUserId }).IsUnique(true);
+            _ = builder.HasIndex(t => new { t.SourceUserId, t.DestinationUserId });
 
             _ = builder.HasOne(t => t.SourceUser).WithMany().HasForeignKey(t => t.SourceUserId).OnDelete(DeleteBehavior.NoAction);
             _ = builder.HasOne(t => t.DestinationUser).WithMany().HasForeignKey(t => t.DestinationUserId).OnDelete(DeleteBehavior.NoAction);

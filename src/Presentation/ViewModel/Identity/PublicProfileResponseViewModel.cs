@@ -4,12 +4,28 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
     using GamaEdtech.Common.Converter;
     using GamaEdtech.Domain.Enumeration;
+    using GamaEdtech.Presentation.ViewModel.Experience;
 
     public sealed class PublicProfileResponseViewModel
     {
         [JsonConverter(typeof(FlagsEnumerationConverter<Role>))]
         public Role? Roles { get; set; }
 
-        public bool Online { get; set; }
+        public long ProfileView { get; set; }
+
+        public string? Avatar { get; set; }
+
+        public DateTimeOffset? RegistrationDate { get; set; }
+
+        [JsonConverter(typeof(EnumerationConverter<OnlineStatus, byte>))]
+        public OnlineStatus OnlineStatus { get; set; }
+
+        public string? Biography { get; set; }
+
+        public IEnumerable<string?>? Skills { get; set; }
+
+        public string? CurrentStatusSentence { get; set; }
+
+        public IEnumerable<ExperienceResponseViewModel>? Experiences { get; set; }
     }
 }

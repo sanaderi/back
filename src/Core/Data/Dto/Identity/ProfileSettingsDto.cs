@@ -1,5 +1,6 @@
 namespace GamaEdtech.Data.Dto.Identity
 {
+    using GamaEdtech.Data.Dto.Experience;
     using GamaEdtech.Domain.Enumeration;
 
     public sealed class ProfileSettingsDto
@@ -23,5 +24,10 @@ namespace GamaEdtech.Data.Dto.Identity
         public bool ProfileUpdated { get; set; }
         public Role? Roles { get; set; }
         public ProfileVisibility ProfileVisibility { get; set; }
+        public string? Biography { get; set; }
+        public IEnumerable<string?>? Skills { get; set; }
+        public string? CurrentStatusSentence { get; set; }
+        public UserRateLevel UserRateLevel { get; set; }
+        public IEnumerable<ExperienceDto>? Experiences { get; set; }
     }
 }

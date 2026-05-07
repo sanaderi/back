@@ -26,6 +26,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.Service;
     using GamaEdtech.Common.Service.Factory;
     using GamaEdtech.Data.Dto.ApplicationSettings;
+    using GamaEdtech.Data.Dto.Experience;
     using GamaEdtech.Data.Dto.Identity;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
@@ -854,7 +855,27 @@ namespace GamaEdtech.Application.Service
                     t.ProfileUpdated,
                     t.ProfileVisibility,
                     Roles = t.UserRoles != null ? t.UserRoles.Select(u => u.Role!.Name!) : null,
+                    t.Biography,
+                    t.Skills,
+                    t.CurrentStatusSentence,
+                    Experiences = t.Experiences == null ? null : t.Experiences.Select(e => new
+                    {
+                        e.Id,
+                        e.Title,
+                        e.Description,
+                        e.StartDate,
+                        e.EndDate,
+                    }),
                 }).FirstOrDefaultAsync();
+                var skills = data?.Skills?.Split(Delimiter);
+                var experiences = data?.Experiences?.Select(t => new ExperienceDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Description = t.Description,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate,
+                });
 
                 return data is null
                     ? new(OperationResult.Failed) { Errors = new[] { new Error { Message = "User not found." } } }
@@ -880,6 +901,11 @@ namespace GamaEdtech.Application.Service
                             ProfileUpdated = data.ProfileUpdated,
                             Roles = data.Roles?.ListToFlagsEnum<Role>(),
                             ProfileVisibility = data.ProfileVisibility,
+                            Biography = data.Biography,
+                            Skills = skills,
+                            CurrentStatusSentence = data.CurrentStatusSentence,
+                            Experiences = experiences,
+                            UserRateLevel = UserRateLevel.Calculate(data.Avatar, data.FirstName, data.LastName, data.CurrentStatusSentence, data.Biography, skills, experiences?.Select(t => t.Title))
                         },
                     };
             }
@@ -919,6 +945,9 @@ namespace GamaEdtech.Application.Service
                 user.CoreId = requestDto.CoreId ?? user.CoreId;
                 user.WalletId = requestDto.WalletId ?? user.WalletId;
                 user.ProfileVisibility = requestDto.ProfileVisibility ?? user.ProfileVisibility;
+                user.Biography = requestDto.Biography ?? user.Biography;
+                user.Skills = string.Join(Delimiter, requestDto.Skills ?? []) ?? user.Skills;
+                user.CurrentStatusSentence = requestDto.CurrentStatusSentence ?? user.CurrentStatusSentence;
                 user.ProfileUpdated = true;
 
                 var updateResult = await userManager.Value.UpdateAsync(user);
@@ -1277,7 +1306,15 @@ namespace GamaEdtech.Application.Service
 
                 var result = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId && (t.ProfileVisibility == ProfileVisibility.Public || (t.ProfileVisibility == ProfileVisibility.ConnectionsOnly && connected))).Select(t => new
                 {
+                    t.FirstName,
+                    t.LastName,
                     t.RegistrationDate,
+                    t.ProfileView,
+                    Roles = t.UserRoles!.Select(r => r.Role!.Name!),
+                    t.Biography,
+                    t.Skills,
+                    t.Avatar,
+                    t.CurrentStatusSentence,
                 }).FirstOrDefaultAsync();
                 if (result is null)
                 {
@@ -1285,16 +1322,54 @@ namespace GamaEdtech.Application.Service
                 }
 
                 var lastLoginDate = await uow.GetRepository<LoginHistory>().GetManyQueryable(t => t.UserId == requestDto.ProfileId).OrderByDescending(t => t.CreationDate).Select(t => (DateTimeOffset?)t.CreationDate).FirstOrDefaultAsync();
+                var experiences = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == requestDto.ProfileId).OrderByDescending(t => t.Id).Select(t => new ExperienceDto
+                {
+                    Title = t.Title,
+                    Description = t.Description,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate,
+                }).ToListAsync();
 
+                _ = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId).ExecuteUpdateAsync(t => t.SetProperty(p => p.ProfileView, p => p.ProfileView + 1));
+
+                var skills = result.Skills?.Split(Delimiter);
                 return new(OperationResult.Succeeded)
                 {
                     Data = new()
                     {
+                        FirstName = result.FirstName,
+                        LastName = result.LastName,
                         RegistrationDate = result.RegistrationDate,
-                        //PageViewsCount = 0,
-                        //Roles = null,
+                        Avatar = result.Avatar,
+                        ProfileView = result.ProfileView + 1,    //add current view
+                        Roles = result.Roles.ListToFlagsEnum<Role>(),
                         OnlineStatus = OnlineStatus.Parse(lastLoginDate),
+                        Biography = result.Biography,
+                        Skills = skills,
+                        CurrentStatusSentence = result.CurrentStatusSentence,
+                        Experiences = experiences,
+                        UserRateLevel = UserRateLevel.Calculate(result.Avatar, result.FirstName, result.LastName, result.CurrentStatusSentence, result.Biography, skills, experiences?.Select(t => t.Title))
                     }
+                };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> ManageAvatarAsync([NotNull] ManageAvatarRequestDto requestDto)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var affectedRows = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Id == requestDto.UserId)
+                    .ExecuteUpdateAsync(t => t.SetProperty(p => p.Avatar, requestDto.Avatar));
+
+                return new(OperationResult.Succeeded)
+                {
+                    Data = affectedRows > 0,
                 };
             }
             catch (Exception exc)
