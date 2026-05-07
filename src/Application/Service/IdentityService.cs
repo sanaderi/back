@@ -1278,6 +1278,9 @@ namespace GamaEdtech.Application.Service
                 var result = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId && (t.ProfileVisibility == ProfileVisibility.Public || (t.ProfileVisibility == ProfileVisibility.ConnectionsOnly && connected))).Select(t => new
                 {
                     t.RegistrationDate,
+                    t.ProfileView,
+                    Roles = t.UserRoles!.Select(r => r.Role!.Name!),
+                    t.Avatar,
                 }).FirstOrDefaultAsync();
                 if (result is null)
                 {
@@ -1286,15 +1289,38 @@ namespace GamaEdtech.Application.Service
 
                 var lastLoginDate = await uow.GetRepository<LoginHistory>().GetManyQueryable(t => t.UserId == requestDto.ProfileId).OrderByDescending(t => t.CreationDate).Select(t => (DateTimeOffset?)t.CreationDate).FirstOrDefaultAsync();
 
+                _ = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId).ExecuteUpdateAsync(t => t.SetProperty(p => p.ProfileView, p => p.ProfileView + 1));
+
                 return new(OperationResult.Succeeded)
                 {
                     Data = new()
                     {
                         RegistrationDate = result.RegistrationDate,
-                        //PageViewsCount = 0,
-                        //Roles = null,
+                        Avatar = result.Avatar,
+                        ProfileView = result.ProfileView + 1,    //add current view
+                        Roles = result.Roles.ListToFlagsEnum<Role>(),
                         OnlineStatus = OnlineStatus.Parse(lastLoginDate),
                     }
+                };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> ManageAvatarAsync([NotNull] ManageAvatarRequestDto requestDto)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var affectedRows = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Id == requestDto.UserId)
+                    .ExecuteUpdateAsync(t => t.SetProperty(p => p.Avatar, requestDto.Avatar));
+
+                return new(OperationResult.Succeeded)
+                {
+                    Data = affectedRows > 0,
                 };
             }
             catch (Exception exc)

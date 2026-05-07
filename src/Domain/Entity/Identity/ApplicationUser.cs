@@ -163,6 +163,9 @@ namespace GamaEdtech.Domain.Entity.Identity
         [Column(nameof(ProfileVisibility), DataType.Byte)]
         public ProfileVisibility ProfileVisibility { get; set; }
 
+        [Column(nameof(ProfileView), DataType.Long)]
+        public long ProfileView { get; set; }
+
         public ICollection<ApplicationUserClaim>? UserClaims { get; set; }
 
         public ICollection<ApplicationUserLogin>? UserLogins { get; set; }

@@ -4,8 +4,9 @@ namespace GamaEdtech.Data.Dto.Identity
 
     public sealed class PublicProfileResponseDto
     {
+        public string? Avatar { get; set; }
         public Role? Roles { get; set; }
-        public int PageViewsCount { get; set; }
+        public long ProfileView { get; set; }
         public DateTimeOffset? RegistrationDate { get; set; }
         public OnlineStatus OnlineStatus { get; set; }
     }

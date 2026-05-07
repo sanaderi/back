@@ -151,6 +151,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("tokens"), Produces(typeof(ApiResponse<GenerateTokenResponseViewModel>))]
+        [AllowAnonymous]
         public async Task<IActionResult<GenerateTokenResponseViewModel>> GenerateToken([NotNull] GenerateTokenRequestViewModel request)
         {
             try
@@ -203,6 +204,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("tokens/old"), Produces(typeof(ApiResponse<GenerateTokenResponseViewModel>))]
+        [AllowAnonymous]
         public async Task<IActionResult<GenerateTokenResponseViewModel>> GenerateTokenWithOld([NotNull, FromBody] GenerateTokenWithOldRequestViewModel request)
         {
             try
@@ -241,6 +243,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("tokens/google"), Produces(typeof(ApiResponse<GenerateTokenResponseViewModel>))]
+        [AllowAnonymous]
         public async Task<IActionResult<GenerateTokenResponseViewModel>> GenerateTokenWithGoogle([NotNull] GenerateTokenWithGoogleRequestViewModel request)
         {
             try
@@ -313,6 +316,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("authenticated"), Produces(typeof(ApiResponse<bool>))]
+        [AllowAnonymous]
         public IActionResult<bool> Authenticated()
         {
             try
@@ -372,7 +376,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("profiles/{id:int}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
-        [AllowAnonymous]
+        [Permission(policy: null)]
         public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] int id)
         {
             try
@@ -387,6 +391,11 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     Data = result.Data is null ? null : new()
                     {
+                        OnlineStatus = result.Data.OnlineStatus,
+                        Roles = result.Data.Roles,
+                        ProfileView = result.Data.ProfileView,
+                        RegistrationDate = result.Data.RegistrationDate,
+                        Avatar = result.Data.Avatar,
                     },
                 });
             }
@@ -435,7 +444,58 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
+        [HttpPatch("profiles/avatars"), Produces(typeof(ApiResponse<bool>))]
+        [Permission(policy: null)]
+        public async Task<IActionResult> ManageAvatar([NotNull] ManageAvatarRequestViewModel request)
+        {
+            try
+            {
+                var result = await identityService.Value.ManageAvatarAsync(new()
+                {
+                    UserId = User.UserId(),
+                    Avatar = await request.Avatar.ConvertImageToBase64Async(),
+                });
+
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpDelete("profiles/avatars"), Produces(typeof(ApiResponse<bool>))]
+        [Permission(policy: null)]
+        public async Task<IActionResult> RemoveAvatar()
+        {
+            try
+            {
+                var result = await identityService.Value.ManageAvatarAsync(new()
+                {
+                    UserId = User.UserId(),
+                    Avatar = null,
+                });
+
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
+            }
+        }
+
         [HttpGet("leader-board"), Produces(typeof(ApiResponse<IEnumerable<UserPointsViewModel>>))]
+        [AllowAnonymous]
         public async Task<IActionResult> GetTop100Users([FromQuery] Top100UsersRequestViewModel? request)
         {
             try
