@@ -53,5 +53,8 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         [Display]
         public IEnumerable<string?>? Skills { get; set; }
+
+        [Display]
+        public string? CurrentStatusSentence { get; set; }
     }
 }

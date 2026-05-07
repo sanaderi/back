@@ -713,6 +713,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("CurrentBalance");
 
+                    b.Property<string>("CurrentStatusSentence")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("CurrentStatusSentence");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar")
@@ -2435,7 +2439,7 @@ namespace GamaEdtech.Infrastructure.Migrations
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Experience", b =>
                 {
                     b.HasOne("GamaEdtech.Domain.Entity.Identity.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("Experiences")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3063,6 +3067,8 @@ namespace GamaEdtech.Infrastructure.Migrations
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUser", b =>
                 {
+                    b.Navigation("Experiences");
+
                     b.Navigation("UserClaims");
 
                     b.Navigation("UserLogins");

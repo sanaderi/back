@@ -24,6 +24,8 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         public IEnumerable<string?>? Skills { get; set; }
 
+        public string? CurrentStatusSentence { get; set; }
+
         public IEnumerable<ExperienceResponseViewModel>? Experiences { get; set; }
     }
 }

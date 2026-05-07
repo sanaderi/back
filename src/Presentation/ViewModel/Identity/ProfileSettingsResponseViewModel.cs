@@ -4,6 +4,7 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
     using GamaEdtech.Common.Converter;
     using GamaEdtech.Domain.Enumeration;
+    using GamaEdtech.Presentation.ViewModel.Experience;
 
     public sealed class ProfileSettingsResponseViewModel
     {
@@ -49,5 +50,12 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public string? Biography { get; set; }
 
         public IEnumerable<string?>? Skills { get; set; }
+
+        public string? CurrentStatusSentence { get; set; }
+
+        [JsonConverter(typeof(EnumerationConverter<UserRateLevel, byte>))]
+        public UserRateLevel UserRateLevel { get; set; }
+
+        public IEnumerable<ExperienceResponseViewModel>? Experiences { get; set; }
     }
 }

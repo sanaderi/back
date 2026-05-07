@@ -367,6 +367,16 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         ProfileVisibility = result.Data.ProfileVisibility,
                         Biography = result.Data.Biography,
                         Skills = result.Data.Skills,
+                        CurrentStatusSentence = result.Data.CurrentStatusSentence,
+                        Experiences = result.Data.Experiences?.Select(t => new ExperienceResponseViewModel
+                        {
+                            Id = t.Id,
+                            Title = t.Title,
+                            Description = t.Description,
+                            StartDate = t.StartDate,
+                            EndDate = t.EndDate,
+                        }),
+                        UserRateLevel = result.Data.UserRateLevel,
                     },
                 });
             }
@@ -401,6 +411,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         Avatar = result.Data.Avatar,
                         Biography = result.Data.Biography,
                         Skills = result.Data.Skills,
+                        CurrentStatusSentence = result.Data.CurrentStatusSentence,
                         Experiences = result.Data.Experiences?.Select(t => new ExperienceResponseViewModel
                         {
                             Title = t.Title,
@@ -441,6 +452,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Avatar = await request.Avatar.ConvertImageToBase64Async(),
                     Biography = request.Biography,
                     Skills = request.Skills,
+                    CurrentStatusSentence = request.CurrentStatusSentence,
                 });
 
                 return Ok<bool>(new(result.Errors)
