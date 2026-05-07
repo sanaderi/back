@@ -687,6 +687,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Avatar");
 
+                    b.Property<string>("Biography")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Biography");
+
                     b.Property<int?>("Board")
                         .HasColumnType("int")
                         .HasColumnName("Board");
@@ -807,6 +811,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar")
                         .HasColumnName("SecurityStamp");
+
+                    b.Property<string>("Skills")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Skills");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit")

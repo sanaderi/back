@@ -23,5 +23,7 @@ namespace GamaEdtech.Data.Dto.Identity
         public bool ProfileUpdated { get; set; }
         public Role? Roles { get; set; }
         public ProfileVisibility ProfileVisibility { get; set; }
+        public string? Biography { get; set; }
+        public IEnumerable<string?>? Skills { get; set; }
     }
 }

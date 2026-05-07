@@ -44,7 +44,10 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public Role? Roles { get; set; }
 
         [JsonConverter(typeof(EnumerationConverter<ProfileVisibility, byte>))]
-
         public ProfileVisibility ProfileVisibility { get; set; }
+
+        public string? Biography { get; set; }
+
+        public IEnumerable<string?>? Skills { get; set; }
     }
 }

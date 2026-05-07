@@ -14,6 +14,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
     using GamaEdtech.Data.Dto.Identity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
+    using GamaEdtech.Presentation.ViewModel.Experience;
     using GamaEdtech.Presentation.ViewModel.Identity;
 
     using Hangfire;
@@ -364,6 +365,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         ProfileUpdated = result.Data.ProfileUpdated,
                         Roles = result.Data.Roles,
                         ProfileVisibility = result.Data.ProfileVisibility,
+                        Biography = result.Data.Biography,
+                        Skills = result.Data.Skills,
                     },
                 });
             }
@@ -396,6 +399,15 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         ProfileView = result.Data.ProfileView,
                         RegistrationDate = result.Data.RegistrationDate,
                         Avatar = result.Data.Avatar,
+                        Biography = result.Data.Biography,
+                        Skills = result.Data.Skills,
+                        Experiences = result.Data.Experiences?.Select(t => new ExperienceResponseViewModel
+                        {
+                            Title = t.Title,
+                            Description = t.Description,
+                            StartDate = t.StartDate,
+                            EndDate = t.EndDate,
+                        }),
                     },
                 });
             }
@@ -428,7 +440,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     ProfileVisibility = request.ProfileVisibility,
                     Avatar = await request.Avatar.ConvertImageToBase64Async(),
                     Biography = request.Biography,
-                    Skils = request.Skils,
+                    Skills = request.Skills,
                 });
 
                 return Ok<bool>(new(result.Errors)

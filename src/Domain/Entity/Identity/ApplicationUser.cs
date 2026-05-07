@@ -166,6 +166,12 @@ namespace GamaEdtech.Domain.Entity.Identity
         [Column(nameof(ProfileView), DataType.Long)]
         public long ProfileView { get; set; }
 
+        [Column(nameof(Biography), DataType.UnicodeMaxString)]
+        public string? Biography { get; set; }
+
+        [Column(nameof(Skills), DataType.UnicodeMaxString)]
+        public string? Skills { get; set; }
+
         public ICollection<ApplicationUserClaim>? UserClaims { get; set; }
 
         public ICollection<ApplicationUserLogin>? UserLogins { get; set; }

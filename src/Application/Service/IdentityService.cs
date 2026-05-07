@@ -26,6 +26,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.Service;
     using GamaEdtech.Common.Service.Factory;
     using GamaEdtech.Data.Dto.ApplicationSettings;
+    using GamaEdtech.Data.Dto.Experience;
     using GamaEdtech.Data.Dto.Identity;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
@@ -854,6 +855,8 @@ namespace GamaEdtech.Application.Service
                     t.ProfileUpdated,
                     t.ProfileVisibility,
                     Roles = t.UserRoles != null ? t.UserRoles.Select(u => u.Role!.Name!) : null,
+                    t.Biography,
+                    t.Skills,
                 }).FirstOrDefaultAsync();
 
                 return data is null
@@ -880,6 +883,8 @@ namespace GamaEdtech.Application.Service
                             ProfileUpdated = data.ProfileUpdated,
                             Roles = data.Roles?.ListToFlagsEnum<Role>(),
                             ProfileVisibility = data.ProfileVisibility,
+                            Biography = data.Biography,
+                            Skills = data.Skills?.Split(Constants.Delimiter),
                         },
                     };
             }
@@ -919,6 +924,8 @@ namespace GamaEdtech.Application.Service
                 user.CoreId = requestDto.CoreId ?? user.CoreId;
                 user.WalletId = requestDto.WalletId ?? user.WalletId;
                 user.ProfileVisibility = requestDto.ProfileVisibility ?? user.ProfileVisibility;
+                user.Biography = requestDto.Biography ?? user.Biography;
+                user.Skills = string.Join(Delimiter, requestDto.Skills ?? []) ?? user.Skills;
                 user.ProfileUpdated = true;
 
                 var updateResult = await userManager.Value.UpdateAsync(user);
@@ -1280,6 +1287,8 @@ namespace GamaEdtech.Application.Service
                     t.RegistrationDate,
                     t.ProfileView,
                     Roles = t.UserRoles!.Select(r => r.Role!.Name!),
+                    t.Biography,
+                    t.Skills,
                     t.Avatar,
                 }).FirstOrDefaultAsync();
                 if (result is null)
@@ -1288,6 +1297,13 @@ namespace GamaEdtech.Application.Service
                 }
 
                 var lastLoginDate = await uow.GetRepository<LoginHistory>().GetManyQueryable(t => t.UserId == requestDto.ProfileId).OrderByDescending(t => t.CreationDate).Select(t => (DateTimeOffset?)t.CreationDate).FirstOrDefaultAsync();
+                var experiences = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == requestDto.ProfileId).OrderByDescending(t => t.Id).Select(t => new ExperienceDto
+                {
+                    Title = t.Title,
+                    Description = t.Description,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate,
+                }).ToListAsync();
 
                 _ = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId).ExecuteUpdateAsync(t => t.SetProperty(p => p.ProfileView, p => p.ProfileView + 1));
 
@@ -1300,6 +1316,9 @@ namespace GamaEdtech.Application.Service
                         ProfileView = result.ProfileView + 1,    //add current view
                         Roles = result.Roles.ListToFlagsEnum<Role>(),
                         OnlineStatus = OnlineStatus.Parse(lastLoginDate),
+                        Biography = result.Biography,
+                        Skills = result.Skills?.Split(Delimiter),
+                        Experiences = experiences,
                     }
                 };
             }

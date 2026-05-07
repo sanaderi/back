@@ -52,6 +52,6 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public string? Biography { get; set; }
 
         [Display]
-        public string? Skils { get; set; }
+        public IEnumerable<string?>? Skills { get; set; }
     }
 }
