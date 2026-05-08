@@ -163,6 +163,18 @@ namespace GamaEdtech.Domain.Entity.Identity
         [Column(nameof(ProfileVisibility), DataType.Byte)]
         public ProfileVisibility ProfileVisibility { get; set; }
 
+        [Column(nameof(ProfileView), DataType.Long)]
+        public long ProfileView { get; set; }
+
+        [Column(nameof(Biography), DataType.UnicodeMaxString)]
+        public string? Biography { get; set; }
+
+        [Column(nameof(Skills), DataType.UnicodeMaxString)]
+        public string? Skills { get; set; }
+
+        [Column(nameof(CurrentStatusSentence), DataType.UnicodeMaxString)]
+        public string? CurrentStatusSentence { get; set; }
+
         public ICollection<ApplicationUserClaim>? UserClaims { get; set; }
 
         public ICollection<ApplicationUserLogin>? UserLogins { get; set; }
@@ -170,6 +182,8 @@ namespace GamaEdtech.Domain.Entity.Identity
         public ICollection<ApplicationUserRole>? UserRoles { get; set; }
 
         public ICollection<ApplicationUserToken>? UserTokens { get; set; }
+
+        public ICollection<Experience>? Experiences { get; set; }
 
         public void Configure([NotNull] EntityTypeBuilder<ApplicationUser> builder)
         {

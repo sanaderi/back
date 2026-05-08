@@ -14,6 +14,12 @@ namespace GamaEdtech.Domain.Enumeration
         [Display]
         public static readonly ConnectionStatus Rejected = new(nameof(Rejected), 2);
 
+        [Display]
+        public static readonly ConnectionStatus Canceled = new(nameof(Canceled), 3);
+
+        [Display]
+        public static readonly ConnectionStatus Revoked = new(nameof(Revoked), 4);
+
         public ConnectionStatus()
         {
         }
