@@ -771,6 +771,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("nvarchar")
                         .HasColumnName("NormalizedUserName");
 
+                    b.Property<DateTimeOffset?>("OrphanDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("OrphanDate");
+
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar")

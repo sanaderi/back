@@ -119,5 +119,20 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
         [Required]
         [RequiredTokens("[RECEIVER_NAME]", "[SCHOOL_NAME]", "[SCHOOL_ID]", "[REJECTION_REASON]")]
         public string? SchoolImageContributionRejectionEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]")]
+        public string? InitializeDeletingAccountEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]")]
+        public string? StartDeletingAccountEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]")]
+        public string? FinishedDeletingAccountEmailTemplate { get; set; }
     }
 }

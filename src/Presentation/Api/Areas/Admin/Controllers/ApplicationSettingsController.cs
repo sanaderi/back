@@ -59,6 +59,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         RegistrationEmailTemplate = result.Data.RegistrationEmailTemplate,
                         SchoolContributionRejectionEmailTemplate = result.Data.SchoolContributionRejectionEmailTemplate,
                         SchoolImageContributionRejectionEmailTemplate = result.Data.SchoolImageContributionRejectionEmailTemplate,
+                        InitializeDeletingAccountEmailTemplate = result.Data.InitializeDeletingAccountEmailTemplate,
+                        StartDeletingAccountEmailTemplate = result.Data.StartDeletingAccountEmailTemplate,
+                        FinishedDeletingAccountEmailTemplate = result.Data.FinishedDeletingAccountEmailTemplate,
                     }
                 });
             }
@@ -103,6 +106,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     RegistrationEmailTemplate = request.RegistrationEmailTemplate,
                     SchoolContributionRejectionEmailTemplate = request.SchoolContributionRejectionEmailTemplate,
                     SchoolImageContributionRejectionEmailTemplate = request.SchoolImageContributionRejectionEmailTemplate,
+                    InitializeDeletingAccountEmailTemplate = request.InitializeDeletingAccountEmailTemplate,
+                    StartDeletingAccountEmailTemplate = request.StartDeletingAccountEmailTemplate,
+                    FinishedDeletingAccountEmailTemplate = request.FinishedDeletingAccountEmailTemplate,
                 });
                 return Ok<bool>(new(result.Errors) { Data = result.Data });
             }

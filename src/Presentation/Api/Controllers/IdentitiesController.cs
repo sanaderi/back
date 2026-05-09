@@ -10,6 +10,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.Data.Enumeration;
     using GamaEdtech.Common.DataAccess.Specification.Impl;
+    using GamaEdtech.Common.DataAnnotation;
     using GamaEdtech.Common.Identity;
     using GamaEdtech.Data.Dto.Identity;
     using GamaEdtech.Domain.Entity.Identity;
@@ -552,6 +553,72 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 Logger.Value.LogException(exc);
 
                 return Ok<IEnumerable<UserPointsViewModel>>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpDelete("profiles"), Produces(typeof(ApiResponse<bool>))]
+        [Permission(policy: null)]
+        [Display(Name = "Request Removing User Account")]
+        public async Task<IActionResult<bool>> DeleteAccount([NotNull] DeleteAccountRequestViewModel request)
+        {
+            try
+            {
+                var authenticateResult = await identityService.Value.AuthenticateAsync(new()
+                {
+                    Username = request.Username!,
+                    Password = request.Password!,
+                    AuthenticationProvider = AuthenticationProvider.Local,
+                });
+                if (authenticateResult.Data?.User is null)
+                {
+                    return Ok<bool>(new(authenticateResult.Errors));
+                }
+
+                var result = await identityService.Value.InitializeDeletingAccountAsync(new IdEqualsSpecification<ApplicationUser, int>(User.UserId()));
+
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPatch("profiles/recover"), Produces(typeof(ApiResponse<bool>))]
+        [Permission(policy: null)]
+        [Display(Name = "Cancel Removing User Account Request")]
+        public async Task<IActionResult<bool>> RecoverAccount([NotNull] RecoverAccountRequestViewModel request)
+        {
+            try
+            {
+                var authenticateResult = await identityService.Value.AuthenticateAsync(new()
+                {
+                    Username = request.Username!,
+                    Password = request.Password!,
+                    AuthenticationProvider = AuthenticationProvider.Local,
+                });
+                if (authenticateResult.Data?.User is null)
+                {
+                    return Ok<bool>(new(authenticateResult.Errors));
+                }
+
+                var result = await identityService.Value.RecoverAccountAsync(new IdEqualsSpecification<ApplicationUser, int>(User.UserId()));
+
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
             }
         }
     }
