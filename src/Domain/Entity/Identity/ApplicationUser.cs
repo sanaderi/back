@@ -36,78 +36,78 @@ namespace GamaEdtech.Domain.Entity.Identity
 
         [System.ComponentModel.DataAnnotations.Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Required]
         [Column(nameof(Id), DataType.Int)]
+        [Required]
         public override int Id { get; set; }
 
+        [Column(nameof(UserName), DataType.UnicodeString)]
         [StringLength(256)]
         [Required]
-        [Column(nameof(UserName), DataType.UnicodeString)]
         public override string? UserName { get; set; }
 
+        [Column(nameof(NormalizedUserName), DataType.UnicodeString)]
         [StringLength(256)]
         [Required]
-        [Column(nameof(NormalizedUserName), DataType.UnicodeString)]
         public override string? NormalizedUserName { get; set; }
 
-        [StringLength(256)]
         [Column(nameof(Email), DataType.UnicodeString)]
+        [StringLength(256)]
         public override string? Email { get; set; }
 
-        [StringLength(256)]
         [Column(nameof(NormalizedEmail), DataType.UnicodeString)]
+        [StringLength(256)]
         public override string? NormalizedEmail { get; set; }
 
-        [Required]
         [Column(nameof(EmailConfirmed), DataType.Boolean)]
+        [Required]
         public override bool EmailConfirmed { get; set; }
 
-        [StringLength(512)]
         [Column(nameof(PasswordHash), DataType.UnicodeString)]
+        [StringLength(512)]
         public override string? PasswordHash { get; set; }
 
+        [Column(nameof(SecurityStamp), DataType.String)]
         [StringLength(50)]
         [Required]
-        [Column(nameof(SecurityStamp), DataType.String)]
         [AuditIgnore]
         public override string? SecurityStamp { get; set; }
 
+        [Column(nameof(ConcurrencyStamp), DataType.String)]
         [StringLength(50)]
         [Required]
-        [Column(nameof(ConcurrencyStamp), DataType.String)]
         [AuditIgnore]
         public override string? ConcurrencyStamp { get; set; }
 
-        [StringLength(50)]
         [Column(nameof(PhoneNumber), DataType.String)]
+        [StringLength(50)]
         public override string? PhoneNumber { get; set; }
 
-        [Required]
         [Column(nameof(PhoneNumberConfirmed), DataType.Boolean)]
+        [Required]
         public override bool PhoneNumberConfirmed { get; set; }
 
-        [Required]
         [Column(nameof(TwoFactorEnabled), DataType.Boolean)]
+        [Required]
         public override bool TwoFactorEnabled { get; set; }
 
         [Column(nameof(LockoutEnd), DataType.DateTimeOffset)]
         [AuditIgnore]
         public override DateTimeOffset? LockoutEnd { get; set; }
 
-        [Required]
         [Column(nameof(LockoutEnabled), DataType.Boolean)]
+        [Required]
         public override bool LockoutEnabled { get; set; }
 
-        [Required]
         [Column(nameof(AccessFailedCount), DataType.Int)]
+        [Required]
         [AuditIgnore]
         public override int AccessFailedCount { get; set; }
 
         [Column(nameof(RegistrationDate), DataType.DateTimeOffset)]
         public DateTimeOffset? RegistrationDate { get; set; }
 
-        [Required]
         [Column(nameof(Enabled), DataType.Boolean)]
+        [Required]
         public bool Enabled { get; set; }
 
         [Column(nameof(FirstName), DataType.UnicodeString)]
@@ -174,6 +174,9 @@ namespace GamaEdtech.Domain.Entity.Identity
 
         [Column(nameof(CurrentStatusSentence), DataType.UnicodeMaxString)]
         public string? CurrentStatusSentence { get; set; }
+
+        [Column(nameof(OrphanDate), DataType.DateTimeOffset)]
+        public DateTimeOffset? OrphanDate { get; set; }
 
         public ICollection<ApplicationUserClaim>? UserClaims { get; set; }
 

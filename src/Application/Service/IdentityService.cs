@@ -449,7 +449,8 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var user = await uow.GetRepository<ApplicationUser, int>().GetAsync(specification);
+                var repository = uow.GetRepository<ApplicationUser, int>();
+                var user = await repository.GetAsync(specification);
                 if (user is null)
                 {
                     return new(OperationResult.NotFound)
@@ -459,7 +460,7 @@ namespace GamaEdtech.Application.Service
                     };
                 }
 
-                uow.GetRepository<ApplicationUser, int>().Remove(user);
+                repository.Remove(user);
                 _ = await uow.SaveChangesAsync();
                 return new(OperationResult.Succeeded) { Data = true };
             }
@@ -1378,6 +1379,156 @@ namespace GamaEdtech.Application.Service
                 return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
             }
         }
+
+        public async Task<ResultData<bool>> InitializeDeletingAccountAsync([NotNull] ISpecification<ApplicationUser> specification)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var repository = uow.GetRepository<ApplicationUser, int>();
+                var now = DateTimeOffset.UtcNow;
+                var affectedRows = await repository.GetManyQueryable(specification)
+                    .ExecuteUpdateAsync(t => t.SetProperty(p => p.OrphanDate, now));
+                if (affectedRows > 0)
+                {
+                    var data = await repository.GetManyQueryable(specification).Select(t => new
+                    {
+                        t.FirstName,
+                        t.LastName,
+                        t.Email,
+                    }).FirstOrDefaultAsync();
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.InitializeDeletingAccountEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", $"{data!.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "Deleting Account Request",
+                        Body = template!,
+                        EmailAddresses = [data!.Email!],
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = affectedRows > 0 };
+            }
+            catch (ReferenceConstraintException)
+            {
+                return new(OperationResult.NotValid) { Errors = new[] { new Error { Message = Localizer.Value["UserCantBeRemoved"], } } };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        public async Task<ResultData<bool>> RecoverAccountAsync([NotNull] ISpecification<ApplicationUser> specification)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var repository = uow.GetRepository<ApplicationUser, int>();
+                DateTimeOffset? orphanDate = null;
+                var affectedRows = await repository.GetManyQueryable(specification).Where(t => t.OrphanDate != null)
+                    .ExecuteUpdateAsync(t => t.SetProperty(p => p.OrphanDate, orphanDate));
+
+                return new(OperationResult.Succeeded) { Data = affectedRows > 0 };
+            }
+            catch (ReferenceConstraintException)
+            {
+                return new(OperationResult.NotValid) { Errors = new[] { new Error { Message = Localizer.Value["UserCantBeRemoved"], } } };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        #region Job
+
+        public async Task<ResultData<bool>> UpdateOrphanUsersAsync()
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var repository = uow.GetRepository<ApplicationUser, int>();
+                var date = DateTimeOffset.UtcNow.AddDays(-7);
+                var lst = await repository.GetManyQueryable(t => t.OrphanDate != null && date >= t.OrphanDate.Value).Select(t => new
+                {
+                    t.Id,
+                    t.Email,
+                    t.FirstName,
+                    t.LastName,
+                }).ToListAsync();
+                if (lst is null)
+                {
+                    return new(OperationResult.Succeeded);
+                }
+
+                string? nullString = null;
+                DateTimeOffset? nullDate = null;
+                for (var i = 0; i < lst.Count; i++)
+                {
+                    try
+                    {
+                        var data = lst[i];
+                        var startTemplate = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.StartDeletingAccountEmailTemplate))).Data;
+                        startTemplate = startTemplate?
+                            .Replace("[RECEIVER_NAME]", $"{data.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                        _ = await emailService.Value.SendEmailAsync(new()
+                        {
+                            Subject = "Initialize Deleting Account",
+                            Body = startTemplate!,
+                            EmailAddresses = [data.Email!],
+                        });
+
+                        //clear user data
+                        _ = await repository.GetManyQueryable(t => t.Id == data.Id).ExecuteUpdateAsync(t => t
+                            .SetProperty(t => t.FirstName, "Deleted")
+                            .SetProperty(t => t.Email, nullString)
+                            .SetProperty(t => t.NormalizedEmail, nullString)
+                            .SetProperty(t => t.ProfileView, 0)
+                            .SetProperty(t => t.Avatar, nullString)
+                            .SetProperty(t => t.Biography, nullString)
+                            .SetProperty(t => t.WalletId, nullString)
+                            .SetProperty(t => t.Skills, nullString)
+                            .SetProperty(t => t.CurrentStatusSentence, nullString)
+                            .SetProperty(t => t.OrphanDate, nullDate));
+
+                        //delete Experience entries
+                        _ = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == data.Id).ExecuteDeleteAsync();
+
+                        //delete Follow relationships
+                        ConnectionStatus[] statuses = [ConnectionStatus.Confirmed, ConnectionStatus.Requested];
+                        _ = await uow.GetRepository<Connection>().GetManyQueryable(t => t.SourceUserId == data.Id && statuses.Contains(t.Status)).ExecuteUpdateAsync(t => t.SetProperty(p => p.Status, ConnectionStatus.Revoked));
+
+
+                        var finishedtemplate = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.FinishedDeletingAccountEmailTemplate))).Data;
+                        finishedtemplate = finishedtemplate?
+                            .Replace("[RECEIVER_NAME]", $"{data.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                        _ = await emailService.Value.SendEmailAsync(new()
+                        {
+                            Subject = "Finish Deleting Account",
+                            Body = finishedtemplate!,
+                            EmailAddresses = [data.Email!],
+                        });
+                    }
+                    catch (Exception exc)
+                    {
+                        Logger.Value.LogException(exc);
+                    }
+                }
+
+                return new(OperationResult.Succeeded);
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        #endregion
 
         private async Task<string> GetTimeZoneIdAsync(int userId)
         {
