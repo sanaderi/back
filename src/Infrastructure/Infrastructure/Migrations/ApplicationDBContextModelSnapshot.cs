@@ -636,6 +636,13 @@ namespace GamaEdtech.Infrastructure.Migrations
                             ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE6",
                             Name = "Advisor",
                             NormalizedName = "ADVISOR"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE7",
+                            Name = "Finance",
+                            NormalizedName = "FINANCE"
                         });
                 });
 

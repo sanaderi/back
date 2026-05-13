@@ -27,5 +27,12 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public string? CurrentStatusSentence { get; set; }
 
         public IEnumerable<ExperienceResponseViewModel>? Experiences { get; set; }
+
+        public string? FirstName { get; set; }
+
+        public string? LastName { get; set; }
+
+        [JsonConverter(typeof(EnumerationConverter<UserRateLevel, byte>))]
+        public UserRateLevel UserRateLevel { get; set; }
     }
 }
