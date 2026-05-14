@@ -391,6 +391,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpGet("profiles/{id:int}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
         [Permission(policy: null)]
+        [Display(Name = "Get Public Profile of a User")]
         public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] int id)
         {
             try
@@ -405,14 +406,15 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     Data = result.Data is null ? null : new()
                     {
-                        OnlineStatus = result.Data.OnlineStatus,
+                        FirstName = result.Data.FirstName,
+                        LastName = result.Data.LastName,
+                        Avatar = result.Data.Avatar,
                         Roles = result.Data.Roles,
                         ProfileView = result.Data.ProfileView,
                         RegistrationDate = result.Data.RegistrationDate,
-                        Avatar = result.Data.Avatar,
+                        OnlineStatus = result.Data.OnlineStatus,
                         Biography = result.Data.Biography,
                         Skills = result.Data.Skills,
-                        CurrentStatusSentence = result.Data.CurrentStatusSentence,
                         Experiences = result.Data.Experiences?.Select(t => new ExperienceResponseViewModel
                         {
                             Title = t.Title,
@@ -420,6 +422,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             StartDate = t.StartDate,
                             EndDate = t.EndDate,
                         }),
+                        CurrentStatusSentence = result.Data.CurrentStatusSentence,
+                        UserRateLevel = result.Data.UserRateLevel,
                     },
                 });
             }
@@ -433,6 +437,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpPut("profiles"), Produces(typeof(ApiResponse<bool>))]
         [Permission(policy: null)]
+        [Display(Name = "Update Profile Settings")]
         public async Task<IActionResult> UpdateProfileSettings([NotNull] ProfileSettingsRequestViewModel request)
         {
             try
@@ -496,6 +501,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpDelete("profiles/avatars"), Produces(typeof(ApiResponse<bool>))]
         [Permission(policy: null)]
+        [Display(Name = "Remove Profile Avatar")]
         public async Task<IActionResult> RemoveAvatar()
         {
             try

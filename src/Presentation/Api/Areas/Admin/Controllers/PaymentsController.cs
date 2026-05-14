@@ -22,7 +22,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     [Route("api/v{version:apiVersion}/[area]/[controller]")]
     [ApiVersion("1.0")]
     [Permission(Roles = [nameof(Role.Admin)])]
-    public class PaymentsController(Lazy<ILogger<PaymentsController>> logger, Lazy<IPaymentService> transactionService)
+    public class PaymentsController(Lazy<ILogger<PaymentsController>> logger, Lazy<IPaymentService> paymentService)
         : ApiControllerBase<PaymentsController>(logger)
     {
         [HttpGet, Produces<ApiResponse<ListDataSource<PaymentsListResponseViewModel>>>()]
@@ -55,7 +55,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     specification = specification is null ? spec : specification.And(spec);
                 }
 
-                var result = await transactionService.Value.GetPaymentsAsync(new ListRequestDto<Payment>
+                var result = await paymentService.Value.GetPaymentsAsync(new ListRequestDto<Payment>
                 {
                     PagingDto = request.PagingDto,
                     Specification = specification,
