@@ -1305,7 +1305,7 @@ namespace GamaEdtech.Application.Service
 
                 var connected = await connectionRepository.AnyAsync(t => t.SourceUserId == requestDto.UserId && t.DestinationUserId == requestDto.ProfileId && t.Status == ConnectionStatus.Confirmed);
 
-                var result = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId && (t.ProfileVisibility == ProfileVisibility.Public || (t.ProfileVisibility == ProfileVisibility.ConnectionsOnly && connected))).Select(t => new
+                var result = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId && (t.ProfileVisibility == ProfileVisibility.Public || (t.ProfileVisibility == ProfileVisibility.ConnectionsOnly && connected) || requestDto.ProfileId == requestDto.UserId)).Select(t => new
                 {
                     t.FirstName,
                     t.LastName,
