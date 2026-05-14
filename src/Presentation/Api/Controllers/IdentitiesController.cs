@@ -390,7 +390,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("profiles/{id:int}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
-        [Permission(policy: null)]
+        [AllowAnonymous]
         [Display(Name = "Get Public Profile of a User")]
         public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] int id)
         {
