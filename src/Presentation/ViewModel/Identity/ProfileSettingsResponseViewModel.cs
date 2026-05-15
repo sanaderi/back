@@ -57,5 +57,7 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public UserRateLevel UserRateLevel { get; set; }
 
         public IEnumerable<ExperienceResponseViewModel>? Experiences { get; set; }
+
+        public string? Handle { get; set; }
     }
 }

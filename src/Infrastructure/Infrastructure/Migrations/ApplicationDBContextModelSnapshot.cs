@@ -754,6 +754,11 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("Group");
 
+                    b.Property<string>("Handle")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Handle");
+
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar")
@@ -849,6 +854,11 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CityId");
+
+                    b.HasIndex("Handle")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ApplicationUser_Handle")
+                        .HasFilter("([Handle] IS NOT NULL)");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("IX_ApplicationUser_NormalizedEmail");

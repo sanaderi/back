@@ -56,5 +56,8 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         [Display]
         public string? CurrentStatusSentence { get; set; }
+
+        [Display]
+        public string? Handle { get; set; }
     }
 }

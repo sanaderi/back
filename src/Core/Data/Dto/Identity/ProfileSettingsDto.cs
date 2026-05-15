@@ -29,5 +29,6 @@ namespace GamaEdtech.Data.Dto.Identity
         public string? CurrentStatusSentence { get; set; }
         public UserRateLevel UserRateLevel { get; set; }
         public IEnumerable<ExperienceDto>? Experiences { get; set; }
+        public string? Handle { get; set; }
     }
 }

@@ -7,6 +7,7 @@ namespace GamaEdtech.Application.Service
     using System.Security.Claims;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Text.RegularExpressions;
 
     using EntityFramework.Exceptions.Common;
 
@@ -51,7 +52,7 @@ namespace GamaEdtech.Application.Service
     using Error = Common.Data.Error;
     using Void = Common.Data.Void;
 
-    public class IdentityService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<IdentityService>> localizer, Lazy<ILogger<IdentityService>> logger
+    public partial class IdentityService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<IdentityService>> localizer, Lazy<ILogger<IdentityService>> logger
             , Lazy<UserManager<ApplicationUser>> userManager, Lazy<IGenericFactory<IAuthenticationProvider, AuthenticationProvider>> genericFactory, Lazy<IApplicationSettingsService> applicationSettingsService
             , Lazy<SignInManager<ApplicationUser>> signInManager, Lazy<ICacheProvider> cacheProvider, Lazy<IConfiguration> configuration, Lazy<ICoreProvider> coreProvider, Lazy<IEmailService> emailService)
         : LocalizableServiceBase<IdentityService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IIdentityService, ITokenService
@@ -265,6 +266,8 @@ namespace GamaEdtech.Application.Service
                     RegistrationDate = DateTime.UtcNow,
                     Enabled = true,
                     ProfileVisibility = ProfileVisibility.Private,
+                    FirstName = requestDto.FirstName,
+                    LastName = requestDto.LastName,
                 };
                 var identityResult = await userManager.Value.CreateAsync(user, requestDto.Password);
                 return identityResult.Succeeded
@@ -284,9 +287,14 @@ namespace GamaEdtech.Application.Service
 
         public async Task SendRegistrationEmailAsync([NotNull] RegistrationEmailRequestDto requestDto)
         {
+            var name = requestDto.FirstName + " " + requestDto.LastName;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = requestDto.Username;
+            }
             var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.RegistrationEmailTemplate))).Data;
             template = template?
-                .Replace("[RECEIVER_NAME]", requestDto.Username, StringComparison.OrdinalIgnoreCase);
+                .Replace("[RECEIVER_NAME]", name, StringComparison.OrdinalIgnoreCase);
             _ = await emailService.Value.SendEmailAsync(new()
             {
                 Subject = "Gamatrain Registration",
@@ -838,6 +846,7 @@ namespace GamaEdtech.Application.Service
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var data = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => new
                 {
+                    t.Id,
                     t.UserName,
                     t.FirstName,
                     t.LastName,
@@ -859,6 +868,7 @@ namespace GamaEdtech.Application.Service
                     t.Biography,
                     t.Skills,
                     t.CurrentStatusSentence,
+                    t.Handle,
                     Experiences = t.Experiences == null ? null : t.Experiences.Select(e => new
                     {
                         e.Id,
@@ -868,8 +878,13 @@ namespace GamaEdtech.Application.Service
                         e.EndDate,
                     }),
                 }).FirstOrDefaultAsync();
-                var skills = data?.Skills?.Split(Delimiter);
-                var experiences = data?.Experiences?.Select(t => new ExperienceDto
+                if (data is null)
+                {
+                    return new(OperationResult.Failed) { Errors = new[] { new Error { Message = "User not found." } } };
+                }
+
+                var skills = data.Skills?.Split(Delimiter);
+                var experiences = data.Experiences?.Select(t => new ExperienceDto
                 {
                     Id = t.Id,
                     Title = t.Title,
@@ -878,37 +893,40 @@ namespace GamaEdtech.Application.Service
                     EndDate = t.EndDate,
                 });
 
-                return data is null
-                    ? new(OperationResult.Failed) { Errors = new[] { new Error { Message = "User not found." } } }
-                    : new(OperationResult.Succeeded)
+                var handle = string.IsNullOrEmpty(data.Handle)
+                    ? $"{data.Id}-{data.FirstName}-{data.LastName}".ToLowerInvariant()
+                    : data.Handle;
+
+                return new(OperationResult.Succeeded)
+                {
+                    Data = new()
                     {
-                        Data = new()
-                        {
-                            UserName = data.UserName,
-                            FirstName = data.FirstName,
-                            LastName = data.LastName,
-                            SchoolId = data.SchoolId,
-                            CityId = data.CityId,
-                            StateId = data.StateId,
-                            CountryId = data.CountryId,
-                            ReferralId = data.ReferralId,
-                            Gender = data.Gender,
-                            Board = data.Board,
-                            Grade = data.Grade,
-                            Avatar = data.Avatar,
-                            Group = data.Group,
-                            CoreId = data.CoreId,
-                            WalletId = data.WalletId,
-                            ProfileUpdated = data.ProfileUpdated,
-                            Roles = data.Roles?.ListToFlagsEnum<Role>(),
-                            ProfileVisibility = data.ProfileVisibility,
-                            Biography = data.Biography,
-                            Skills = skills,
-                            CurrentStatusSentence = data.CurrentStatusSentence,
-                            Experiences = experiences,
-                            UserRateLevel = UserRateLevel.Calculate(data.Avatar, data.FirstName, data.LastName, data.CurrentStatusSentence, data.Biography, skills, experiences?.Select(t => t.Title))
-                        },
-                    };
+                        UserName = data.UserName,
+                        FirstName = data.FirstName,
+                        LastName = data.LastName,
+                        SchoolId = data.SchoolId,
+                        CityId = data.CityId,
+                        StateId = data.StateId,
+                        CountryId = data.CountryId,
+                        ReferralId = data.ReferralId,
+                        Gender = data.Gender,
+                        Board = data.Board,
+                        Grade = data.Grade,
+                        Avatar = data.Avatar,
+                        Group = data.Group,
+                        CoreId = data.CoreId,
+                        WalletId = data.WalletId,
+                        ProfileUpdated = data.ProfileUpdated,
+                        Roles = data.Roles?.ListToFlagsEnum<Role>(),
+                        ProfileVisibility = data.ProfileVisibility,
+                        Biography = data.Biography,
+                        Skills = skills,
+                        CurrentStatusSentence = data.CurrentStatusSentence,
+                        Experiences = experiences,
+                        UserRateLevel = UserRateLevel.Calculate(data.Avatar, data.FirstName, data.LastName, data.CurrentStatusSentence, data.Biography, skills, experiences?.Select(t => t.Title)),
+                        Handle = handle,
+                    },
+                };
             }
             catch (Exception exc)
             {
@@ -934,6 +952,16 @@ namespace GamaEdtech.Application.Service
                     };
                 }
 
+                var valid = await ValidateHandleAsync(new()
+                {
+                    Handle = requestDto.Handle,
+                    UserId = requestDto.UserId,
+                });
+                if (valid.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(valid.OperationResult) { Errors = valid.Errors };
+                }
+
                 user.CityId = requestDto.CityId ?? user.CityId;
                 user.SchoolId = requestDto.SchoolId ?? user.SchoolId;
                 user.FirstName = !string.IsNullOrEmpty(requestDto.FirstName) ? requestDto.FirstName : user.FirstName;
@@ -949,6 +977,7 @@ namespace GamaEdtech.Application.Service
                 user.Biography = requestDto.Biography ?? user.Biography;
                 user.Skills = string.Join(Delimiter, requestDto.Skills ?? []) ?? user.Skills;
                 user.CurrentStatusSentence = requestDto.CurrentStatusSentence ?? user.CurrentStatusSentence;
+                user.Handle = valid.Data ?? user.Handle;
                 user.ProfileUpdated = true;
 
                 var updateResult = await userManager.Value.UpdateAsync(user);
@@ -1301,11 +1330,23 @@ namespace GamaEdtech.Application.Service
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var repository = uow.GetRepository<ApplicationUser, int>();
-                var connectionRepository = uow.GetRepository<Connection>();
 
-                var connected = await connectionRepository.AnyAsync(t => t.SourceUserId == requestDto.UserId && t.DestinationUserId == requestDto.ProfileId && t.Status == ConnectionStatus.Confirmed);
+                var userId = await repository.GetManyQueryable(t => t.Handle == requestDto.ProfileHandle).Select(t => (int?)t.Id).FirstOrDefaultAsync();
+                if (userId is null)
+                {
+                    var match = HandleRegex().Match(requestDto.ProfileHandle);
+                    if (match.Success)
+                    {
+                        userId = match.Value.ValueOf<int?>();
+                    }
+                }
 
-                var result = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId && (t.ProfileVisibility == ProfileVisibility.Public || (t.ProfileVisibility == ProfileVisibility.ConnectionsOnly && connected) || requestDto.ProfileId == requestDto.UserId)).Select(t => new
+                if (userId is null)
+                {
+                    return new(OperationResult.NotFound);
+                }
+
+                var result = await repository.GetManyQueryable(t => t.Id == userId.Value).Select(t => new
                 {
                     t.FirstName,
                     t.LastName,
@@ -1316,14 +1357,33 @@ namespace GamaEdtech.Application.Service
                     t.Skills,
                     t.Avatar,
                     t.CurrentStatusSentence,
+                    t.ProfileVisibility,
+                    t.Id,
                 }).FirstOrDefaultAsync();
                 if (result is null)
                 {
-                    return new(OperationResult.Succeeded) { Data = new() };
+                    return new(OperationResult.NotFound);
                 }
 
-                var lastLoginDate = await uow.GetRepository<LoginHistory>().GetManyQueryable(t => t.UserId == requestDto.ProfileId).OrderByDescending(t => t.CreationDate).Select(t => (DateTimeOffset?)t.CreationDate).FirstOrDefaultAsync();
-                var experiences = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == requestDto.ProfileId).OrderByDescending(t => t.Id).Select(t => new ExperienceDto
+                var valid = result.ProfileVisibility == ProfileVisibility.Public || result.Id == requestDto.UserId;
+                if (!valid)
+                {
+                    if (result.ProfileVisibility == ProfileVisibility.Private)
+                    {
+                        return new(OperationResult.NotFound);
+                    }
+
+                    var connectionRepository = uow.GetRepository<Connection>();
+                    var connected = await connectionRepository.AnyAsync(t => t.SourceUserId == requestDto.UserId && t.DestinationUserId == result.Id && t.Status == ConnectionStatus.Confirmed);
+                    if (!connected)
+                    {
+                        return new(OperationResult.NotFound);
+                    }
+
+                }
+
+                var lastLoginDate = await uow.GetRepository<LoginHistory>().GetManyQueryable(t => t.UserId == result.Id).OrderByDescending(t => t.CreationDate).Select(t => (DateTimeOffset?)t.CreationDate).FirstOrDefaultAsync();
+                var experiences = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == result.Id).OrderByDescending(t => t.Id).Select(t => new ExperienceDto
                 {
                     Title = t.Title,
                     Description = t.Description,
@@ -1331,7 +1391,7 @@ namespace GamaEdtech.Application.Service
                     EndDate = t.EndDate,
                 }).ToListAsync();
 
-                _ = await repository.GetManyQueryable(t => t.Id == requestDto.ProfileId).ExecuteUpdateAsync(t => t.SetProperty(p => p.ProfileView, p => p.ProfileView + 1));
+                _ = await repository.GetManyQueryable(t => t.Id == result.Id).ExecuteUpdateAsync(t => t.SetProperty(p => p.ProfileView, p => p.ProfileView + 1));
 
                 var skills = result.Skills?.Split(Delimiter);
                 return new(OperationResult.Succeeded)
@@ -1441,6 +1501,30 @@ namespace GamaEdtech.Application.Service
             {
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        public async Task<ResultData<string>> ValidateHandleAsync([NotNull] ValidateHandleRequestDto requestDto)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(requestDto.Handle))
+                {
+                    return new(OperationResult.Failed) { Errors = [new() { Message = Localizer.Value["InvalidHandle"], },] };
+                }
+
+                var value = Globals.Slugify(requestDto.Handle);
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var exists = await uow.GetRepository<ApplicationUser, int>().AnyAsync(t => t.Handle == value && t.Id != requestDto.UserId);
+
+                return exists
+                    ? new(OperationResult.NotValid) { Errors = [new() { Message = Localizer.Value["InvalidHandle"] }] }
+                    : new(OperationResult.Succeeded) { Data = value };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
             }
         }
 
@@ -1581,6 +1665,9 @@ namespace GamaEdtech.Application.Service
                 Errors = errors,
             };
         }
+
+        [GeneratedRegex("^\\d+")]
+        private static partial Regex HandleRegex();
     }
 }
 

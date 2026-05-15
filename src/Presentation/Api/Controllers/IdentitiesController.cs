@@ -89,6 +89,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Username = request.Email!,
                     Password = request.Password!,
                     Email = request.Email!,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
                 };
                 var result = await identityService.Value.RegisterAsync(data);
                 if (result.OperationResult is OperationResult.Succeeded)
@@ -97,6 +99,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     {
                         Email = data.Email,
                         Username = data.Username,
+                        FirstName = data.FirstName,
+                        LastName = data.LastName,
                     }));
                 }
 
@@ -378,6 +382,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             EndDate = t.EndDate,
                         }),
                         UserRateLevel = result.Data.UserRateLevel,
+                        Handle = result.Data.Handle,
                     },
                 });
             }
@@ -389,16 +394,16 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpGet("profiles/{id:int}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
+        [HttpGet("profiles/{handle}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
         [AllowAnonymous]
         [Display(Name = "Get Public Profile of a User")]
-        public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] int id)
+        public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] string handle)
         {
             try
             {
                 var result = await identityService.Value.GetPublicProfileAsync(new()
                 {
-                    ProfileId = id,
+                    ProfileHandle = handle,
                     UserId = User.UserId(),
                 });
 
@@ -459,6 +464,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Biography = request.Biography,
                     Skills = request.Skills,
                     CurrentStatusSentence = request.CurrentStatusSentence,
+                    Handle = request.Handle,
                 });
 
                 return Ok<bool>(new(result.Errors)
@@ -627,6 +633,31 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 return Ok<bool>(new(new Error { Message = exc.Message }));
             }
         }
+
+        [HttpGet("handles/validate"), Produces<ApiResponse<string>>()]
+        [Permission(policy: null)]
+        public async Task<IActionResult<string>> ValidateHandle([FromQuery, Required] string? handle)
+        {
+            try
+            {
+                var result = await identityService.Value.ValidateHandleAsync(new()
+                {
+                    Handle = handle!,
+                    UserId = User.UserId(),
+                });
+                return Ok<string>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<string>(new(new Error { Message = exc.Message }));
+            }
+        }
+
     }
 }
 
