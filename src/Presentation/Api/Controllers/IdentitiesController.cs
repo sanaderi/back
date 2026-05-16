@@ -10,6 +10,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.Data.Enumeration;
     using GamaEdtech.Common.DataAccess.Specification.Impl;
+    using GamaEdtech.Common.DataAnnotation;
     using GamaEdtech.Common.Identity;
     using GamaEdtech.Data.Dto.Identity;
     using GamaEdtech.Domain.Entity.Identity;
@@ -88,6 +89,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Username = request.Email!,
                     Password = request.Password!,
                     Email = request.Email!,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
                 };
                 var result = await identityService.Value.RegisterAsync(data);
                 if (result.OperationResult is OperationResult.Succeeded)
@@ -96,6 +99,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     {
                         Email = data.Email,
                         Username = data.Username,
+                        FirstName = data.FirstName,
+                        LastName = data.LastName,
                     }));
                 }
 
@@ -377,6 +382,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             EndDate = t.EndDate,
                         }),
                         UserRateLevel = result.Data.UserRateLevel,
+                        Handle = result.Data.Handle,
                     },
                 });
             }
@@ -388,15 +394,16 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpGet("profiles/{id:int}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
-        [Permission(policy: null)]
-        public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] int id)
+        [HttpGet("profiles/{handle}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
+        [AllowAnonymous]
+        [Display(Name = "Get Public Profile of a User")]
+        public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] string handle)
         {
             try
             {
                 var result = await identityService.Value.GetPublicProfileAsync(new()
                 {
-                    ProfileId = id,
+                    ProfileHandle = handle,
                     UserId = User.UserId(),
                 });
 
@@ -404,14 +411,15 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     Data = result.Data is null ? null : new()
                     {
-                        OnlineStatus = result.Data.OnlineStatus,
+                        FirstName = result.Data.FirstName,
+                        LastName = result.Data.LastName,
+                        Avatar = result.Data.Avatar,
                         Roles = result.Data.Roles,
                         ProfileView = result.Data.ProfileView,
                         RegistrationDate = result.Data.RegistrationDate,
-                        Avatar = result.Data.Avatar,
+                        OnlineStatus = result.Data.OnlineStatus,
                         Biography = result.Data.Biography,
                         Skills = result.Data.Skills,
-                        CurrentStatusSentence = result.Data.CurrentStatusSentence,
                         Experiences = result.Data.Experiences?.Select(t => new ExperienceResponseViewModel
                         {
                             Title = t.Title,
@@ -419,6 +427,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             StartDate = t.StartDate,
                             EndDate = t.EndDate,
                         }),
+                        CurrentStatusSentence = result.Data.CurrentStatusSentence,
+                        UserRateLevel = result.Data.UserRateLevel,
                     },
                 });
             }
@@ -432,6 +442,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpPut("profiles"), Produces(typeof(ApiResponse<bool>))]
         [Permission(policy: null)]
+        [Display(Name = "Update Profile Settings")]
         public async Task<IActionResult> UpdateProfileSettings([NotNull] ProfileSettingsRequestViewModel request)
         {
             try
@@ -453,6 +464,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Biography = request.Biography,
                     Skills = request.Skills,
                     CurrentStatusSentence = request.CurrentStatusSentence,
+                    Handle = request.Handle,
                 });
 
                 return Ok<bool>(new(result.Errors)
@@ -495,6 +507,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpDelete("profiles/avatars"), Produces(typeof(ApiResponse<bool>))]
         [Permission(policy: null)]
+        [Display(Name = "Remove Profile Avatar")]
         public async Task<IActionResult> RemoveAvatar()
         {
             try
@@ -554,6 +567,97 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 return Ok<IEnumerable<UserPointsViewModel>>(new(new Error { Message = exc.Message }));
             }
         }
+
+        [HttpDelete("profiles"), Produces(typeof(ApiResponse<bool>))]
+        [Permission(policy: null)]
+        [Display(Name = "Request Removing User Account")]
+        public async Task<IActionResult<bool>> DeleteAccount([NotNull] DeleteAccountRequestViewModel request)
+        {
+            try
+            {
+                var authenticateResult = await identityService.Value.AuthenticateAsync(new()
+                {
+                    Username = request.Username!,
+                    Password = request.Password!,
+                    AuthenticationProvider = AuthenticationProvider.Local,
+                });
+                if (authenticateResult.Data?.User is null)
+                {
+                    return Ok<bool>(new(authenticateResult.Errors));
+                }
+
+                var result = await identityService.Value.InitializeDeletingAccountAsync(new IdEqualsSpecification<ApplicationUser, int>(User.UserId()));
+
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPatch("profiles/recover"), Produces(typeof(ApiResponse<bool>))]
+        [Permission(policy: null)]
+        [Display(Name = "Cancel Removing User Account Request")]
+        public async Task<IActionResult<bool>> RecoverAccount([NotNull] RecoverAccountRequestViewModel request)
+        {
+            try
+            {
+                var authenticateResult = await identityService.Value.AuthenticateAsync(new()
+                {
+                    Username = request.Username!,
+                    Password = request.Password!,
+                    AuthenticationProvider = AuthenticationProvider.Local,
+                });
+                if (authenticateResult.Data?.User is null)
+                {
+                    return Ok<bool>(new(authenticateResult.Errors));
+                }
+
+                var result = await identityService.Value.RecoverAccountAsync(new IdEqualsSpecification<ApplicationUser, int>(User.UserId()));
+
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpGet("handles/validate"), Produces<ApiResponse<string>>()]
+        [Permission(policy: null)]
+        public async Task<IActionResult<string>> ValidateHandle([FromQuery, Required] string? handle)
+        {
+            try
+            {
+                var result = await identityService.Value.ValidateHandleAsync(new()
+                {
+                    Handle = handle!,
+                    UserId = User.UserId(),
+                });
+                return Ok<string>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<string>(new(new Error { Message = exc.Message }));
+            }
+        }
+
     }
 }
 

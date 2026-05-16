@@ -48,6 +48,10 @@ namespace GamaEdtech.Application.Interface
         Task<ResultData<Void>> AddLoginHistoryAsync([NotNull] LoginHistoryRequestDto requestDto);
         Task<ResultData<PublicProfileResponseDto>> GetPublicProfileAsync([NotNull] PublicProfileRequestDto requestDto);
         Task<ResultData<bool>> ManageAvatarAsync([NotNull] ManageAvatarRequestDto requestDto);
+        Task<ResultData<bool>> InitializeDeletingAccountAsync([NotNull] ISpecification<ApplicationUser> specification);
+        Task<ResultData<bool>> RecoverAccountAsync([NotNull] ISpecification<ApplicationUser> specification);
+        Task<ResultData<bool>> UpdateOrphanUsersAsync();
+        Task<ResultData<string>> ValidateHandleAsync([NotNull] ValidateHandleRequestDto requestDto);
     }
 }
 

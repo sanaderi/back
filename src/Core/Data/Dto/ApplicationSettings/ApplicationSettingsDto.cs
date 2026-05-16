@@ -29,5 +29,8 @@ namespace GamaEdtech.Data.Dto.ApplicationSettings
         public string? RegistrationEmailTemplate { get; set; } = "Hi [RECEIVER_NAME],<br><br>welcome to Gamatrain";
         public string? SchoolContributionRejectionEmailTemplate { get; set; } = "Hi [RECEIVER_NAME],<br><br>your Contribution for [SCHOOL_NAME]([SCHOOL_ID]) has been rejected<br>[REJECTION_REASON]";
         public string? SchoolImageContributionRejectionEmailTemplate { get; set; } = "Hi [RECEIVER_NAME],<br><br>your Contribution for [SCHOOL_NAME]([SCHOOL_ID]) has been rejected<br>[REJECTION_REASON]";
+        public string? InitializeDeletingAccountEmailTemplate { get; set; } = "Hi [RECEIVER_NAME],<br><br>your request has been received and your account will be deleted after 7 days";
+        public string? StartDeletingAccountEmailTemplate { get; set; } = "Hi [RECEIVER_NAME],<br><br>deleting your account has been started";
+        public string? FinishedDeletingAccountEmailTemplate { get; set; } = "Hi [RECEIVER_NAME],<br><br>your account has been deleted";
     }
 }

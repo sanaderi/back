@@ -7,6 +7,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Core.Extensions.Linq;
     using GamaEdtech.Common.Data;
+    using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Common.DataAccess.UnitOfWork;
     using GamaEdtech.Common.HttpProvider;
     using GamaEdtech.Common.Service;
@@ -193,6 +194,29 @@ namespace GamaEdtech.Application.Service
             {
                 Data = true,
             };
+        }
+
+        public async Task<ResultData<List<PaymentsSummaryDto>>> GetPaymentsSummaryAsync(ISpecification<Payment>? specification)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var result = await uow.GetRepository<Payment>().GetManyQueryable(specification).GroupBy(t => new { t.CreationDate.Date, t.Status })
+                    .Select(t => new PaymentsSummaryDto
+                    {
+                        Date = t.Key.Date,
+                        Status = t.Key.Status,
+                        Amount = t.Sum(p => p.Amount),
+                        Count = t.Count(),
+                    }).OrderBy(t => t.Date).ToListAsync();
+
+                return new(OperationResult.Succeeded) { Data = result };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
         }
 
         private async Task<ResultData<long>> GetPointsAsync(decimal amount, Currency currency, string? mint)

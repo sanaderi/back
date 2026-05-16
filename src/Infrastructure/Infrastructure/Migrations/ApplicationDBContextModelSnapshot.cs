@@ -636,6 +636,13 @@ namespace GamaEdtech.Infrastructure.Migrations
                             ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE6",
                             Name = "Advisor",
                             NormalizedName = "ADVISOR"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE7",
+                            Name = "Finance",
+                            NormalizedName = "FINANCE"
                         });
                 });
 
@@ -747,6 +754,11 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("Group");
 
+                    b.Property<string>("Handle")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Handle");
+
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar")
@@ -770,6 +782,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar")
                         .HasColumnName("NormalizedUserName");
+
+                    b.Property<DateTimeOffset?>("OrphanDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("OrphanDate");
 
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(512)
@@ -838,6 +854,11 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CityId");
+
+                    b.HasIndex("Handle")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ApplicationUser_Handle")
+                        .HasFilter("([Handle] IS NOT NULL)");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("IX_ApplicationUser_NormalizedEmail");

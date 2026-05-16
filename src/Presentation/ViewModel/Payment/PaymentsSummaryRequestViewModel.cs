@@ -1,0 +1,32 @@
+namespace GamaEdtech.Presentation.ViewModel.Payment
+{
+    using System.Text.Json.Serialization;
+
+    using GamaEdtech.Common.Converter;
+    using GamaEdtech.Common.DataAnnotation;
+    using GamaEdtech.Domain.Enumeration;
+
+    public sealed class PaymentsSummaryRequestViewModel
+    {
+        [Display]
+        public int? UserId { get; set; }
+
+        [Display]
+        public DateOnly? StartDate { get; set; }
+
+        [Display]
+        public DateOnly? EndDate { get; set; }
+
+        [Display]
+        [JsonConverter(typeof(EnumerationConverter<PaymentGateway, byte>))]
+        public PaymentGateway? Gateway { get; set; }
+
+        [Display]
+        [JsonConverter(typeof(EnumerationConverter<PaymentStatus, byte>))]
+        public PaymentStatus? Status { get; set; }
+
+        [Display]
+        [JsonConverter(typeof(EnumerationConverter<Currency, byte>))]
+        public Currency? Currency { get; set; }
+    }
+}
