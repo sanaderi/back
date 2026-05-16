@@ -178,6 +178,10 @@ namespace GamaEdtech.Domain.Entity.Identity
         [Column(nameof(OrphanDate), DataType.DateTimeOffset)]
         public DateTimeOffset? OrphanDate { get; set; }
 
+        [Column(nameof(Handle), DataType.UnicodeString)]
+        [StringLength(100)]
+        public string? Handle { get; set; }
+
         public ICollection<ApplicationUserClaim>? UserClaims { get; set; }
 
         public ICollection<ApplicationUserLogin>? UserLogins { get; set; }
@@ -206,6 +210,12 @@ namespace GamaEdtech.Domain.Entity.Identity
                     $"IX_{nameof(ApplicationUser)}_{nameof(ReferralId)}"))
                 .IsUnique()
                 .HasFilter($"([{DbProviderFactories.GetFactory.GetObjectName(nameof(ReferralId), pluralize: false)}] IS NOT NULL)");
+
+            _ = builder.HasIndex(e => e.Handle)
+                .HasDatabaseName(DbProviderFactories.GetFactory.GetObjectName(
+                    $"IX_{nameof(ApplicationUser)}_{nameof(Handle)}"))
+                .IsUnique()
+                .HasFilter($"([{DbProviderFactories.GetFactory.GetObjectName(nameof(Handle), pluralize: false)}] IS NOT NULL)");
 
             var now = new DateTimeOffset(2023, 3, 21, 0, 0, 0, TimeSpan.Zero);
             List<ApplicationUser> seedData =

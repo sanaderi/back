@@ -20,5 +20,6 @@ namespace GamaEdtech.Data.Dto.Identity
         public string? Biography { get; set; }
         public IEnumerable<string?>? Skills { get; set; }
         public string? CurrentStatusSentence { get; set; }
+        public string? Handle { get; set; }
     }
 }
