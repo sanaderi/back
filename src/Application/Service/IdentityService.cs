@@ -290,7 +290,7 @@ namespace GamaEdtech.Application.Service
             var name = requestDto.FirstName + " " + requestDto.LastName;
             if (string.IsNullOrWhiteSpace(name))
             {
-                name = requestDto.Username;
+                name = "Dear User";
             }
             var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.RegistrationEmailTemplate))).Data;
             template = template?
