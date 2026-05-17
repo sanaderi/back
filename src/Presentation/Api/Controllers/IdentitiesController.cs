@@ -376,7 +376,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         Experiences = result.Data.Experiences?.Select(t => new ExperienceResponseViewModel
                         {
                             Id = t.Id,
-                            Title = t.Title,
+                            SchoolId = t.SchoolId,
+                            SchoolTitle = t.SchoolTitle,
                             Description = t.Description,
                             StartDate = t.StartDate,
                             EndDate = t.EndDate,
@@ -422,7 +423,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         Skills = result.Data.Skills,
                         Experiences = result.Data.Experiences?.Select(t => new ExperienceResponseViewModel
                         {
-                            Title = t.Title,
+                            SchoolId = t.SchoolId,
+                            SchoolTitle = t.SchoolTitle,
                             Description = t.Description,
                             StartDate = t.StartDate,
                             EndDate = t.EndDate,
