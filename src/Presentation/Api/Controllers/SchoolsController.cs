@@ -194,6 +194,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         }),
                         Boards = result.Data.Boards?.Select(t => new BoardsListResponseViewModel
                         {
+                            Id = t.Id,
+                            Icon = t.Icon,
                             Code = t.Code,
                             Title = t.Title,
                         }),

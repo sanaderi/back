@@ -46,6 +46,7 @@ namespace GamaEdtech.Infrastructure.Provider.PaymentGateway
                     Mode = "payment",
                     UiMode = "hosted_page",
                     SuccessUrl = requestDto.CallbackUrl + "?transactionId={CHECKOUT_SESSION_ID}",
+                    CustomerEmail = requestDto.Email,
                     LineItems =
                     [
                         new()

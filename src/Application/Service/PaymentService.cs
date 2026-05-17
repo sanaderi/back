@@ -8,12 +8,14 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.Core.Extensions.Linq;
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAccess.Specification;
+    using GamaEdtech.Common.DataAccess.Specification.Impl;
     using GamaEdtech.Common.DataAccess.UnitOfWork;
     using GamaEdtech.Common.HttpProvider;
     using GamaEdtech.Common.Service;
     using GamaEdtech.Data.Dto.Payment;
     using GamaEdtech.Data.Dto.Provider.PaymentGateway;
     using GamaEdtech.Domain.Entity;
+    using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Infrastructure.Interface;
 
@@ -27,7 +29,7 @@ namespace GamaEdtech.Application.Service
 
     public class PaymentService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<PaymentService>> localizer
         , Lazy<ILogger<PaymentService>> logger, Lazy<IEnumerable<IPaymentGatewayProvider>> gatewayProviders, Lazy<IConfiguration> configuration, Lazy<ITransactionService> transactionService
-        , Lazy<IHttpProvider> httpProvider)
+        , Lazy<IHttpProvider> httpProvider, Lazy<IIdentityService> identityService)
         : LocalizableServiceBase<PaymentService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IPaymentService
     {
         public async Task<ResultData<ListDataSource<PaymentDto>>> GetPaymentsAsync(ListRequestDto<Payment>? requestDto = null)
@@ -80,6 +82,8 @@ namespace GamaEdtech.Application.Service
                 repository.Add(payment);
                 _ = await uow.SaveChangesAsync();
 
+                var email = await identityService.Value.GetUsersEmailAsync(new IdEqualsSpecification<ApplicationUser, int>(requestDto.UserId));
+
                 var result = await gatewayProviders.Value.FirstOrDefault(t => t.ProviderType == requestDto.Gateway)!.CreateAsync(new()
                 {
                     Amount = requestDto.Amount,
@@ -87,6 +91,7 @@ namespace GamaEdtech.Application.Service
                     Description = requestDto.Description,
                     Title = requestDto.Title,
                     PaymentId = payment.Id,
+                    Email = email.Data?[0],
                     CallbackUrl = $"{configuration.Value.GetValue<string>("PaymentGateway:CallbackBaseUrl")}/payments/{payment.Id}/verify",
                 });
                 if (result.OperationResult is OperationResult.Succeeded)
