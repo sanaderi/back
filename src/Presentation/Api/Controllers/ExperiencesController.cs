@@ -45,7 +45,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         List = result.Data.List.Select(t => new ExperienceResponseViewModel
                         {
                             Id = t.Id,
-                            Title = t.Title,
+                            SchoolId = t.SchoolId,
+                            SchoolTitle = t.SchoolTitle,
                             Description = t.Description,
                             StartDate = t.StartDate,
                             EndDate = t.EndDate,
@@ -76,7 +77,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Data = result.Data is null ? null : new()
                     {
                         Id = result.Data.Id,
-                        Title = result.Data.Title,
+                        SchoolTitle = result.Data.SchoolTitle,
+                        SchoolId = result.Data.SchoolId,
                         Description = result.Data.Description,
                         StartDate = result.Data.StartDate,
                         EndDate = result.Data.EndDate,
@@ -99,7 +101,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 var result = await experienceService.Value.ManageExperienceAsync(new()
                 {
                     UserId = User.UserId(),
-                    Title = request.Title,
+                    SchoolId = request.SchoolId.GetValueOrDefault(),
                     Description = request.Description,
                     StartDate = request.StartDate.GetValueOrDefault(),
                     EndDate = request.EndDate,
@@ -126,7 +128,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     Id = id,
                     UserId = User.UserId(),
-                    Title = request.Title,
+                    SchoolId = request.SchoolId.GetValueOrDefault(),
                     Description = request.Description,
                     StartDate = request.StartDate.GetValueOrDefault(),
                     EndDate = request.EndDate,

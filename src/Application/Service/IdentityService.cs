@@ -290,7 +290,7 @@ namespace GamaEdtech.Application.Service
             var name = requestDto.FirstName + " " + requestDto.LastName;
             if (string.IsNullOrWhiteSpace(name))
             {
-                name = requestDto.Username;
+                name = "Dear User";
             }
             var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.RegistrationEmailTemplate))).Data;
             template = template?
@@ -872,7 +872,8 @@ namespace GamaEdtech.Application.Service
                     Experiences = t.Experiences == null ? null : t.Experiences.Select(e => new
                     {
                         e.Id,
-                        e.Title,
+                        e.SchoolId,
+                        e.School.Name,
                         e.Description,
                         e.StartDate,
                         e.EndDate,
@@ -887,7 +888,8 @@ namespace GamaEdtech.Application.Service
                 var experiences = data.Experiences?.Select(t => new ExperienceDto
                 {
                     Id = t.Id,
-                    Title = t.Title,
+                    SchoolId = t.SchoolId,
+                    SchoolTitle = t.Name,
                     Description = t.Description,
                     StartDate = t.StartDate,
                     EndDate = t.EndDate,
@@ -923,7 +925,7 @@ namespace GamaEdtech.Application.Service
                         Skills = skills,
                         CurrentStatusSentence = data.CurrentStatusSentence,
                         Experiences = experiences,
-                        UserRateLevel = UserRateLevel.Calculate(data.Avatar, data.FirstName, data.LastName, data.CurrentStatusSentence, data.Biography, skills, experiences?.Select(t => t.Title)),
+                        UserRateLevel = UserRateLevel.Calculate(data.Avatar, data.FirstName, data.LastName, data.CurrentStatusSentence, data.Biography, skills, experiences?.Select(t => t.Id)),
                         Handle = handle,
                     },
                 };
@@ -1385,7 +1387,8 @@ namespace GamaEdtech.Application.Service
                 var lastLoginDate = await uow.GetRepository<LoginHistory>().GetManyQueryable(t => t.UserId == result.Id).OrderByDescending(t => t.CreationDate).Select(t => (DateTimeOffset?)t.CreationDate).FirstOrDefaultAsync();
                 var experiences = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == result.Id).OrderByDescending(t => t.Id).Select(t => new ExperienceDto
                 {
-                    Title = t.Title,
+                    SchoolId = t.SchoolId,
+                    SchoolTitle = t.School.Name,
                     Description = t.Description,
                     StartDate = t.StartDate,
                     EndDate = t.EndDate,
@@ -1409,7 +1412,7 @@ namespace GamaEdtech.Application.Service
                         Skills = skills,
                         CurrentStatusSentence = result.CurrentStatusSentence,
                         Experiences = experiences,
-                        UserRateLevel = UserRateLevel.Calculate(result.Avatar, result.FirstName, result.LastName, result.CurrentStatusSentence, result.Biography, skills, experiences?.Select(t => t.Title))
+                        UserRateLevel = UserRateLevel.Calculate(result.Avatar, result.FirstName, result.LastName, result.CurrentStatusSentence, result.Biography, skills, experiences?.Select(t => t.Id))
                     }
                 };
             }

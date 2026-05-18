@@ -33,7 +33,8 @@ namespace GamaEdtech.Application.Service
                 var lst = await result.List.Select(t => new ExperienceDto
                 {
                     Id = t.Id,
-                    Title = t.Title,
+                    SchoolId = t.SchoolId,
+                    SchoolTitle = t.School.Name,
                     Description = t.Description,
                     StartDate = t.StartDate,
                     EndDate = t.EndDate,
@@ -55,7 +56,8 @@ namespace GamaEdtech.Application.Service
                 var experience = await uow.GetRepository<Experience>().GetManyQueryable(specification).Select(t => new ExperienceDto
                 {
                     Id = t.Id,
-                    Title = t.Title,
+                    SchoolId = t.SchoolId,
+                    SchoolTitle = t.School.Name,
                     Description = t.Description,
                     StartDate = t.StartDate,
                     EndDate = t.EndDate,
@@ -94,7 +96,7 @@ namespace GamaEdtech.Application.Service
                         };
                     }
 
-                    experience.Title = requestDto.Title;
+                    experience.SchoolId = requestDto.SchoolId;
                     experience.Description = requestDto.Description;
                     experience.StartDate = requestDto.StartDate;
                     experience.EndDate = requestDto.EndDate;
@@ -106,7 +108,7 @@ namespace GamaEdtech.Application.Service
                     experience = new Experience
                     {
                         UserId = requestDto.UserId,
-                        Title = requestDto.Title,
+                        SchoolId = requestDto.SchoolId,
                         Description = requestDto.Description,
                         StartDate = requestDto.StartDate,
                         EndDate = requestDto.EndDate,
