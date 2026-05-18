@@ -60,6 +60,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             Name = t.Name,
                             LocalName = t.LocalName,
                             DefaultImageUri = t.DefaultImageUri,
+                            CountryRank = t.CountryRank,
+                            StateRank = t.StateRank,
+                            CityRank = t.CityRank,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }
@@ -299,7 +302,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     return Ok(new ApiResponse<SchoolCommentContributionReviewViewModel>(contributionResult.Errors));
                 }
 
-                var schoolResult = await schoolService.Value.GetSchoolAsync(new IdEqualsSpecification<School, long>(contributionResult.Data.IdentifierId.GetValueOrDefault()));
+                var schoolResult = await schoolService.Value.GetSchoolsNameAsync(new IdEqualsSpecification<School, long>(contributionResult.Data.IdentifierId.GetValueOrDefault()));
                 if (schoolResult.OperationResult is not Constants.OperationResult.Succeeded)
                 {
                     return Ok(new ApiResponse<SchoolCommentContributionReviewViewModel>(schoolResult.Errors));
@@ -309,7 +312,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 {
                     Id = contributionResult.Data.Id,
                     SchoolId = contributionResult.Data.Data!.SchoolId,
-                    SchoolName = schoolResult.Data?.Name,
+                    SchoolName = schoolResult.Data?[0].Value,
                     ArtisticActivitiesRate = contributionResult.Data.Data!.ArtisticActivitiesRate,
                     AverageRate = contributionResult.Data.Data!.AverageRate,
                     BehaviorRate = contributionResult.Data.Data!.BehaviorRate,
@@ -453,7 +456,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     return Ok(new ApiResponse<SchoolImageContributionReviewViewModel>(contributionResult.Errors));
                 }
 
-                var schoolResult = await schoolService.Value.GetSchoolAsync(new IdEqualsSpecification<School, long>(contributionResult.Data.IdentifierId.GetValueOrDefault()));
+                var schoolResult = await schoolService.Value.GetSchoolsNameAsync(new IdEqualsSpecification<School, long>(contributionResult.Data.IdentifierId.GetValueOrDefault()));
                 if (schoolResult.OperationResult is not Constants.OperationResult.Succeeded)
                 {
                     return Ok(new ApiResponse<SchoolImageContributionReviewViewModel>(schoolResult.Errors));
@@ -474,7 +477,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     IsDefault = contributionResult.Data.Data.IsDefault,
                     TagId = contributionResult.Data.Data.TagId,
                     TagName = tagName,
-                    SchoolName = schoolResult.Data?.Name,
+                    SchoolName = schoolResult.Data?[0].Value,
                 };
 
                 return Ok(new ApiResponse<SchoolImageContributionReviewViewModel>
@@ -650,7 +653,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     return Ok<RemoveSchoolImageContributionReviewViewModel>(new(contributionResult.Errors));
                 }
 
-                var schoolResult = await schoolService.Value.GetSchoolAsync(new IdEqualsSpecification<School, long>(contributionResult.Data.Data.SchoolId));
+                var schoolResult = await schoolService.Value.GetSchoolsNameAsync(new IdEqualsSpecification<School, long>(contributionResult.Data.Data.SchoolId));
                 if (schoolResult.OperationResult is not Constants.OperationResult.Succeeded)
                 {
                     return Ok<RemoveSchoolImageContributionReviewViewModel>(new(schoolResult.Errors));
@@ -661,7 +664,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     Id = contributionResult.Data.Id,
                     FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.FileId, ContainerType = ContainerType.School, }),
                     SchoolId = contributionResult.Data.Data.SchoolId,
-                    SchoolName = schoolResult.Data?.Name,
+                    SchoolName = schoolResult.Data?[0].Value,
                 };
 
                 return Ok<RemoveSchoolImageContributionReviewViewModel>(new()
@@ -1145,6 +1148,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 Icon = t.Icon,
                 Id = t.Id,
             }),
+            CountryRank = dto.CountryRank,
+            StateRank = dto.StateRank,
+            CityRank = dto.CityRank,
         };
     }
 }

@@ -415,7 +415,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         FirstName = result.Data.FirstName,
                         LastName = result.Data.LastName,
                         Avatar = result.Data.Avatar,
-                        Roles = result.Data.Roles,
                         ProfileView = result.Data.ProfileView,
                         RegistrationDate = result.Data.RegistrationDate,
                         OnlineStatus = result.Data.OnlineStatus,

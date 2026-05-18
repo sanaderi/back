@@ -103,6 +103,15 @@ namespace GamaEdtech.Domain.Entity
         [Column(nameof(ViewCount), DataType.Long)]
         public long ViewCount { get; set; }
 
+        [Column(nameof(CountryRank), DataType.Int)]
+        public int? CountryRank { get; set; }
+
+        [Column(nameof(StateRank), DataType.Int)]
+        public int? StateRank { get; set; }
+
+        [Column(nameof(CityRank), DataType.Int)]
+        public int? CityRank { get; set; }
+
         public virtual ICollection<SchoolComment> SchoolComments { get; set; } = [];
         public virtual ICollection<SchoolTag> SchoolTags { get; set; } = [];
         public virtual ICollection<SchoolImage> SchoolImages { get; set; } = [];
