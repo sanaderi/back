@@ -11,7 +11,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Experience))]
-    public class Experience : IEntity<Experience, long>, IUserId<int>
+    public class Experience : IEntity<Experience, long>, IUserId<int>, ISchoolId
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]
@@ -31,10 +31,10 @@ namespace GamaEdtech.Domain.Entity
         [Column(nameof(EndDate), DataType.DateTimeOffset)]
         public DateTimeOffset? EndDate { get; set; }
 
-        [Column(nameof(Title), DataType.UnicodeString)]
+        [Column(nameof(SchoolId), DataType.Long)]
         [Required]
-        [StringLength(100)]
-        public string? Title { get; set; }
+        public long SchoolId { get; set; }
+        public School School { get; set; }
 
         [Column(nameof(Description), DataType.UnicodeString)]
         public string? Description { get; set; }

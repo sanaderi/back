@@ -496,21 +496,21 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("EndDate");
 
+                    b.Property<long>("SchoolId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("SchoolId");
+
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("StartDate");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar")
-                        .HasColumnName("Title");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SchoolId");
 
                     b.HasIndex("UserId");
 
@@ -2459,11 +2459,19 @@ namespace GamaEdtech.Infrastructure.Migrations
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Experience", b =>
                 {
+                    b.HasOne("GamaEdtech.Domain.Entity.School", "School")
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("GamaEdtech.Domain.Entity.Identity.ApplicationUser", "User")
                         .WithMany("Experiences")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("School");
 
                     b.Navigation("User");
                 });

@@ -13,7 +13,7 @@ namespace GamaEdtech.Presentation.ViewModel.Experience
 
         [Display]
         [Required]
-        public string? Title { get; set; }
+        public long? SchoolId { get; set; }
 
         [Display]
         public string? Description { get; set; }

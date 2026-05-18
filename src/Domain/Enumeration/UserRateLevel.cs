@@ -28,7 +28,7 @@ namespace GamaEdtech.Domain.Enumeration
         {
         }
 
-        public static UserRateLevel Calculate(string? avatar, string? firstName, string? lastName, string? currentStatusSentence, string? biography, IEnumerable<string?>? skills, IEnumerable<string?>? experiences)
+        public static UserRateLevel Calculate(string? avatar, string? firstName, string? lastName, string? currentStatusSentence, string? biography, IEnumerable<string?>? skills, IEnumerable<long>? experiences)
         {
             var rate = 0;
             if (string.IsNullOrEmpty(avatar))
