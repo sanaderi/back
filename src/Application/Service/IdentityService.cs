@@ -29,6 +29,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Data.Dto.ApplicationSettings;
     using GamaEdtech.Data.Dto.Experience;
     using GamaEdtech.Data.Dto.Identity;
+    using GamaEdtech.Data.Dto.SiteMap;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
@@ -55,7 +56,7 @@ namespace GamaEdtech.Application.Service
     public partial class IdentityService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<IdentityService>> localizer, Lazy<ILogger<IdentityService>> logger
             , Lazy<UserManager<ApplicationUser>> userManager, Lazy<IGenericFactory<IAuthenticationProvider, AuthenticationProvider>> genericFactory, Lazy<IApplicationSettingsService> applicationSettingsService
             , Lazy<SignInManager<ApplicationUser>> signInManager, Lazy<ICacheProvider> cacheProvider, Lazy<IConfiguration> configuration, Lazy<ICoreProvider> coreProvider, Lazy<IEmailService> emailService)
-        : LocalizableServiceBase<IdentityService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IIdentityService, ITokenService
+        : LocalizableServiceBase<IdentityService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IIdentityService, ITokenService, ISiteMapHandler
     {
         private const string RolesCacheKey = "Roles";
 
@@ -1528,6 +1529,20 @@ namespace GamaEdtech.Application.Service
                 return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
             }
         }
+
+        #region SiteMap
+
+        public ItemType ItemType => ItemType.Profile;
+
+        public IQueryable<SiteMapItemDto> GetSiteMapData([NotNull] IUnitOfWork uow) => uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Enabled && t.ProfileVisibility == ProfileVisibility.Public).Select(t => new SiteMapItemDto
+        {
+            Id = t.Id,
+            Path1 = t.Handle,
+            Path2 = string.IsNullOrEmpty(t.Handle) ? t.Id + "-" + t.FirstName + "-" + t.LastName : null,
+            LastModifyDate = t.RegistrationDate,
+        });
+
+        #endregion
 
         #region Job
 

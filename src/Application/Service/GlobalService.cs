@@ -201,7 +201,8 @@ namespace GamaEdtech.Application.Service
                               {
                                   t1.Id,
                                   t1.LastModifyDate,
-                                  t1.Title,
+                                  t1.Path1,
+                                  t1.Path2,
                                   t3.Priority,
                                   t3.ChangeFrequency,
                               };
@@ -226,12 +227,12 @@ namespace GamaEdtech.Application.Service
                         {
                             _ = nested.AppendFormat(@"
 <url>
-    <loc>https://gamatrain.com/{0}/{1}/{2}</loc>
-    <lastmod>{3}</lastmod>
-    <changefreq>{4}</changefreq>
-    <priority>{5}</priority>
+    <loc>https://gamatrain.com/{0}/{1}</loc>
+    <lastmod>{2}</lastmod>
+    <changefreq>{3}</changefreq>
+    <priority>{4}</priority>
 </url>
-", handler.ItemType.Identifier, result[j].Id, result[j].Title.Slugify(), result[j].LastModifyDate.ToString("O"), (result[j].ChangeFrequency ?? DefaultChangeFrequency).Name.ToLowerInvariant(), result[j].Priority ?? DefaultPriority);
+", handler.ItemType.Identifier, $"{result[j].Path1}{(string.IsNullOrEmpty(result[j].Path2) ? "" : $"/{result[j].Path2.Slugify()}")}", result[j].LastModifyDate?.ToString("O"), (result[j].ChangeFrequency ?? DefaultChangeFrequency).Name.ToLowerInvariant(), result[j].Priority ?? DefaultPriority);
                         }
                         _ = nested.Append("</urlset>");
                         await File.WriteAllTextAsync(Path.Combine(dir, $"{fileName}.xml"), nested.ToString());

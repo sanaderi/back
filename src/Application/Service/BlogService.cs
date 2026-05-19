@@ -1011,7 +1011,8 @@ namespace GamaEdtech.Application.Service
             return uow.GetRepository<Post>().GetManyQueryable(t => t.PublishDate <= now && t.VisibilityType == VisibilityType.General).Select(t => new SiteMapItemDto
             {
                 Id = t.Id,
-                Title = t.Slug ?? t.Title,
+                Path1 = t.Id.ToString(),
+                Path2 = t.Slug ?? t.Title,
                 LastModifyDate = t.LastModifyDate ?? t.CreationDate,
             });
         }

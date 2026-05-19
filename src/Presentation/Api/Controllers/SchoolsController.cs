@@ -112,6 +112,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             Slug = t.Name.Slugify(),
                             LastModifyDate = t.LastModifyDate,
                             Score = t.Score,
+                            ReviewScore = t.ReviewScore,
                             CityTitle = t.CityTitle,
                             CountryTitle = t.CountryTitle,
                             HasEmail = t.HasEmail,
