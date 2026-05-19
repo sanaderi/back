@@ -37,5 +37,11 @@ namespace GamaEdtech.Presentation.ViewModel.School
         public Uri? DefaultImageUri { get; set; }
 
         public double? Distance { get; set; }
+
+        public int? CountryRank { get; set; }
+
+        public int? StateRank { get; set; }
+
+        public int? CityRank { get; set; }
     }
 }

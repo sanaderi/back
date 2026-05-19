@@ -489,7 +489,7 @@ namespace GamaEdtech.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("Description");
 
                     b.Property<DateTimeOffset?>("EndDate")
@@ -1504,6 +1504,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("CityId");
 
+                    b.Property<int?>("CityRank")
+                        .HasColumnType("int")
+                        .HasColumnName("CityRank");
+
                     b.Property<Point>("Coordinates")
                         .HasColumnType("geography")
                         .HasColumnName("Coordinates");
@@ -1511,6 +1515,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.Property<int?>("CountryId")
                         .HasColumnType("int")
                         .HasColumnName("CountryId");
+
+                    b.Property<int?>("CountryRank")
+                        .HasColumnType("int")
+                        .HasColumnName("CountryRank");
 
                     b.Property<DateTimeOffset>("CreationDate")
                         .HasColumnType("datetimeoffset")
@@ -1590,6 +1598,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.Property<int?>("StateId")
                         .HasColumnType("int")
                         .HasColumnName("StateId");
+
+                    b.Property<int?>("StateRank")
+                        .HasColumnType("int")
+                        .HasColumnName("StateRank");
 
                     b.Property<decimal?>("Tuition")
                         .HasColumnType("numeric")

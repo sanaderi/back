@@ -1354,7 +1354,6 @@ namespace GamaEdtech.Application.Service
                     t.LastName,
                     t.RegistrationDate,
                     t.ProfileView,
-                    Roles = t.UserRoles!.Select(r => r.Role!.Name!),
                     t.Biography,
                     t.Skills,
                     t.Avatar,
@@ -1406,8 +1405,7 @@ namespace GamaEdtech.Application.Service
                         RegistrationDate = result.RegistrationDate,
                         Avatar = result.Avatar,
                         ProfileView = result.ProfileView + 1,    //add current view
-                        Roles = result.Roles.ListToFlagsEnum<Role>(),
-                        OnlineStatus = OnlineStatus.Parse(lastLoginDate),
+                        OnlineStatus = OnlineStatus.Calculate(lastLoginDate),
                         Biography = result.Biography,
                         Skills = skills,
                         CurrentStatusSentence = result.CurrentStatusSentence,

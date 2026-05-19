@@ -36,7 +36,7 @@ namespace GamaEdtech.Domain.Enumeration
         {
         }
 
-        public static OnlineStatus Parse(DateTimeOffset? loginDate)
+        public static OnlineStatus Calculate(DateTimeOffset? loginDate)
         {
             if (!loginDate.HasValue)
             {

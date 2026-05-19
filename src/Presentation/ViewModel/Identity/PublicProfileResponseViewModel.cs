@@ -8,9 +8,6 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
     public sealed class PublicProfileResponseViewModel
     {
-        [JsonConverter(typeof(FlagsEnumerationConverter<Role>))]
-        public Role? Roles { get; set; }
-
         public long ProfileView { get; set; }
 
         public string? Avatar { get; set; }

@@ -36,7 +36,7 @@ namespace GamaEdtech.Domain.Entity
         public long SchoolId { get; set; }
         public School School { get; set; }
 
-        [Column(nameof(Description), DataType.UnicodeString)]
+        [Column(nameof(Description), DataType.UnicodeMaxString)]
         public string? Description { get; set; }
 
         public void Configure([NotNull] EntityTypeBuilder<Experience> builder)

@@ -123,6 +123,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             StateTitle = t.StateTitle,
                             DefaultImageUri = t.DefaultImageUri,
                             Distance = t.Distance,
+                            CountryRank = t.CountryRank,
+                            StateRank = t.StateRank,
+                            CityRank = t.CityRank,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     },
@@ -199,6 +202,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             Code = t.Code,
                             Title = t.Title,
                         }),
+                        CountryRank = result.Data.CountryRank,
+                        StateRank = result.Data.StateRank,
+                        CityRank = result.Data.CityRank,
                     }
                 });
             }
