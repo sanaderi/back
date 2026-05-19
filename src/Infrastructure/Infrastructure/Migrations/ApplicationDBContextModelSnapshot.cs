@@ -759,6 +759,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("nvarchar")
                         .HasColumnName("Handle");
 
+                    b.Property<DateTimeOffset?>("LastLoginDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("LastLoginDate");
+
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar")
@@ -2619,7 +2623,7 @@ namespace GamaEdtech.Infrastructure.Migrations
             modelBuilder.Entity("GamaEdtech.Domain.Entity.LoginHistory", b =>
                 {
                     b.HasOne("GamaEdtech.Domain.Entity.Identity.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("LoginHistories")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3109,6 +3113,8 @@ namespace GamaEdtech.Infrastructure.Migrations
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUser", b =>
                 {
                     b.Navigation("Experiences");
+
+                    b.Navigation("LoginHistories");
 
                     b.Navigation("UserClaims");
 
