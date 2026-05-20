@@ -46,6 +46,7 @@ namespace GamaEdtech.Application.Service
                     UserId = t.UserId,
                     FirstName = t.User!.FirstName,
                     LastName = t.User.LastName,
+                    City = t.User.City != null ? t.User.City.Title : null,
                     Currency = t.Currency,
                     Amount = t.Amount,
                     Status = t.Status,

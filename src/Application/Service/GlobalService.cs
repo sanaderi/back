@@ -232,7 +232,7 @@ namespace GamaEdtech.Application.Service
     <changefreq>{3}</changefreq>
     <priority>{4}</priority>
 </url>
-", handler.ItemType.Identifier, $"{result[j].Path1}{(string.IsNullOrEmpty(result[j].Path2) ? "" : $"/{result[j].Path2.Slugify()}")}", result[j].LastModifyDate?.ToString("O"), (result[j].ChangeFrequency ?? DefaultChangeFrequency).Name.ToLowerInvariant(), result[j].Priority ?? DefaultPriority);
+", handler.ItemType.Identifier, $"{result[j].Path1}{(string.IsNullOrEmpty(result[j].Path2) ? "" : $"/{result[j].Path2.Slugify()}")}".TrimStart('/'), result[j].LastModifyDate?.ToString("O"), (result[j].ChangeFrequency ?? DefaultChangeFrequency).Name.ToLowerInvariant(), result[j].Priority ?? DefaultPriority);
                         }
                         _ = nested.Append("</urlset>");
                         await File.WriteAllTextAsync(Path.Combine(dir, $"{fileName}.xml"), nested.ToString());
