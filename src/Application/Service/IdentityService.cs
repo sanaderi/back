@@ -29,6 +29,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Data.Dto.ApplicationSettings;
     using GamaEdtech.Data.Dto.Experience;
     using GamaEdtech.Data.Dto.Identity;
+    using GamaEdtech.Data.Dto.SiteMap;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
@@ -55,7 +56,7 @@ namespace GamaEdtech.Application.Service
     public partial class IdentityService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<IdentityService>> localizer, Lazy<ILogger<IdentityService>> logger
             , Lazy<UserManager<ApplicationUser>> userManager, Lazy<IGenericFactory<IAuthenticationProvider, AuthenticationProvider>> genericFactory, Lazy<IApplicationSettingsService> applicationSettingsService
             , Lazy<SignInManager<ApplicationUser>> signInManager, Lazy<ICacheProvider> cacheProvider, Lazy<IConfiguration> configuration, Lazy<ICoreProvider> coreProvider, Lazy<IEmailService> emailService)
-        : LocalizableServiceBase<IdentityService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IIdentityService, ITokenService
+        : LocalizableServiceBase<IdentityService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IIdentityService, ITokenService, ISiteMapHandler
     {
         private const string RolesCacheKey = "Roles";
 
@@ -1307,17 +1308,83 @@ namespace GamaEdtech.Application.Service
         {
             try
             {
+                var now = DateTimeOffset.UtcNow;
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 uow.GetRepository<LoginHistory>().Add(new()
                 {
-                    CreationDate = DateTimeOffset.UtcNow,
+                    CreationDate = now,
                     UserId = requestDto.UserId,
                     IpAddress = requestDto.IpAddress,
                     UserAgent = requestDto.UserAgent,
                 });
                 _ = await uow.SaveChangesAsync();
+                _ = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Id == requestDto.UserId).ExecuteUpdateAsync(t => t.SetProperty(p => p.LastLoginDate, now));
 
                 return new(OperationResult.Succeeded);
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<ListDataSource<PublicProfileDto>>> GetProfilesListAsync(ListRequestDto<ApplicationUser>? requestDto = null)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var lst = uow.GetRepository<ApplicationUser, int>().GetManyQueryable(requestDto?.Specification);
+                int? total = requestDto?.PagingDto?.PageFilter?.ReturnTotalRecordsCount == true ? await lst.CountAsync() : null;
+                var query = lst.Select(t => new
+                {
+                    t.Id,
+                    t.Avatar,
+                    t.FirstName,
+                    t.LastName,
+                    t.Skills,
+                    t.Handle,
+                    UserRateLevel = (string.IsNullOrEmpty(t.Avatar) ? 0 : 15)
+                        + (string.IsNullOrEmpty(t.FirstName) ? 0 : 5)
+                        + (string.IsNullOrEmpty(t.LastName) ? 0 : 5)
+                        + (!string.IsNullOrEmpty(t.CurrentStatusSentence) && t.CurrentStatusSentence.Length > 9 ? 10 : 0)
+                        + (!string.IsNullOrEmpty(t.Biography) && t.Biography.Length > 49 ? 15 : 0)
+                        + (!string.IsNullOrEmpty(t.Skills) && t.Skills.Length > 1 ? 20 : 0),
+                    t.LastLoginDate,
+                });
+
+                (query, var sortApplied) = query.OrderBy(requestDto?.PagingDto?.SortFilter);
+                if (!sortApplied)
+                {
+                    query = query.OrderByDescending(t => t.LastLoginDate).ThenByDescending(t => t.UserRateLevel);
+                }
+                if (requestDto?.PagingDto?.PageFilter is not null)
+                {
+                    query = query.Skip(requestDto.PagingDto.PageFilter.Skip)
+                        .Take(requestDto.PagingDto.PageFilter.Size);
+                }
+                var items = await query.ToListAsync();
+                if (items is null || items.Count == 0)
+                {
+                    return new(OperationResult.Succeeded) { Data = new() { List = null } };
+                }
+
+                List<PublicProfileDto> result = new(items.Count);
+                for (var i = 0; i < items.Count; i++)
+                {
+                    var skills = items[i].Skills?.Split(Delimiter);
+                    result.Add(new()
+                    {
+                        Avatar = items[i].Avatar,
+                        FullName = items[i].FirstName + " " + items[i].LastName,
+                        Handle = items[i].Handle,
+                        Skills = skills,
+                        OnlineStatus = OnlineStatus.Calculate(items[i].LastLoginDate),
+                        UserRateLevel = UserRateLevel.Calculate(items[i].UserRateLevel)
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = new() { List = result, TotalRecordsCount = total } };
             }
             catch (Exception exc)
             {
@@ -1360,6 +1427,7 @@ namespace GamaEdtech.Application.Service
                     t.CurrentStatusSentence,
                     t.ProfileVisibility,
                     t.Id,
+                    t.LastLoginDate,
                 }).FirstOrDefaultAsync();
                 if (result is null)
                 {
@@ -1383,7 +1451,6 @@ namespace GamaEdtech.Application.Service
 
                 }
 
-                var lastLoginDate = await uow.GetRepository<LoginHistory>().GetManyQueryable(t => t.UserId == result.Id).OrderByDescending(t => t.CreationDate).Select(t => (DateTimeOffset?)t.CreationDate).FirstOrDefaultAsync();
                 var experiences = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == result.Id).OrderByDescending(t => t.Id).Select(t => new ExperienceDto
                 {
                     SchoolId = t.SchoolId,
@@ -1405,7 +1472,7 @@ namespace GamaEdtech.Application.Service
                         RegistrationDate = result.RegistrationDate,
                         Avatar = result.Avatar,
                         ProfileView = result.ProfileView + 1,    //add current view
-                        OnlineStatus = OnlineStatus.Calculate(lastLoginDate),
+                        OnlineStatus = OnlineStatus.Calculate(result.LastLoginDate),
                         Biography = result.Biography,
                         Skills = skills,
                         CurrentStatusSentence = result.CurrentStatusSentence,
@@ -1528,6 +1595,20 @@ namespace GamaEdtech.Application.Service
                 return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
             }
         }
+
+        #region SiteMap
+
+        public ItemType ItemType => ItemType.Profile;
+
+        public IQueryable<SiteMapItemDto> GetSiteMapData([NotNull] IUnitOfWork uow) => uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Enabled && t.ProfileVisibility == ProfileVisibility.Public).Select(t => new SiteMapItemDto
+        {
+            Id = t.Id,
+            Path1 = t.Handle,
+            Path2 = string.IsNullOrEmpty(t.Handle) ? t.Id + "-" + t.FirstName + "-" + t.LastName : null,
+            LastModifyDate = t.RegistrationDate,
+        });
+
+        #endregion
 
         #region Job
 

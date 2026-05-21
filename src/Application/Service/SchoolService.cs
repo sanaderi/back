@@ -53,7 +53,8 @@ namespace GamaEdtech.Application.Service
         public IQueryable<SiteMapItemDto> GetSiteMapData([NotNull] IUnitOfWork uow) => uow.GetRepository<School>().GetManyQueryable().Select(t => new SiteMapItemDto
         {
             Id = t.Id,
-            Title = t.Name,
+            Path1 = t.Id.ToString(),
+            Path2 = t.Name,
             LastModifyDate = t.LastModifyDate ?? t.CreationDate,
         });
 

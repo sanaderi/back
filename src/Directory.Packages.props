@@ -74,6 +74,7 @@
     <PackageVersion Include="System.Linq.Dynamic.Core" Version="1.6.10" />
     <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="9.0.10" />
     <PackageVersion Include="AWSSDK.S3" Version="4.0.0.7" />
+    <PackageVersion Include="ClosedXML" Version="0.105.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

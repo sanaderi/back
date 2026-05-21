@@ -60,6 +60,11 @@ namespace GamaEdtech.Domain.Enumeration
                 rate += 30;
             }
 
+            return Calculate(rate);
+        }
+
+        public static UserRateLevel Calculate(int rate)
+        {
             if (rate < 20)
             {
                 return Beginner;

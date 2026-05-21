@@ -7,6 +7,6 @@ namespace GamaEdtech.Domain.Specification.Identity
 
     public sealed class NameContainsSpecification(string name) : SpecificationBase<ApplicationUser>
     {
-        public override Expression<Func<ApplicationUser, bool>> Expression() => (t) => t.FirstName!.Contains(name) || t.LastName!.Contains(name);
+        public override Expression<Func<ApplicationUser, bool>> Expression() => (t) => (t.FirstName + " " + t.LastName).Contains(name);
     }
 }

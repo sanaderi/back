@@ -182,6 +182,9 @@ namespace GamaEdtech.Domain.Entity.Identity
         [StringLength(100)]
         public string? Handle { get; set; }
 
+        [Column(nameof(LastLoginDate), DataType.DateTimeOffset)]
+        public DateTimeOffset? LastLoginDate { get; set; }
+
         public ICollection<ApplicationUserClaim>? UserClaims { get; set; }
 
         public ICollection<ApplicationUserLogin>? UserLogins { get; set; }
@@ -191,6 +194,8 @@ namespace GamaEdtech.Domain.Entity.Identity
         public ICollection<ApplicationUserToken>? UserTokens { get; set; }
 
         public ICollection<Experience>? Experiences { get; set; }
+
+        public ICollection<LoginHistory>? LoginHistories { get; set; }
 
         public void Configure([NotNull] EntityTypeBuilder<ApplicationUser> builder)
         {
