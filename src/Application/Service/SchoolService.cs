@@ -643,7 +643,7 @@ namespace GamaEdtech.Application.Service
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var result = await uow.GetRepository<SchoolComment>().GetManyQueryable(requestDto?.Specification).FilterListAsync(requestDto?.PagingDto);
-                var users = await result.List.Select(t => new SchoolCommentDto
+                var lst = await result.List.Select(t => new SchoolCommentDto
                 {
                     Id = t.Id,
                     Comment = t.Comment,
@@ -654,7 +654,33 @@ namespace GamaEdtech.Application.Service
                     DislikeCount = t.DislikeCount,
                     AverageRate = t.AverageRate,
                 }).ToListAsync();
-                return new(OperationResult.Succeeded) { Data = new() { List = users, TotalRecordsCount = result.TotalRecordsCount } };
+                if (lst is null)
+                {
+                    return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
+                }
+
+                if (HttpContextAccessor.Value.HttpContext?.User.Identity?.IsAuthenticated == true)
+                {
+                    var ids = lst.Select(t => t.Id);
+                    var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.SchoolComment)
+                        .And(new IdentifierIdContainsSpecification<Reaction>(ids))
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(HttpContextAccessor.Value.HttpContext.UserId()));
+                    var reactions = await reactionService.Value.GetReactionsAsync(spec);
+                    if (reactions.Data is not null)
+                    {
+                        foreach (var item in reactions.Data)
+                        {
+                            var reaction = lst.Find(t => t.Id == item.IdentifierId);
+                            if (reaction is not null)
+                            {
+                                reaction.LikedByCurrentUser = reaction.LikeCount > 0;
+                                reaction.DislikedByCurrentUser = reaction.DislikeCount > 0;
+                            }
+                        }
+                    }
+                }
+
+                return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
             }
             catch (Exception exc)
             {
