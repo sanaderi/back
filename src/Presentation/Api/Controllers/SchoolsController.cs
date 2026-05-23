@@ -275,6 +275,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             CreationUserAvatar = t.CreationUserAvatar,
                             DislikeCount = t.DislikeCount,
                             LikeCount = t.LikeCount,
+                            LikedByCurrentUser = t.LikedByCurrentUser,
+                            DislikedByCurrentUser = t.DislikedByCurrentUser,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }

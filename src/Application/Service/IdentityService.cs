@@ -1578,7 +1578,7 @@ namespace GamaEdtech.Application.Service
             {
                 if (string.IsNullOrEmpty(requestDto.Handle))
                 {
-                    return new(OperationResult.Failed) { Errors = [new() { Message = Localizer.Value["InvalidHandle"], },] };
+                    return new(OperationResult.Succeeded);
                 }
 
                 var value = Globals.Slugify(requestDto.Handle);
