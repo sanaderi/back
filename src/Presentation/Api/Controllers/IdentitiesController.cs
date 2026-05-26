@@ -324,6 +324,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("authenticated"), Produces(typeof(ApiResponse<bool>))]
+        [Permission(policy: null)]
         [AllowAnonymous]
         public IActionResult<bool> Authenticated()
         {
@@ -398,6 +399,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("profiles/list"), Produces(typeof(ApiResponse<ListDataSource<PublicProfileListResponseViewModel>>))]
+        [Permission(policy: null)]
         [AllowAnonymous]
         [Display(Name = "Get Public Profiles list")]
         public async Task<IActionResult<ListDataSource<PublicProfileListResponseViewModel>>> GetPublicProfile([NotNull, FromQuery] PublicProfileListRequestViewModel request)
@@ -447,6 +449,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("profiles/{handle}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
+        [Permission(policy: null)]
         [AllowAnonymous]
         [Display(Name = "Get Public Profile of a User")]
         public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] string handle)
@@ -584,6 +587,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("leader-board"), Produces(typeof(ApiResponse<IEnumerable<UserPointsViewModel>>))]
+        [Permission(policy: null)]
         [AllowAnonymous]
         public async Task<IActionResult> GetTop100Users([FromQuery] Top100UsersRequestViewModel? request)
         {
