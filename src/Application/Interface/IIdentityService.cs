@@ -52,6 +52,7 @@ namespace GamaEdtech.Application.Interface
         Task<ResultData<bool>> RecoverAccountAsync([NotNull] ISpecification<ApplicationUser> specification);
         Task<ResultData<bool>> UpdateOrphanUsersAsync();
         Task<ResultData<string>> ValidateHandleAsync([NotNull] ValidateHandleRequestDto requestDto);
+        Task<ResultData<ListDataSource<PublicProfileDto>>> GetProfilesListAsync(ListRequestDto<ApplicationUser>? requestDto = null);
     }
 }
 

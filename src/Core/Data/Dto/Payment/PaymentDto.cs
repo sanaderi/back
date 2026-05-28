@@ -8,6 +8,7 @@ namespace GamaEdtech.Data.Dto.Payment
         public int UserId { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+        public string? City { get; set; }
         public decimal Amount { get; set; }
         public Currency Currency { get; set; }
         public PaymentStatus Status { get; set; }

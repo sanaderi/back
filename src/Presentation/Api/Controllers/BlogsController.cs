@@ -128,7 +128,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         ImageUri = result.Data.ImageUri,
                         PodcastUri = result.Data.PodcastUri,
                         LikeCount = result.Data.LikeCount,
+                        LikedByCurrentUser = result.Data.LikedByCurrentUser,
                         DislikeCount = result.Data.DislikeCount,
+                        DislikedByCurrentUser = result.Data.DislikedByCurrentUser,
                         CreationUser = result.Data.CreationUser,
                         CreationUserAvatar = result.Data.CreationUserAvatar,
                         VisibilityType = result.Data.VisibilityType,
@@ -491,6 +493,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             CreationUserAvatar = t.CreationUserAvatar,
                             DislikeCount = t.DislikeCount,
                             LikeCount = t.LikeCount,
+                            LikedByCurrentUser = t.LikedByCurrentUser,
+                            DislikedByCurrentUser = t.DislikedByCurrentUser,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }

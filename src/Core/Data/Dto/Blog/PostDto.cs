@@ -24,5 +24,7 @@ namespace GamaEdtech.Data.Dto.Blog
         public long ViewCount { get; set; }
         public long? NextId { get; set; }
         public long? PreviousId { get; set; }
+        public bool LikedByCurrentUser { get; set; }
+        public bool DislikedByCurrentUser { get; set; }
     }
 }

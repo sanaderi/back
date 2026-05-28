@@ -112,6 +112,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             Slug = t.Name.Slugify(),
                             LastModifyDate = t.LastModifyDate,
                             Score = t.Score,
+                            ReviewScore = t.ReviewScore,
                             CityTitle = t.CityTitle,
                             CountryTitle = t.CountryTitle,
                             HasEmail = t.HasEmail,
@@ -123,6 +124,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             StateTitle = t.StateTitle,
                             DefaultImageUri = t.DefaultImageUri,
                             Distance = t.Distance,
+                            CountryRank = t.CountryRank,
+                            StateRank = t.StateRank,
+                            CityRank = t.CityRank,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     },
@@ -199,6 +203,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             Code = t.Code,
                             Title = t.Title,
                         }),
+                        CountryRank = result.Data.CountryRank,
+                        StateRank = result.Data.StateRank,
+                        CityRank = result.Data.CityRank,
                     }
                 });
             }
@@ -268,6 +275,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             CreationUserAvatar = t.CreationUserAvatar,
                             DislikeCount = t.DislikeCount,
                             LikeCount = t.LikeCount,
+                            LikedByCurrentUser = t.LikedByCurrentUser,
+                            DislikedByCurrentUser = t.DislikedByCurrentUser,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }

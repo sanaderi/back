@@ -11,6 +11,9 @@ namespace GamaEdtech.Domain.Enumeration
         [Display]
         public static readonly ItemType Blog = new(nameof(Blog), 1, "blog");
 
+        [Display]
+        public static readonly ItemType Profile = new(nameof(Profile), 2, "profile");
+
         public string Identifier { get; }
 
         public ItemType()

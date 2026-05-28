@@ -34,8 +34,16 @@ namespace GamaEdtech.Presentation.ViewModel.School
 
         public double? Score { get; set; }
 
+        public double? ReviewScore { get; set; }
+
         public Uri? DefaultImageUri { get; set; }
 
         public double? Distance { get; set; }
+
+        public int? CountryRank { get; set; }
+
+        public int? StateRank { get; set; }
+
+        public int? CityRank { get; set; }
     }
 }

@@ -9,5 +9,7 @@ namespace GamaEdtech.Data.Dto.Blog
         public string? Comment { get; set; }
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
+        public bool LikedByCurrentUser { get; set; }
+        public bool DislikedByCurrentUser { get; set; }
     }
 }

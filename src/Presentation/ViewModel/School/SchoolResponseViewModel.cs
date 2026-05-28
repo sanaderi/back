@@ -40,5 +40,8 @@ namespace GamaEdtech.Presentation.ViewModel.School
         public decimal? Tuition { get; set; }
         public string? Description { get; set; }
         public long ViewCount { get; set; }
+        public int? CountryRank { get; set; }
+        public int? StateRank { get; set; }
+        public int? CityRank { get; set; }
     }
 }

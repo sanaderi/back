@@ -53,7 +53,8 @@ namespace GamaEdtech.Application.Service
         public IQueryable<SiteMapItemDto> GetSiteMapData([NotNull] IUnitOfWork uow) => uow.GetRepository<School>().GetManyQueryable().Select(t => new SiteMapItemDto
         {
             Id = t.Id,
-            Title = t.Name,
+            Path1 = t.Id.ToString(),
+            Path2 = t.Name,
             LastModifyDate = t.LastModifyDate ?? t.CreationDate,
         });
 
@@ -73,6 +74,9 @@ namespace GamaEdtech.Application.Service
                     t.Name,
                     t.LocalName,
                     t.DefaultImageId,
+                    t.CountryRank,
+                    t.StateRank,
+                    t.CityRank,
                 }).ToListAsync();
                 if (schools is null || schools.Count == 0)
                 {
@@ -99,6 +103,9 @@ namespace GamaEdtech.Application.Service
                             FileId = files.Find(c => c.Id == schools[i].DefaultImageId)?.FileId,
                             ContainerType = ContainerType.School,
                         }) : null,
+                        CountryRank = schools[i].CountryRank,
+                        StateRank = schools[i].StateRank,
+                        CityRank = schools[i].CityRank,
                     });
                 }
 
@@ -135,6 +142,9 @@ namespace GamaEdtech.Application.Service
                     t.StateId,
                     t.CountryId,
                     t.DefaultImageId,
+                    t.CountryRank,
+                    t.StateRank,
+                    t.CityRank,
                     Distance = point != null && t.Coordinates != null ? t.Coordinates.Distance(point) : (double?)null,
                 });
 
@@ -217,6 +227,9 @@ namespace GamaEdtech.Application.Service
                             FileId = files.Find(c => c.Id == items[i].DefaultImageId)?.FileId,
                             ContainerType = ContainerType.School,
                         }),
+                        CountryRank = items[i].CountryRank,
+                        StateRank = items[i].StateRank,
+                        CityRank = items[i].CityRank,
                     });
                 }
 
@@ -274,6 +287,9 @@ namespace GamaEdtech.Application.Service
                         Icon = s.Board.Icon,
                         Title = s.Board.Title,
                     }),
+                    t.CountryRank,
+                    t.StateRank,
+                    t.CityRank,
                 }).FirstOrDefaultAsync();
                 if (school is null)
                 {
@@ -317,6 +333,9 @@ namespace GamaEdtech.Application.Service
                     Boards = school.Boards,
                     Description = localizedValues.Data?.Find(t => t.ContentId == school.Id && t.Name == nameof(School.Description))?.Value ?? school.Description,
                     ViewCount = school.ViewCount,
+                    CountryRank = school.CountryRank,
+                    StateRank = school.StateRank,
+                    CityRank = school.CityRank,
                 };
                 return new(OperationResult.Succeeded) { Data = result };
             }
@@ -624,7 +643,7 @@ namespace GamaEdtech.Application.Service
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var result = await uow.GetRepository<SchoolComment>().GetManyQueryable(requestDto?.Specification).FilterListAsync(requestDto?.PagingDto);
-                var users = await result.List.Select(t => new SchoolCommentDto
+                var lst = await result.List.Select(t => new SchoolCommentDto
                 {
                     Id = t.Id,
                     Comment = t.Comment,
@@ -635,7 +654,33 @@ namespace GamaEdtech.Application.Service
                     DislikeCount = t.DislikeCount,
                     AverageRate = t.AverageRate,
                 }).ToListAsync();
-                return new(OperationResult.Succeeded) { Data = new() { List = users, TotalRecordsCount = result.TotalRecordsCount } };
+                if (lst is null)
+                {
+                    return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
+                }
+
+                if (HttpContextAccessor.Value.HttpContext?.User.Identity?.IsAuthenticated == true)
+                {
+                    var ids = lst.Select(t => t.Id);
+                    var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.SchoolComment)
+                        .And(new IdentifierIdContainsSpecification<Reaction>(ids))
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(HttpContextAccessor.Value.HttpContext.UserId()));
+                    var reactions = await reactionService.Value.GetReactionsAsync(spec);
+                    if (reactions.Data is not null)
+                    {
+                        foreach (var item in reactions.Data)
+                        {
+                            var reaction = lst.Find(t => t.Id == item.IdentifierId);
+                            if (reaction is not null)
+                            {
+                                reaction.LikedByCurrentUser = reaction.LikeCount > 0;
+                                reaction.DislikedByCurrentUser = reaction.DislikeCount > 0;
+                            }
+                        }
+                    }
+                }
+
+                return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
             }
             catch (Exception exc)
             {
@@ -817,9 +862,6 @@ namespace GamaEdtech.Application.Service
                 }
 
                 await CreateSchoolCommentAsync(result.Data.Data!);
-
-                //this is temporary
-                _ = await UpdateSchoolScoreAsync(result.Data.Data!.SchoolId);
 
                 if (requestDto.NotifyUser)
                 {
@@ -1800,15 +1842,75 @@ namespace GamaEdtech.Application.Service
 
         #region Job
 
-        public async Task<ResultData<bool>> UpdateSchoolScoreAsync(long? schoolId = null)
+        public async Task<ResultData<bool>> UpdateSchoolScoreAsync()
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var where = schoolId.HasValue ? $"WHERE s.Id={schoolId.Value}" : "";
-                var query = $@"UPDATE s SET
-                    Score=(SELECT AVG(c.AverageRate) FROM SchoolComments c WHERE c.SchoolId = s.Id)
-                FROM Schools s {where}";
+                var query = $@"
+;WITH CommentAgg AS
+(
+    SELECT c.SchoolId, AVG(CONVERT(decimal(10,2), c.AverageRate)) * 10 AS CommentScore FROM SchoolComments c GROUP BY c.SchoolId
+),
+ImageAgg AS
+(
+    SELECT i.SchoolId, CASE WHEN COUNT_BIG(*) >= 5 THEN 50 ELSE COUNT_BIG(*) * 10 END AS ImageScore FROM SchoolImages i GROUP BY i.SchoolId
+),
+ScoreCalc AS
+(
+    SELECT
+        s.Id,
+        s.CountryId,
+        s.StateId,
+        s.CityId,
+        Score =
+              ISNULL(ca.CommentScore, 0)
+            + CASE WHEN s.Coordinates IS NOT NULL THEN 10 ELSE 0 END
+            + CASE WHEN s.WebSite     IS NOT NULL AND s.WebSite    <> '' THEN 25 ELSE 0 END
+            + CASE WHEN s.Email       IS NOT NULL AND s.Email      <> '' THEN 5  ELSE 0 END
+            + CASE WHEN s.PhoneNumber IS NOT NULL AND s.PhoneNumber <> '' THEN 5  ELSE 0 END
+            + CASE WHEN s.Address     IS NOT NULL AND s.Address    <> '' THEN 5  ELSE 0 END
+            + ISNULL(ia.ImageScore, 0)
+    FROM Schools s
+    LEFT JOIN CommentAgg ca ON ca.SchoolId = s.Id
+    LEFT JOIN ImageAgg ia ON ia.SchoolId = s.Id
+),
+RankCalc AS
+(
+    SELECT
+        sc.*,
+		CASE
+            WHEN sc.CountryId IS NULL THEN NULL
+            ELSE DENSE_RANK() OVER (PARTITION BY sc.CountryId ORDER BY sc.Score DESC)
+        END AS CountryRank,
+		CASE
+            WHEN sc.StateId IS NULL THEN NULL
+            ELSE DENSE_RANK() OVER (PARTITION BY sc.CountryId, sc.StateId ORDER BY sc.Score DESC)
+        END AS StateRank,
+		CASE
+            WHEN sc.CityId IS NULL THEN NULL
+            ELSE DENSE_RANK() OVER (PARTITION BY sc.CountryId, sc.StateId, sc.CityId ORDER BY sc.Score DESC)
+        END AS CityRank
+    FROM ScoreCalc sc
+)
+UPDATE s
+SET
+    s.Score = rc.Score,
+    s.CountryRank = rc.CountryRank,
+    s.StateRank = rc.StateRank,
+    s.CityRank = rc.CityRank
+FROM Schools s
+JOIN RankCalc rc ON rc.Id = s.Id
+WHERE
+      s.Score <> rc.Score
+   OR s.Score IS NULL
+   OR s.CountryRank <> rc.CountryRank
+   OR s.CountryRank IS NULL
+   OR s.StateRank <> rc.StateRank
+   OR s.StateRank IS NULL
+   OR s.CityRank <> rc.CityRank
+   OR s.CityRank IS NULL;
+";
                 _ = await uow.ExecuteSqlCommandAsync(query);
 
                 return new(OperationResult.Succeeded) { Data = true };
@@ -1825,10 +1927,24 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var where = schoolCommentId.HasValue ? $"WHERE c.Id={schoolCommentId.Value}" : "";
-                var query = $@"UPDATE c SET
-                    LikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.SchoolComment.Value} AND r.IdentifierId=c.Id AND r.IsLike=1)
-                    ,DislikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.SchoolComment.Value} AND r.IdentifierId=c.Id AND r.IsLike=0)
+                var where = schoolCommentId.HasValue ? $" c.Id={schoolCommentId.Value} AND " : "";
+                var query = $@"
+;WITH ReactionAgg AS
+(
+    SELECT r.IdentifierId, SUM(CASE WHEN r.IsLike = 1 THEN 1 ELSE 0 END) AS LikeCount, SUM(CASE WHEN r.IsLike = 0 THEN 1 ELSE 0 END) AS DislikeCount
+    FROM Reactions r WHERE r.CategoryType = {CategoryType.SchoolComment.Value} GROUP BY r.IdentifierId
+)
+UPDATE c
+SET
+    c.LikeCount    = ISNULL(ra.LikeCount, 0),
+    c.DislikeCount = ISNULL(ra.DislikeCount, 0)
+FROM SchoolComments c
+LEFT JOIN ReactionAgg ra ON ra.IdentifierId = c.Id
+WHERE {where} (
+    c.LikeCount <> ISNULL(ra.LikeCount, 0)
+    OR c.DislikeCount <> ISNULL(ra.DislikeCount, 0)
+    OR c.LikeCount IS NULL OR c.DislikeCount IS NULL);
+
                 FROM SchoolComments c {where}";
                 _ = await uow.ExecuteSqlCommandAsync(query);
 

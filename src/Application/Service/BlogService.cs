@@ -159,6 +159,19 @@ namespace GamaEdtech.Application.Service
                     ContentType = nameof(Post),
                 });
 
+                var likedByCurrentUser = false;
+                var dislikedByCurrentUser = false;
+                if (HttpContextAccessor.Value.HttpContext?.User.Identity?.IsAuthenticated == true)
+                {
+                    var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.Post)
+                        .And(new IdentifierIdEqualsSpecification<Reaction>(post.Id))
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(HttpContextAccessor.Value.HttpContext.UserId()));
+                    var reaction = await reactionService.Value.GetReactionsAsync(spec);
+
+                    likedByCurrentUser = reaction.Data?.FirstOrDefault()?.Like > 0;
+                    dislikedByCurrentUser = reaction.Data?.FirstOrDefault()?.Dislike > 0;
+                }
+
                 PostDto result = new()
                 {
                     Summary = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Summary))?.Value ?? post.Summary,
@@ -168,7 +181,9 @@ namespace GamaEdtech.Application.Service
                     ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.ImageId, ContainerType = ContainerType.Post, }),
                     PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.PodcastId, ContainerType = ContainerType.Post, }),
                     LikeCount = post.LikeCount,
+                    LikedByCurrentUser = likedByCurrentUser,
                     DislikeCount = post.DislikeCount,
+                    DislikedByCurrentUser = dislikedByCurrentUser,
                     CreationUser = post.CreationUser,
                     CreationUserAvatar = post.Avatar,
                     Tags = post.Tags,
@@ -773,7 +788,7 @@ namespace GamaEdtech.Application.Service
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var result = await uow.GetRepository<PostComment>().GetManyQueryable(requestDto?.Specification).FilterListAsync(requestDto?.PagingDto);
-                var users = await result.List.Select(t => new PostCommentDto
+                var lst = await result.List.Select(t => new PostCommentDto
                 {
                     Id = t.Id,
                     Comment = t.Comment,
@@ -783,7 +798,33 @@ namespace GamaEdtech.Application.Service
                     LikeCount = t.LikeCount,
                     DislikeCount = t.DislikeCount,
                 }).ToListAsync();
-                return new(OperationResult.Succeeded) { Data = new() { List = users, TotalRecordsCount = result.TotalRecordsCount } };
+                if (lst is null)
+                {
+                    return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
+                }
+
+                if (HttpContextAccessor.Value.HttpContext?.User.Identity?.IsAuthenticated == true)
+                {
+                    var ids = lst.Select(t => t.Id);
+                    var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.PostComment)
+                        .And(new IdentifierIdContainsSpecification<Reaction>(ids))
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(HttpContextAccessor.Value.HttpContext.UserId()));
+                    var reactions = await reactionService.Value.GetReactionsAsync(spec);
+                    if (reactions.Data is not null)
+                    {
+                        foreach (var item in reactions.Data)
+                        {
+                            var reaction = lst.Find(t => t.Id == item.IdentifierId);
+                            if (reaction is not null)
+                            {
+                                reaction.LikedByCurrentUser = reaction.LikeCount > 0;
+                                reaction.DislikedByCurrentUser = reaction.DislikeCount > 0;
+                            }
+                        }
+                    }
+                }
+
+                return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
             }
             catch (Exception exc)
             {
@@ -1011,7 +1052,8 @@ namespace GamaEdtech.Application.Service
             return uow.GetRepository<Post>().GetManyQueryable(t => t.PublishDate <= now && t.VisibilityType == VisibilityType.General).Select(t => new SiteMapItemDto
             {
                 Id = t.Id,
-                Title = t.Slug ?? t.Title,
+                Path1 = t.Id.ToString(),
+                Path2 = t.Slug ?? t.Title,
                 LastModifyDate = t.LastModifyDate ?? t.CreationDate,
             });
         }

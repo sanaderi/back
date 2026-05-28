@@ -11,7 +11,7 @@ namespace GamaEdtech.Application.Interface
     [Injectable]
     public interface IReactionService
     {
-        Task<ResultData<ReactionDto>> GetReactionsCountAsync([NotNull] ISpecification<Reaction> specification);
+        Task<ResultData<IEnumerable<ReactionDto>>> GetReactionsAsync([NotNull] ISpecification<Reaction> specification);
         Task<ResultData<bool>> ManageReactionAsync([NotNull] ManageReactionRequestDto requestDto);
         Task<ResultData<bool>> ExistReactionAsync([NotNull] ISpecification<Reaction> specification);
         Task<ResultData<bool>> RemoveReactionAsync([NotNull] ISpecification<Reaction> specification);

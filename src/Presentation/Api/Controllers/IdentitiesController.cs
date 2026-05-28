@@ -9,12 +9,14 @@ namespace GamaEdtech.Presentation.Api.Controllers
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.Data.Enumeration;
+    using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Common.DataAccess.Specification.Impl;
     using GamaEdtech.Common.DataAnnotation;
     using GamaEdtech.Common.Identity;
     using GamaEdtech.Data.Dto.Identity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
+    using GamaEdtech.Domain.Specification.Identity;
     using GamaEdtech.Presentation.ViewModel.Experience;
     using GamaEdtech.Presentation.ViewModel.Identity;
 
@@ -322,6 +324,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("authenticated"), Produces(typeof(ApiResponse<bool>))]
+        [Permission(policy: null)]
         [AllowAnonymous]
         public IActionResult<bool> Authenticated()
         {
@@ -395,7 +398,58 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
+        [HttpGet("profiles/list"), Produces(typeof(ApiResponse<ListDataSource<PublicProfileListResponseViewModel>>))]
+        [Permission(policy: null)]
+        [AllowAnonymous]
+        [Display(Name = "Get Public Profiles list")]
+        public async Task<IActionResult<ListDataSource<PublicProfileListResponseViewModel>>> GetPublicProfile([NotNull, FromQuery] PublicProfileListRequestViewModel request)
+        {
+            try
+            {
+                ISpecification<ApplicationUser>? specification = new ProfileVisibilityEqualsSpecification(ProfileVisibility.Public);
+
+                if (!string.IsNullOrEmpty(request.FullName))
+                {
+                    specification = specification.And(new NameContainsSpecification(request.FullName));
+                }
+
+                if (!string.IsNullOrEmpty(request.Skill))
+                {
+                    specification = specification.And(new SkillsContainsSpecification(request.Skill));
+                }
+
+                var result = await identityService.Value.GetProfilesListAsync(new ListRequestDto<ApplicationUser>
+                {
+                    PagingDto = request.PagingDto,
+                    Specification = specification,
+                });
+                return Ok<ListDataSource<PublicProfileListResponseViewModel>>(new(result.Errors)
+                {
+                    Data = result.Data.List is null ? new() : new()
+                    {
+                        List = result.Data.List.Select(t => new PublicProfileListResponseViewModel
+                        {
+                            Avatar = t.Avatar,
+                            FullName = t.FullName,
+                            OnlineStatus = t.OnlineStatus,
+                            Skills = t.Skills,
+                            UserRateLevel = t.UserRateLevel,
+                            Handle = t.Handle,
+                        }),
+                        TotalRecordsCount = result.Data.TotalRecordsCount,
+                    }
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<ListDataSource<PublicProfileListResponseViewModel>>(new(new Error { Message = exc.Message }));
+            }
+        }
+
         [HttpGet("profiles/{handle}"), Produces(typeof(ApiResponse<PublicProfileResponseViewModel>))]
+        [Permission(policy: null)]
         [AllowAnonymous]
         [Display(Name = "Get Public Profile of a User")]
         public async Task<IActionResult<PublicProfileResponseViewModel>> GetPublicProfile([FromRoute] string handle)
@@ -415,7 +469,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         FirstName = result.Data.FirstName,
                         LastName = result.Data.LastName,
                         Avatar = result.Data.Avatar,
-                        Roles = result.Data.Roles,
                         ProfileView = result.Data.ProfileView,
                         RegistrationDate = result.Data.RegistrationDate,
                         OnlineStatus = result.Data.OnlineStatus,
@@ -534,6 +587,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("leader-board"), Produces(typeof(ApiResponse<IEnumerable<UserPointsViewModel>>))]
+        [Permission(policy: null)]
         [AllowAnonymous]
         public async Task<IActionResult> GetTop100Users([FromQuery] Top100UsersRequestViewModel? request)
         {

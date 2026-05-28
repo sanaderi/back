@@ -8,7 +8,6 @@ namespace GamaEdtech.Data.Dto.Identity
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? Avatar { get; set; }
-        public Role? Roles { get; set; }
         public long ProfileView { get; set; }
         public DateTimeOffset? RegistrationDate { get; set; }
         public OnlineStatus OnlineStatus { get; set; }
