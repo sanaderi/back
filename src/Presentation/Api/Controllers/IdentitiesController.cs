@@ -476,6 +476,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         Skills = result.Data.Skills,
                         Experiences = result.Data.Experiences?.Select(t => new ExperienceResponseViewModel
                         {
+                            Id = t.Id,
                             SchoolId = t.SchoolId,
                             SchoolTitle = t.SchoolTitle,
                             Description = t.Description,
