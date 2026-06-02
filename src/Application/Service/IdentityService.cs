@@ -978,7 +978,7 @@ namespace GamaEdtech.Application.Service
                 user.WalletId = requestDto.WalletId ?? user.WalletId;
                 user.ProfileVisibility = requestDto.ProfileVisibility ?? user.ProfileVisibility;
                 user.Biography = requestDto.Biography ?? user.Biography;
-                user.Skills = string.Join(Delimiter, requestDto.Skills ?? []) ?? user.Skills;
+                user.Skills = requestDto.Skills?.Any() == true ? string.Join(Delimiter, requestDto.Skills ?? []) : user.Skills;
                 user.CurrentStatusSentence = requestDto.CurrentStatusSentence ?? user.CurrentStatusSentence;
                 user.Handle = valid.Data ?? user.Handle;
                 user.ProfileUpdated = true;
@@ -1453,6 +1453,7 @@ namespace GamaEdtech.Application.Service
 
                 var experiences = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == result.Id).OrderByDescending(t => t.Id).Select(t => new ExperienceDto
                 {
+                    Id = t.Id,
                     SchoolId = t.SchoolId,
                     SchoolTitle = t.School.Name,
                     Description = t.Description,
