@@ -15,6 +15,9 @@ namespace GamaEdtech.Presentation.Api
 
     using Hangfire;
 
+    using HealthChecks.UI.Client;
+
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.OpenApi.Models;
 
     public class Startup(IConfiguration configuration)
@@ -180,7 +183,14 @@ namespace GamaEdtech.Presentation.Api
                 };
             });
 
-            _ = services.AddHealthChecks();
+            _ = services.AddHealthChecks()
+                .AddSqlServer(Configuration.GetValue<string>("Connection:ConnectionString")!)
+                .AddPrivateMemoryHealthCheck(long.MaxValue)
+                .AddHangfire(t => t.MaximumJobsFailed = 5)
+                //.AddNpgSql()
+                .AddRedis(Configuration.GetValue<string>("Cache:Configuration")!);
+
+            _ = services.AddHealthChecksUI(t => _ = t.AddHealthCheckEndpoint("endpoint1", "healthz")).AddInMemoryStorage();
         }
 
         protected override void ConfigureCore([NotNull] IApplicationBuilder app, IWebHostEnvironment env)
@@ -202,9 +212,19 @@ namespace GamaEdtech.Presentation.Api
             _ = app.UseCookiePolicy(new CookiePolicyOptions { Secure = CookieSecurePolicy.Always });
 
             _ = app.UseOutputCache();
-            _ = app.UseHealthChecks("/healthz");
+            _ = app.UseHealthChecks("/health");
+            _ = app.UseHealthChecks("/healthz", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions() { ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse });
 
             _ = app.UseHangfireDashboard();
+
+            _ = app.UseEndpoints(t => _ = t.MapHealthChecksUI(t =>
+            {
+                t.UIPath = "/health/details";
+                t.UseRelativeApiPath = false;
+                t.UseRelativeWebhookPath = false;
+                t.UseRelativeResourcesPath = false;
+            })
+                .RequireAuthorization());
 
             RecurringJob.AddOrUpdate<ISchoolService>("UpdateSchoolScore", t => t.UpdateSchoolScoreAsync(), Cron.Weekly(DayOfWeek.Sunday, 2, 0));
             RecurringJob.AddOrUpdate<ISchoolService>("UpdateSchoolCommentReactions", t => t.UpdateSchoolCommentReactionsAsync(null), Cron.Daily(0, 5));

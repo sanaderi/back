@@ -7,7 +7,7 @@ namespace GamaEdtech.Common.DataAnnotation
     public sealed class IpAddressAttribute : ValidationAttribute
     {
         public override bool IsValid(object? value) => string.IsNullOrEmpty(value?.ToString())
-|| (value is IEnumerable<string> lst ? lst.All(t => string.IsNullOrEmpty(t) || Validate(t)) : Validate(value.ToString()));
+            || (value is IEnumerable<string> lst ? lst.All(t => string.IsNullOrEmpty(t) || Validate(t)) : Validate(value.ToString()));
 
         private static bool Validate(string? value)
         {
@@ -16,7 +16,7 @@ namespace GamaEdtech.Common.DataAnnotation
                 return true;
             }
 
-            var splitValues = value.Split('.');
+            var splitValues = value.Split('.', StringSplitOptions.RemoveEmptyEntries);
             return splitValues.Length == 4 && splitValues.All(r => byte.TryParse(r, out var _));
         }
     }

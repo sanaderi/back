@@ -131,6 +131,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     t.FirstName,
                     t.LastName,
                     t.City,
+                    t.State,
+                    t.Country,
                     t.Amount,
                     Currency = t.Currency.Name,
                     Status = t.Status.Name,

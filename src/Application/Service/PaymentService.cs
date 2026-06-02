@@ -47,6 +47,8 @@ namespace GamaEdtech.Application.Service
                     FirstName = t.User!.FirstName,
                     LastName = t.User.LastName,
                     City = t.User.City != null ? t.User.City.Title : null,
+                    State = t.User.City != null && t.User.City.Parent != null ? t.User.City.Parent.Title : null,
+                    Country = t.User.City != null && t.User.City.Parent != null && t.User.City.Parent.Parent != null ? t.User.City.Parent.Parent.Title : null,
                     Currency = t.Currency,
                     Amount = t.Amount,
                     Status = t.Status,
