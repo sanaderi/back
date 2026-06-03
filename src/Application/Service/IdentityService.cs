@@ -885,7 +885,7 @@ namespace GamaEdtech.Application.Service
                     return new(OperationResult.Failed) { Errors = new[] { new Error { Message = "User not found." } } };
                 }
 
-                var skills = data.Skills?.Split(Delimiter);
+                var skills = data.Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
                 var experiences = data.Experiences?.Select(t => new ExperienceDto
                 {
                     Id = t.Id,
@@ -1372,7 +1372,7 @@ namespace GamaEdtech.Application.Service
                 List<PublicProfileDto> result = new(items.Count);
                 for (var i = 0; i < items.Count; i++)
                 {
-                    var skills = items[i].Skills?.Split(Delimiter);
+                    var skills = items[i].Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
                     result.Add(new()
                     {
                         Avatar = items[i].Avatar,
@@ -1463,7 +1463,7 @@ namespace GamaEdtech.Application.Service
 
                 _ = await repository.GetManyQueryable(t => t.Id == result.Id).ExecuteUpdateAsync(t => t.SetProperty(p => p.ProfileView, p => p.ProfileView + 1));
 
-                var skills = result.Skills?.Split(Delimiter);
+                var skills = result.Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
                 return new(OperationResult.Succeeded)
                 {
                     Data = new()

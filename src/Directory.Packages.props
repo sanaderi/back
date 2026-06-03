@@ -6,6 +6,16 @@
     </PackageReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <PackageVersion Include="AspNetCore.HealthChecks.Hangfire" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.System" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.Core" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.Data" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.6.2" />
     <PackageVersion Include="Google.Apis.YouTube.v3" Version="1.73.0.3981" />
     <PackageVersion Include="Handlebars.Net.Helpers.Humanizer" Version="2.5.3" />
