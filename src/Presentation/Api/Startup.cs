@@ -187,7 +187,6 @@ namespace GamaEdtech.Presentation.Api
                 .AddSqlServer(Configuration.GetValue<string>("Connection:ConnectionString")!)
                 .AddPrivateMemoryHealthCheck(long.MaxValue)
                 .AddHangfire(t => t.MaximumJobsFailed = 5)
-                //.AddNpgSql()
                 .AddRedis(Configuration.GetValue<string>("Cache:Configuration")!);
 
             _ = services.AddHealthChecksUI(t => _ = t.AddHealthCheckEndpoint("endpoint1", "healthz")).AddInMemoryStorage();
