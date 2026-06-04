@@ -18,6 +18,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
+    [Permission(policy: null)]
     public class ConnectionsController(Lazy<ILogger<ConnectionsController>> logger, Lazy<IConnectionService> connectionService)
         : ApiControllerBase<ConnectionsController>(logger)
     {
@@ -106,7 +107,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("users/{id:int}/followers"), Produces(typeof(ApiResponse<ListDataSource<FollowViewModel>>))]
-        [Permission(policy: null)]
         [Display(Name = "Get List of Followers of a User")]
         public async Task<IActionResult<ListDataSource<FollowViewModel>>> Followers([FromRoute] int id, [NotNull, FromQuery] FollowersRequestViewModel request)
         {
@@ -141,7 +141,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("users/{id:int}/followings"), Produces(typeof(ApiResponse<ListDataSource<FollowViewModel>>))]
-        [Permission(policy: null)]
         [Display(Name = "Get List of Users that a user follow")]
         public async Task<IActionResult<ListDataSource<FollowViewModel>>> Followings([FromRoute] int id, [NotNull, FromQuery] FollowingsRequestViewModel request)
         {
@@ -176,7 +175,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("users/{id:int}/follow"), Produces(typeof(ApiResponse<bool>))]
-        [Permission(policy: null)]
         [Display(Name = "follow a user")]
         public async Task<IActionResult<bool>> Follow([FromRoute] int id, [NotNull] FollowRequestViewModel request)
         {
@@ -203,7 +201,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("users/{id:int}/unfollow"), Produces(typeof(ApiResponse<bool>))]
-        [Permission(policy: null)]
         [Display(Name = "Unfollow a user")]
         public async Task<IActionResult<bool>> UnFollow([FromRoute] int id, [NotNull] UnFollowRequestViewModel request)
         {
@@ -230,7 +227,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPatch("users/{id:int}/subscriptions/toggle"), Produces(typeof(ApiResponse<bool>))]
-        [Permission(policy: null)]
         [Display(Name = "Subscribe/UnSubscribe to activity feed of a user")]
         public async Task<IActionResult<bool>> Subscribe([FromRoute] int id)
         {

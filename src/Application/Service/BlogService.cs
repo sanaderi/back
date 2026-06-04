@@ -852,7 +852,7 @@ namespace GamaEdtech.Application.Service
                 {
                     CategoryType = CategoryType.PostComment,
                     CreationDate = DateTimeOffset.UtcNow,
-                    CreationUserId = HttpContextAccessor.Value.HttpContext.UserId(),
+                    CreationUserId = requestDto.UserId,
                     IdentifierId = requestDto.CommentId,
                     IsLike = true,
                 });
@@ -891,7 +891,7 @@ namespace GamaEdtech.Application.Service
                 {
                     CategoryType = CategoryType.PostComment,
                     CreationDate = DateTimeOffset.UtcNow,
-                    CreationUserId = HttpContextAccessor.Value.HttpContext.UserId(),
+                    CreationUserId = requestDto.UserId,
                     IdentifierId = requestDto.CommentId,
                     IsLike = false,
                 });
