@@ -14,11 +14,11 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
+    [Permission(policy: null)]
     public class ReferralController(Lazy<ILogger<ReferralController>> logger, Lazy<IIdentityService> referralService)
         : ApiControllerBase<ReferralController>(logger)
     {
         [HttpPost("generate"), Produces(typeof(ApiResponse<ReferralReponseViewModel>))]
-        [Permission(policy: null)]
         public async Task<IActionResult<ReferralReponseViewModel>> GenerateRefferalId()
         {
             try

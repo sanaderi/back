@@ -8,11 +8,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAccess.Specification;
+    using GamaEdtech.Common.Identity;
     using GamaEdtech.Data.Dto.VotingPower;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Specification.VotingPower;
     using GamaEdtech.Presentation.ViewModel.VotingPower;
 
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
     using Org.BouncyCastle.Crypto.Parameters;
@@ -20,6 +22,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
+    [Permission(policy: null)]
+    [AllowAnonymous]
     public class VotingPowersController(Lazy<ILogger<VotingPowersController>> logger, Lazy<IVotingPowerService> votingPowerService)
         : ApiControllerBase<VotingPowersController>(logger)
     {

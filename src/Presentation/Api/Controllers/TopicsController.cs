@@ -7,15 +7,18 @@ namespace GamaEdtech.Presentation.Api.Controllers
     using GamaEdtech.Application.Interface;
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
-
+    using GamaEdtech.Common.Identity;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Specification.Topic;
     using GamaEdtech.Presentation.ViewModel.Topic;
 
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
+    [Permission(policy: null)]
+    [AllowAnonymous]
     public class TopicsController(Lazy<ILogger<TopicsController>> logger, Lazy<ITopicService> boardService)
         : ApiControllerBase<TopicsController>(logger)
     {

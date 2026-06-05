@@ -19,7 +19,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         : ApiControllerBase<PaymentsController>(logger)
     {
         [HttpPost, Produces(typeof(ApiResponse<CreatePaymentResponseViewModel>))]
-        [Permission(policy: null)]
         public async Task<IActionResult<CreatePaymentResponseViewModel>> CreatePayment([NotNull] CreatePaymentRequestViewModel request)
         {
             try
@@ -53,7 +52,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("{id:long}/verify"), Produces(typeof(ApiResponse<bool>))]
-        [Permission(policy: null)]
         public async Task<IActionResult<bool>> VerifyPayment([FromRoute] long id, [NotNull] VerifyPaymentRequestViewModel request)
         {
             try
