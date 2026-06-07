@@ -19,9 +19,9 @@ namespace GamaEdtech.Domain.Entity
         [Required]
         public long Id { get; set; }
 
-        [Column(nameof(UserId), DataType.Int)]
+        [Column(nameof(UserId), DataType.Long)]
         [Required]
-        public int UserId { get; set; }
+        public long UserId { get; set; }
         public ApplicationUser User { get; set; }
 
         [Column(nameof(CreationDate), DataType.DateTimeOffset)]

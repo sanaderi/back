@@ -53,8 +53,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpGet("connections/{connectionId:int}"), Produces<ApiResponse<ListDataSource<MessagesResponseViewModel>>>()]
-        public async Task<IActionResult<ListDataSource<MessagesResponseViewModel>>> GetMessages([FromRoute] int connectionId, [NotNull, FromQuery] MessagesRequestViewModel request)
+        [HttpGet("connections/{connectionId:long}"), Produces<ApiResponse<ListDataSource<MessagesResponseViewModel>>>()]
+        public async Task<IActionResult<ListDataSource<MessagesResponseViewModel>>> GetMessages([FromRoute] long connectionId, [NotNull, FromQuery] MessagesRequestViewModel request)
         {
             try
             {

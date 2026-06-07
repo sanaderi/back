@@ -11,7 +11,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Transaction))]
-    public class Transaction : IEntity<Transaction, long>, IUserId<int>, IIdentifierId, ICreationDate
+    public class Transaction : IEntity<Transaction, long>, IUserId<long>, IIdentifierId, ICreationDate
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]
@@ -23,9 +23,9 @@ namespace GamaEdtech.Domain.Entity
         public long? PreviousTransactionId { get; set; }
         public Transaction? PreviousTransaction { get; set; }
 
-        [Column(nameof(UserId), DataType.Int)]
+        [Column(nameof(UserId), DataType.Long)]
         [Required]
-        public int UserId { get; set; }
+        public long UserId { get; set; }
         public ApplicationUser? User { get; set; }
 
         [Column(nameof(IdentifierId), DataType.Long)]

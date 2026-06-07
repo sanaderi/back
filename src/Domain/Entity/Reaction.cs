@@ -13,7 +13,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Reaction))]
-    public class Reaction : CreationableEntity<ApplicationUser, int>, IEntity<Reaction, long>, ICategoryType, IIdentifierId
+    public class Reaction : CreationableEntity<ApplicationUser, long>, IEntity<Reaction, long>, ICategoryType, IIdentifierId
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

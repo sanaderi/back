@@ -2,7 +2,7 @@ namespace GamaEdtech.Data.Dto.Identity
 {
     public sealed class UpdateUserRequestDto
     {
-        public required int Id { get; set; }
+        public required long Id { get; set; }
 
         public required string Username { get; set; }
 

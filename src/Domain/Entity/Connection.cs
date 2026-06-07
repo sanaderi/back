@@ -22,14 +22,14 @@ namespace GamaEdtech.Domain.Entity
         [Required]
         public long Id { get; set; }
 
-        [Column(nameof(SourceUserId), DataType.Int)]
+        [Column(nameof(SourceUserId), DataType.Long)]
         [Required]
-        public int SourceUserId { get; set; }
+        public long SourceUserId { get; set; }
         public ApplicationUser SourceUser { get; set; }
 
-        [Column(nameof(DestinationUserId), DataType.Int)]
+        [Column(nameof(DestinationUserId), DataType.Long)]
         [Required]
-        public int DestinationUserId { get; set; }
+        public long DestinationUserId { get; set; }
         public ApplicationUser DestinationUser { get; set; }
 
         [Column(nameof(CreationDate), DataType.DateTimeOffset)]

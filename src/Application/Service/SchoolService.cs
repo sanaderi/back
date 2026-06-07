@@ -664,7 +664,7 @@ namespace GamaEdtech.Application.Service
                     var ids = lst.Select(t => t.Id);
                     var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.SchoolComment)
                         .And(new IdentifierIdContainsSpecification<Reaction>(ids))
-                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(HttpContextAccessor.Value.HttpContext.UserId()));
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, long>(HttpContextAccessor.Value.HttpContext.UserId()));
                     var reactions = await reactionService.Value.GetReactionsAsync(spec);
                     if (reactions.Data is not null)
                     {
@@ -772,14 +772,14 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var commentSpecification = new SchoolIdEqualsSpecification<SchoolComment>(requestDto.SchoolId)
-                        .And(new CreationUserIdEqualsSpecification<SchoolComment, ApplicationUser, int>(requestDto.UserId));
+                        .And(new CreationUserIdEqualsSpecification<SchoolComment, ApplicationUser, long>(requestDto.UserId));
                 var commentExists = await CommentExistsAsync(commentSpecification);
                 if (commentExists.Data)
                 {
                     return new(OperationResult.Failed) { Errors = [new() { Message = "Comment Exists for Current User and School", }] };
                 }
 
-                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(requestDto.UserId)
+                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(requestDto.UserId)
                     .And(new IdentifierIdEqualsSpecification<Contribution>(requestDto.SchoolId))
                     .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.SchoolComment))
                     .And(
@@ -1314,7 +1314,7 @@ namespace GamaEdtech.Application.Service
                     return new(OperationResult.Failed) { Errors = [new() { Message = "School Image not found", },] };
                 }
 
-                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(requestDto.CreationUserId)
+                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(requestDto.CreationUserId)
                     .And(new IdentifierIdEqualsSpecification<Contribution>(requestDto.ImageId))
                     .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.RemoveSchoolImage))
                     .And(
@@ -1458,7 +1458,7 @@ namespace GamaEdtech.Application.Service
                 if (requestDto.Id.HasValue)
                 {
                     var specification = new IdEqualsSpecification<Contribution, long>(requestDto.Id.Value)
-                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(requestDto.UserId))
+                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(requestDto.UserId))
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.School))
                         .And(
                             new StatusEqualsSpecification<Contribution>(Status.Draft)
@@ -1743,7 +1743,7 @@ namespace GamaEdtech.Application.Service
                     return new(OperationResult.Failed) { Errors = [new() { Message = "School not found", },] };
                 }
 
-                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(requestDto.CreationUserId)
+                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(requestDto.CreationUserId)
                     .And(new IdentifierIdEqualsSpecification<Contribution>(requestDto.SchoolId))
                     .And(
                         new StatusEqualsSpecification<Contribution>(Status.Draft)
@@ -1943,9 +1943,8 @@ LEFT JOIN ReactionAgg ra ON ra.IdentifierId = c.Id
 WHERE {where} (
     c.LikeCount <> ISNULL(ra.LikeCount, 0)
     OR c.DislikeCount <> ISNULL(ra.DislikeCount, 0)
-    OR c.LikeCount IS NULL OR c.DislikeCount IS NULL);
+    OR c.LikeCount IS NULL OR c.DislikeCount IS NULL);";
 
-                FROM SchoolComments c {where}";
                 _ = await uow.ExecuteSqlCommandAsync(query);
 
                 return new(OperationResult.Succeeded) { Data = true };
@@ -2018,7 +2017,7 @@ WHERE {where} (
 
         #region Private methods
 
-        private static async Task UpdateSchoolLastModifyDateAsync(IUnitOfWork uow, int userId, long schoolId) => _ = await uow.GetRepository<School>().GetManyQueryable(t => t.Id == schoolId).ExecuteUpdateAsync(t => t
+        private static async Task UpdateSchoolLastModifyDateAsync(IUnitOfWork uow, long userId, long schoolId) => _ = await uow.GetRepository<School>().GetManyQueryable(t => t.Id == schoolId).ExecuteUpdateAsync(t => t
             .SetProperty(p => p.LastModifyUserId, userId)
             .SetProperty(p => p.LastModifyDate, DateTimeOffset.UtcNow));
 

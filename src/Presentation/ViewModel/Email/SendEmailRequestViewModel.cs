@@ -18,7 +18,7 @@ namespace GamaEdtech.Presentation.ViewModel.Email
 
         [Display]
         [Required]
-        public IEnumerable<int>? Users { get; set; }
+        public IEnumerable<long>? Users { get; set; }
 
         [Display]
         [EmailAddress]

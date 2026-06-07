@@ -6,7 +6,7 @@ namespace GamaEdtech.Data.Dto.Identity
 
     public sealed class ApplicationUserDto : Common.Mapping.IRegister, IEnablable
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string? UserName { get; set; }
         public string? SecurityStamp { get; set; }
         public string? Email { get; set; }

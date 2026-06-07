@@ -2,7 +2,7 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 {
     public sealed class UserResponseViewModel
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string? Username { get; set; }
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }

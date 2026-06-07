@@ -7,6 +7,6 @@ namespace GamaEdtech.Data.Dto.Blog
         public long PostId { get; set; }
         public string? Comment { get; set; }
         public DateTimeOffset CreationDate { get; set; }
-        public int CreationUserId { get; set; }
+        public long CreationUserId { get; set; }
     }
 }

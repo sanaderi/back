@@ -14,7 +14,7 @@ namespace GamaEdtech.Domain.Entity.Identity
     using GamaEdtech.Domain.Enumeration;
 
     [Table(nameof(ApplicationRole))]
-    public class ApplicationRole : IdentityRole<int>, IEntity<ApplicationRole, int>
+    public class ApplicationRole : IdentityRole<long>, IEntity<ApplicationRole, long>
     {
         public ApplicationRole()
         {
@@ -23,9 +23,9 @@ namespace GamaEdtech.Domain.Entity.Identity
         }
 
         [System.ComponentModel.DataAnnotations.Key]
-        [Column(nameof(Id), DataType.Int)]
+        [Column(nameof(Id), DataType.Long)]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public override int Id { get; set; }
+        public override long Id { get; set; }
 
         [Column(nameof(Name), DataType.UnicodeString)]
         [Required]

@@ -11,7 +11,7 @@ namespace GamaEdtech.Data.Dto.Contribution
         public T? Data { get; set; }
         public long? IdentifierId { get; set; }
         public CategoryType? CategoryType { get; set; }
-        public int CreationUserId { get; set; }
+        public long CreationUserId { get; set; }
         public DateTimeOffset CreationDate { get; set; }
         public string Email { get; set; }
         public string FullName { get; set; }

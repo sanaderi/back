@@ -242,7 +242,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     var userIds = await identityService.Value.GetUserIdsAsync(new Domain.Specification.Identity.NameContainsSpecification(request.CommenterName));
                     if (userIds.Data?.Count > 0)
                     {
-                        specification = specification.And(new CreationUserIdContainsSpecification<Contribution, ApplicationUser, int>(userIds.Data));
+                        specification = specification.And(new CreationUserIdContainsSpecification<Contribution, ApplicationUser, long>(userIds.Data));
                     }
                 }
 
@@ -251,7 +251,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     var userIds = await identityService.Value.GetUserIdsAsync(new EmailEqualsSpecification(request.CommenterEmail));
                     if (userIds.Data?.Count > 0)
                     {
-                        specification = specification.And(new CreationUserIdContainsSpecification<Contribution, ApplicationUser, int>(userIds.Data));
+                        specification = specification.And(new CreationUserIdContainsSpecification<Contribution, ApplicationUser, long>(userIds.Data));
                     }
                 }
 

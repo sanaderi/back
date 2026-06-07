@@ -198,16 +198,16 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<DateTimeOffset?>("LastModifyDate")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<string>("Value")
@@ -241,8 +241,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<string>("Description")
@@ -258,8 +258,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<string>("Title")
@@ -294,12 +294,12 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("DestinationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("DestinationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("DestinationUserId");
 
-                    b.Property<int>("SourceUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("SourceUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("SourceUserId");
 
                     b.Property<byte>("Status")
@@ -342,8 +342,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<int>("LanguageId")
@@ -354,8 +354,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<string>("Name")
@@ -403,8 +403,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<string>("Data")
@@ -419,8 +419,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<byte>("Status")
@@ -463,8 +463,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("NoAnswer");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.Property<int>("Valid")
@@ -504,8 +504,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("StartDate");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id");
@@ -534,8 +534,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<string>("Description")
@@ -551,8 +551,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<string>("Title")
@@ -574,12 +574,12 @@ namespace GamaEdtech.Infrastructure.Migrations
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationRole", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("bigint")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsRequired()
@@ -611,35 +611,35 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            Id = 1L,
                             ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE3",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = 2,
+                            Id = 2L,
                             ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE4",
                             Name = "Teacher",
                             NormalizedName = "TEACHER"
                         },
                         new
                         {
-                            Id = 3,
+                            Id = 3L,
                             ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE5",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         },
                         new
                         {
-                            Id = 4,
+                            Id = 4L,
                             ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE6",
                             Name = "Advisor",
                             NormalizedName = "ADVISOR"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 5L,
                             ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE7",
                             Name = "Finance",
                             NormalizedName = "FINANCE"
@@ -666,8 +666,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("nvarchar")
                         .HasColumnName("ClaimValue");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int")
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint")
                         .HasColumnName("RoleId");
 
                     b.HasKey("Id");
@@ -679,12 +679,12 @@ namespace GamaEdtech.Infrastructure.Migrations
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUser", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("bigint")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int")
@@ -712,8 +712,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("varchar")
                         .HasColumnName("ConcurrencyStamp");
 
-                    b.Property<int?>("CoreId")
-                        .HasColumnType("int")
+                    b.Property<long?>("CoreId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CoreId");
 
                     b.Property<long>("CurrentBalance")
@@ -884,7 +884,7 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            Id = 1L,
                             AccessFailedCount = 0,
                             ConcurrencyStamp = "5BABA139-4AE5-4C47-BC65-DE4849346A17",
                             CurrentBalance = 0L,
@@ -928,8 +928,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("nvarchar")
                         .HasColumnName("ClaimValue");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id");
@@ -957,8 +957,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("nvarchar")
                         .HasColumnName("ProviderDisplayName");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.HasKey("LoginProvider", "ProviderKey");
@@ -971,12 +971,12 @@ namespace GamaEdtech.Infrastructure.Migrations
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUserRole", b =>
                 {
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int")
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint")
                         .HasColumnName("RoleId");
 
                     b.HasKey("UserId", "RoleId");
@@ -989,15 +989,15 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = 1,
-                            RoleId = 1
+                            UserId = 1L,
+                            RoleId = 1L
                         });
                 });
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUserToken", b =>
                 {
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.Property<string>("LoginProvider")
@@ -1042,16 +1042,16 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<DateTimeOffset?>("LastModifyDate")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<string>("LocalTitle")
@@ -1114,8 +1114,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("varchar")
                         .HasColumnName("UserAgent");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id");
@@ -1146,12 +1146,12 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("IsRead");
 
-                    b.Property<int>("ReceiverId")
-                        .HasColumnType("int")
+                    b.Property<long>("ReceiverId")
+                        .HasColumnType("bigint")
                         .HasColumnName("ReceiverId");
 
-                    b.Property<int>("SenderId")
-                        .HasColumnType("int")
+                    b.Property<long>("SenderId")
+                        .HasColumnType("bigint")
                         .HasColumnName("SenderId");
 
                     b.HasKey("Id");
@@ -1208,8 +1208,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("nvarchar")
                         .HasColumnName("TransactionId");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.Property<DateTimeOffset?>("VerifyDate")
@@ -1245,8 +1245,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<int>("DislikeCount")
@@ -1268,8 +1268,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<int>("LikeCount")
@@ -1340,8 +1340,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<int>("DislikeCount")
@@ -1352,8 +1352,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<int>("LikeCount")
@@ -1389,8 +1389,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<long>("PostId")
@@ -1431,16 +1431,16 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<DateTimeOffset?>("LastModifyDate")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.HasKey("Id");
@@ -1469,8 +1469,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<long>("IdentifierId")
@@ -1528,8 +1528,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<long?>("DefaultImageId")
@@ -1558,8 +1558,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<string>("LocalAddress")
@@ -1669,8 +1669,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<long>("SchoolId")
@@ -1723,8 +1723,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<int>("DislikeCount")
@@ -1747,8 +1747,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<int>("LikeCount")
@@ -1796,8 +1796,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<string>("FileId")
@@ -1818,8 +1818,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<long>("SchoolId")
@@ -1858,8 +1858,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<long>("SchoolId")
@@ -1928,16 +1928,16 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<DateTimeOffset?>("LastModifyDate")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<int>("Order")
@@ -1972,8 +1972,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<string>("Icon")
@@ -1984,8 +1984,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<string>("Name")
@@ -2037,8 +2037,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("TestId");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id");
@@ -2099,8 +2099,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("nvarchar")
                         .HasColumnName("Subject");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id");
@@ -2130,8 +2130,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int?>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<string>("FileId")
@@ -2178,16 +2178,16 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
-                    b.Property<int>("CreationUserId")
-                        .HasColumnType("int")
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreationUserId");
 
                     b.Property<DateTimeOffset?>("LastModifyDate")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("LastModifyUserId")
-                        .HasColumnType("int")
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("LastModifyUserId");
 
                     b.Property<int>("Order")
@@ -2247,8 +2247,8 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("PreviousTransactionId");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id");

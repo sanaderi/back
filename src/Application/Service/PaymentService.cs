@@ -85,7 +85,7 @@ namespace GamaEdtech.Application.Service
                 repository.Add(payment);
                 _ = await uow.SaveChangesAsync();
 
-                var email = await identityService.Value.GetUsersEmailAsync(new IdEqualsSpecification<ApplicationUser, int>(requestDto.UserId));
+                var email = await identityService.Value.GetUsersEmailAsync(new IdEqualsSpecification<ApplicationUser, long>(requestDto.UserId));
 
                 var result = await gatewayProviders.Value.FirstOrDefault(t => t.ProviderType == requestDto.Gateway)!.CreateAsync(new()
                 {

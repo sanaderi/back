@@ -6,7 +6,7 @@ namespace GamaEdtech.Data.Dto.Reaction
     {
         public required CategoryType CategoryType { get; set; }
         public long IdentifierId { get; set; }
-        public int CreationUserId { get; set; }
+        public long CreationUserId { get; set; }
         public DateTimeOffset CreationDate { get; set; }
         public bool IsLike { get; set; }
     }

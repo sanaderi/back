@@ -1,4 +1,4 @@
-﻿namespace GamaEdtech.Domain.Entity.Identity
+namespace GamaEdtech.Domain.Entity.Identity
 {
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAccess.Entities;
@@ -11,7 +11,7 @@
     using System.Diagnostics.CodeAnalysis;
 
     [Table(nameof(ApplicationRoleClaim))]
-    public class ApplicationRoleClaim : IdentityRoleClaim<int>, IEntity<ApplicationRoleClaim, int>
+    public class ApplicationRoleClaim : IdentityRoleClaim<long>, IEntity<ApplicationRoleClaim, int>
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Int)]
@@ -19,8 +19,8 @@
         public override int Id { get; set; }
 
         [Required]
-        [Column(nameof(RoleId), DataType.Int)]
-        public override int RoleId { get; set; }
+        [Column(nameof(RoleId), DataType.Long)]
+        public override long RoleId { get; set; }
 
         [StringLength(128)]
         [Column(nameof(ClaimType), DataType.String)]
@@ -36,9 +36,7 @@
         public void Configure([NotNull] EntityTypeBuilder<ApplicationRoleClaim> builder)
         {
             _ = builder.HasIndex(t => t.RoleId);
-            _ = builder.HasOne(d => d.Role)
-                .WithMany(p => p.RoleClaims)
-                .HasForeignKey(d => d.RoleId);
+            _ = builder.HasOne(d => d.Role).WithMany(p => p.RoleClaims).HasForeignKey(d => d.RoleId);
         }
     }
 }

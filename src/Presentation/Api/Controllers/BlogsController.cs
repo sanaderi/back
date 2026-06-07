@@ -290,7 +290,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 var result = await contributionService.Value.GetContributionsAsync<PostContributionDto>(new ListRequestDto<Contribution>
                 {
                     PagingDto = request.PagingDto,
-                    Specification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId())
+                    Specification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId())
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.Post)),
                 }, true);
                 return Ok<ListDataSource<PostContributionListResponseViewModel>>(new(result.Errors)
@@ -325,7 +325,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             try
             {
                 var specification = new IdEqualsSpecification<Contribution, long>(contributionId)
-                    .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId()))
+                    .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId()))
                     .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.Post));
                 var result = await contributionService.Value.GetContributionAsync<PostContributionDto>(specification);
 
