@@ -10,10 +10,9 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Common.DataAccess.Specification.Impl;
     using GamaEdtech.Common.DataAccess.UnitOfWork;
-    using GamaEdtech.Common.HttpProvider;
     using GamaEdtech.Common.Service;
+    using GamaEdtech.Common.Service.Factory;
     using GamaEdtech.Data.Dto.Payment;
-    using GamaEdtech.Data.Dto.Provider.PaymentGateway;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
@@ -28,8 +27,8 @@ namespace GamaEdtech.Application.Service
     using static GamaEdtech.Common.Core.Constants;
 
     public class PaymentService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<PaymentService>> localizer
-        , Lazy<ILogger<PaymentService>> logger, Lazy<IEnumerable<IPaymentGatewayProvider>> gatewayProviders, Lazy<IConfiguration> configuration, Lazy<ITransactionService> transactionService
-        , Lazy<IHttpProvider> httpProvider, Lazy<IIdentityService> identityService)
+        , Lazy<ILogger<PaymentService>> logger, Lazy<IGenericFactory<IPaymentGatewayProvider, PaymentGateway>> gatewayFactory, Lazy<IConfiguration> configuration, Lazy<ITransactionService> transactionService
+        , Lazy<IIdentityService> identityService, Lazy<IGenericFactory<ICurrencyConverterProvider, Currency>> currencyConverterFactory)
         : LocalizableServiceBase<PaymentService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IPaymentService
     {
         public async Task<ResultData<ListDataSource<PaymentDto>>> GetPaymentsAsync(ListRequestDto<Payment>? requestDto = null)
@@ -87,7 +86,7 @@ namespace GamaEdtech.Application.Service
 
                 var email = await identityService.Value.GetUsersEmailAsync(new IdEqualsSpecification<ApplicationUser, long>(requestDto.UserId));
 
-                var result = await gatewayProviders.Value.FirstOrDefault(t => t.ProviderType == requestDto.Gateway)!.CreateAsync(new()
+                var result = await gatewayFactory.Value.GetProvider(requestDto.Gateway)!.CreateAsync(new()
                 {
                     Amount = requestDto.Amount,
                     Currency = requestDto.Currency,
@@ -155,7 +154,7 @@ namespace GamaEdtech.Application.Service
                 };
             }
 
-            var result = await gatewayProviders.Value.FirstOrDefault(t => t.ProviderType == payment.Gateway)!.VerifyAsync(new()
+            var result = await gatewayFactory.Value.GetProvider(payment.Gateway)!.VerifyAsync(new()
             {
                 PaymentId = requestDto.Id,
                 Amount = payment.Amount,
@@ -174,7 +173,11 @@ namespace GamaEdtech.Application.Service
                 return new(result.OperationResult) { Errors = result.Errors, };
             }
 
-            var points = await GetPointsAsync(payment.Amount, payment.Currency, result.Data!.Mint);
+            var points = await currencyConverterFactory.Value.GetProvider(payment.Currency)!.GetPointsAsync(new()
+            {
+                Amount = payment.Amount,
+                Mint = result.Data!.Mint,
+            });
             if (points.OperationResult is not OperationResult.Succeeded)
             {
                 return new(points.OperationResult) { Errors = points.Errors, };
@@ -193,7 +196,7 @@ namespace GamaEdtech.Application.Service
                 UserId = payment.UserId,
                 Description = "Payment",
                 IdentifierId = requestDto.Id,
-                Points = points.Data,
+                Points = points.Data!.Point,
             });
 
             trn.Complete();
@@ -224,42 +227,6 @@ namespace GamaEdtech.Application.Service
             {
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
-            }
-        }
-
-        private async Task<ResultData<long>> GetPointsAsync(decimal amount, Currency currency, string? mint)
-        {
-            try
-            {
-                const long pointMetrics = 1000000;
-                if (currency == Currency.GET)
-                {
-                    return new(OperationResult.Succeeded)
-                    {
-                        Data = (long)(amount * 2 * pointMetrics),
-                    };
-                }
-
-                var response = await httpProvider.Value.GetAsync<GamaTrainConvertRequest, GamaTrainConvertResponse, GamaTrainConvertRequest>(new()
-                {
-                    Uri = configuration.Value.GetValue<string>("PaymentGateway:ConvertUri"),
-                    Request = new(),
-                    Body = new()
-                    {
-                        Amount = (long)amount,
-                        SourceMint = mint,
-                        DestinationMint = configuration.Value.GetValue<string?>("PaymentGateway:$GetMint"),
-                    },
-                });
-
-                return response is null
-                    ? new(OperationResult.Failed) { Errors = [new() { Message = Localizer.Value["GeneralError"], }] }
-                    : new(OperationResult.Succeeded) { Data = (long)response.Amount * pointMetrics, };
-            }
-            catch (Exception exc)
-            {
-                Logger.Value.LogException(exc);
-                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, }] };
             }
         }
     }
