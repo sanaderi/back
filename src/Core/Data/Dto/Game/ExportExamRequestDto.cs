@@ -4,7 +4,7 @@ namespace GamaEdtech.Data.Dto.Game
 
     public sealed class ExportExamRequestDto
     {
-        public required int UserId { get; set; }
+        public required long UserId { get; set; }
         public required string? Url { get; set; }
         public required string? SecretKey { get; set; }
         public required long ExamId { get; set; }

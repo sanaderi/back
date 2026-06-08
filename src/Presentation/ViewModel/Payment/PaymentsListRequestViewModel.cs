@@ -13,7 +13,7 @@ namespace GamaEdtech.Presentation.ViewModel.Payment
         public PagingDto? PagingDto { get; set; } = new() { PageFilter = new(), };
 
         [Display]
-        public int? UserId { get; set; }
+        public long? UserId { get; set; }
 
         public long? IdentifierId { get; set; }
 

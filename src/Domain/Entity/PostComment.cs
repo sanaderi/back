@@ -12,7 +12,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(PostComment))]
-    public class PostComment : VersionableEntity<ApplicationUser, int, int?>, IEntity<PostComment, long>, IPostId
+    public class PostComment : VersionableEntity<ApplicationUser, long, long?>, IEntity<PostComment, long>, IPostId
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

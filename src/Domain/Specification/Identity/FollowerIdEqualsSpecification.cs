@@ -5,7 +5,7 @@ namespace GamaEdtech.Domain.Specification.Identity
     using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Domain.Entity;
 
-    public sealed class FollowerIdEqualsSpecification(int followerId) : SpecificationBase<Connection>
+    public sealed class FollowerIdEqualsSpecification(long followerId) : SpecificationBase<Connection>
     {
         public override Expression<Func<Connection, bool>> Expression() => (t) => t.SourceUserId == followerId && t.Status == Enumeration.ConnectionStatus.Confirmed;
     }

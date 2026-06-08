@@ -12,7 +12,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(ContentLocalization))]
-    public class ContentLocalization : VersionableEntity<ApplicationUser, int, int?>, IEntity<ContentLocalization, long>
+    public class ContentLocalization : VersionableEntity<ApplicationUser, long, long?>, IEntity<ContentLocalization, long>
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

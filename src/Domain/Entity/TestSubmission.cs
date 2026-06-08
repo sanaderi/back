@@ -11,7 +11,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(TestSubmission))]
-    public class TestSubmission : IEntity<TestSubmission, long>, ICreationDate, IUserId<int>
+    public class TestSubmission : IEntity<TestSubmission, long>, ICreationDate, IUserId<long>
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]
@@ -19,9 +19,9 @@ namespace GamaEdtech.Domain.Entity
         [Required]
         public long Id { get; set; }
 
-        [Column(nameof(UserId), DataType.Int)]
+        [Column(nameof(UserId), DataType.Long)]
         [Required]
-        public int UserId { get; set; }
+        public long UserId { get; set; }
         public ApplicationUser User { get; set; }
 
         [Column(nameof(TestId), DataType.Long)]

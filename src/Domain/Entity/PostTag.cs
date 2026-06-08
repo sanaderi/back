@@ -11,7 +11,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(PostTag))]
-    public class PostTag : CreationableEntity<ApplicationUser, int>, IEntity<PostTag, long>
+    public class PostTag : CreationableEntity<ApplicationUser, long>, IEntity<PostTag, long>
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

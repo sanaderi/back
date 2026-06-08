@@ -11,7 +11,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Grade))]
-    public class Grade : VersionableEntity<ApplicationUser, int, int?>, IEntity<Grade, int>, IContentLocalizeable
+    public class Grade : VersionableEntity<ApplicationUser, long, long?>, IEntity<Grade, int>, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Int)]

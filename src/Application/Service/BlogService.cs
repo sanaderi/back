@@ -165,7 +165,7 @@ namespace GamaEdtech.Application.Service
                 {
                     var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.Post)
                         .And(new IdentifierIdEqualsSpecification<Reaction>(post.Id))
-                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(HttpContextAccessor.Value.HttpContext.UserId()));
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, long>(HttpContextAccessor.Value.HttpContext.UserId()));
                     var reaction = await reactionService.Value.GetReactionsAsync(spec);
 
                     likedByCurrentUser = reaction.Data?.FirstOrDefault()?.Like > 0;
@@ -212,7 +212,7 @@ namespace GamaEdtech.Application.Service
                 if (requestDto.ContributionId.HasValue)
                 {
                     var specification = new IdEqualsSpecification<Contribution, long>(requestDto.ContributionId.Value)
-                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(requestDto.UserId))
+                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(requestDto.UserId))
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.Post))
                         .AndNot(new StatusEqualsSpecification<Contribution>(Status.Deleted));
                     var data = await contributionService.Value.ExistsContributionAsync(specification);
@@ -731,12 +731,12 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> IsCreatorOfPostAsync(long postId, int userId)
+        public async Task<ResultData<bool>> IsCreatorOfPostAsync(long postId, long userId)
         {
             try
             {
                 var specification = new IdEqualsSpecification<Post, long>(postId)
-                    .And(new CreationUserIdEqualsSpecification<Post, ApplicationUser, int>(userId));
+                    .And(new CreationUserIdEqualsSpecification<Post, ApplicationUser, long>(userId));
 
                 var exists = await PostExistsAsync(specification);
 
@@ -808,7 +808,7 @@ namespace GamaEdtech.Application.Service
                     var ids = lst.Select(t => t.Id);
                     var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.PostComment)
                         .And(new IdentifierIdContainsSpecification<Reaction>(ids))
-                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(HttpContextAccessor.Value.HttpContext.UserId()));
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, long>(HttpContextAccessor.Value.HttpContext.UserId()));
                     var reactions = await reactionService.Value.GetReactionsAsync(spec);
                     if (reactions.Data is not null)
                     {
@@ -916,14 +916,14 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var commentSpecification = new PostIdEqualsSpecification<PostComment>(requestDto.PostId)
-                        .And(new CreationUserIdEqualsSpecification<PostComment, ApplicationUser, int>(requestDto.UserId));
+                        .And(new CreationUserIdEqualsSpecification<PostComment, ApplicationUser, long>(requestDto.UserId));
                 var commentExists = await CommentExistsAsync(commentSpecification);
                 if (commentExists.Data)
                 {
                     return new(OperationResult.Failed) { Errors = [new() { Message = "Comment Exists for Current User and Post", }] };
                 }
 
-                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(requestDto.UserId)
+                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(requestDto.UserId)
                     .And(new IdentifierIdEqualsSpecification<Contribution>(requestDto.PostId))
                     .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.PostComment))
                     .And(
@@ -1067,11 +1067,24 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var where = postId.HasValue ? $"WHERE p.Id={postId.Value}" : "";
-                var query = $@"UPDATE p SET
-                    LikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.Post.Value} AND r.IdentifierId=p.Id AND r.IsLike=1)
-                    ,DislikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.Post.Value} AND r.IdentifierId=p.Id AND r.IsLike=0)
-                FROM Posts p {where}";
+                var where = postId.HasValue ? $" c.Id={postId.Value} AND " : "";
+                var query = $@"
+;WITH ReactionAgg AS
+(
+    SELECT r.IdentifierId, SUM(CASE WHEN r.IsLike = 1 THEN 1 ELSE 0 END) AS LikeCount, SUM(CASE WHEN r.IsLike = 0 THEN 1 ELSE 0 END) AS DislikeCount
+    FROM Reactions r WHERE r.CategoryType = {CategoryType.Post.Value} GROUP BY r.IdentifierId
+)
+UPDATE c
+SET
+    c.LikeCount    = ISNULL(ra.LikeCount, 0),
+    c.DislikeCount = ISNULL(ra.DislikeCount, 0)
+FROM Posts c
+LEFT JOIN ReactionAgg ra ON ra.IdentifierId = c.Id
+WHERE {where} (
+    c.LikeCount <> ISNULL(ra.LikeCount, 0)
+    OR c.DislikeCount <> ISNULL(ra.DislikeCount, 0)
+    OR c.LikeCount IS NULL OR c.DislikeCount IS NULL);";
+
                 _ = await uow.ExecuteSqlCommandAsync(query);
 
                 return new(OperationResult.Succeeded) { Data = true };
@@ -1088,11 +1101,24 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var where = postCommentId.HasValue ? $"WHERE c.Id={postCommentId.Value}" : "";
-                var query = $@"UPDATE c SET
-                    LikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.PostComment.Value} AND r.IdentifierId=c.Id AND r.IsLike=1)
-                    ,DislikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.PostComment.Value} AND r.IdentifierId=c.Id AND r.IsLike=0)
-                FROM PostComments c {where}";
+                var where = postCommentId.HasValue ? $" c.Id={postCommentId.Value} AND " : "";
+                var query = $@"
+;WITH ReactionAgg AS
+(
+    SELECT r.IdentifierId, SUM(CASE WHEN r.IsLike = 1 THEN 1 ELSE 0 END) AS LikeCount, SUM(CASE WHEN r.IsLike = 0 THEN 1 ELSE 0 END) AS DislikeCount
+    FROM Reactions r WHERE r.CategoryType = {CategoryType.PostComment.Value} GROUP BY r.IdentifierId
+)
+UPDATE c
+SET
+    c.LikeCount    = ISNULL(ra.LikeCount, 0),
+    c.DislikeCount = ISNULL(ra.DislikeCount, 0)
+FROM PostComments c
+LEFT JOIN ReactionAgg ra ON ra.IdentifierId = c.Id
+WHERE {where} (
+    c.LikeCount <> ISNULL(ra.LikeCount, 0)
+    OR c.DislikeCount <> ISNULL(ra.DislikeCount, 0)
+    OR c.LikeCount IS NULL OR c.DislikeCount IS NULL);";
+
                 _ = await uow.ExecuteSqlCommandAsync(query);
 
                 return new(OperationResult.Succeeded) { Data = true };

@@ -45,7 +45,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
 
                 if (request.UserId.HasValue)
                 {
-                    var spec = new UserIdEqualsSpecification<Transaction, int>(request.UserId.Value);
+                    var spec = new UserIdEqualsSpecification<Transaction, long>(request.UserId.Value);
                     specification = specification is null ? spec : specification.And(spec);
                 }
 

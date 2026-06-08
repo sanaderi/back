@@ -106,9 +106,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpGet("users/{id:int}/followers"), Produces(typeof(ApiResponse<ListDataSource<FollowViewModel>>))]
+        [HttpGet("users/{id:long}/followers"), Produces(typeof(ApiResponse<ListDataSource<FollowViewModel>>))]
         [Display(Name = "Get List of Followers of a User")]
-        public async Task<IActionResult<ListDataSource<FollowViewModel>>> Followers([FromRoute] int id, [NotNull, FromQuery] FollowersRequestViewModel request)
+        public async Task<IActionResult<ListDataSource<FollowViewModel>>> Followers([FromRoute] long id, [NotNull, FromQuery] FollowersRequestViewModel request)
         {
             try
             {
@@ -140,9 +140,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpGet("users/{id:int}/followings"), Produces(typeof(ApiResponse<ListDataSource<FollowViewModel>>))]
+        [HttpGet("users/{id:long}/followings"), Produces(typeof(ApiResponse<ListDataSource<FollowViewModel>>))]
         [Display(Name = "Get List of Users that a user follow")]
-        public async Task<IActionResult<ListDataSource<FollowViewModel>>> Followings([FromRoute] int id, [NotNull, FromQuery] FollowingsRequestViewModel request)
+        public async Task<IActionResult<ListDataSource<FollowViewModel>>> Followings([FromRoute] long id, [NotNull, FromQuery] FollowingsRequestViewModel request)
         {
             try
             {
@@ -174,9 +174,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpPost("users/{id:int}/follow"), Produces(typeof(ApiResponse<bool>))]
+        [HttpPost("users/{id:long}/follow"), Produces(typeof(ApiResponse<bool>))]
         [Display(Name = "follow a user")]
-        public async Task<IActionResult<bool>> Follow([FromRoute] int id, [NotNull] FollowRequestViewModel request)
+        public async Task<IActionResult<bool>> Follow([FromRoute] long id, [NotNull] FollowRequestViewModel request)
         {
             try
             {
@@ -200,9 +200,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpPost("users/{id:int}/unfollow"), Produces(typeof(ApiResponse<bool>))]
+        [HttpPost("users/{id:long}/unfollow"), Produces(typeof(ApiResponse<bool>))]
         [Display(Name = "Unfollow a user")]
-        public async Task<IActionResult<bool>> UnFollow([FromRoute] int id, [NotNull] UnFollowRequestViewModel request)
+        public async Task<IActionResult<bool>> UnFollow([FromRoute] long id, [NotNull] UnFollowRequestViewModel request)
         {
             try
             {
@@ -226,9 +226,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
             }
         }
 
-        [HttpPatch("users/{id:int}/subscriptions/toggle"), Produces(typeof(ApiResponse<bool>))]
+        [HttpPatch("users/{id:long}/subscriptions/toggle"), Produces(typeof(ApiResponse<bool>))]
         [Display(Name = "Subscribe/UnSubscribe to activity feed of a user")]
-        public async Task<IActionResult<bool>> Subscribe([FromRoute] int id)
+        public async Task<IActionResult<bool>> Subscribe([FromRoute] long id)
         {
             try
             {

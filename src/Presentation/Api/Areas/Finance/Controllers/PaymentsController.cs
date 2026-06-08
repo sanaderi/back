@@ -38,7 +38,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Finance.Controllers
 
                 if (request.UserId.HasValue)
                 {
-                    var spec = new UserIdEqualsSpecification<Payment, int>(request.UserId.Value);
+                    var spec = new UserIdEqualsSpecification<Payment, long>(request.UserId.Value);
                     specification = specification is null ? spec : specification.And(spec);
                 }
 

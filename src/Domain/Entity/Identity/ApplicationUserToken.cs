@@ -1,4 +1,4 @@
-﻿namespace GamaEdtech.Domain.Entity.Identity
+namespace GamaEdtech.Domain.Entity.Identity
 {
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAccess.Entities;
@@ -11,11 +11,11 @@
     using System.Diagnostics.CodeAnalysis;
 
     [Table(nameof(ApplicationUserToken))]
-    public class ApplicationUserToken : IdentityUserToken<int>, IEntity<ApplicationUserToken, int>
+    public class ApplicationUserToken : IdentityUserToken<long>, IEntity<ApplicationUserToken, long>
     {
         [Required]
-        [Column(nameof(UserId), DataType.Int)]
-        public override int UserId { get; set; }
+        [Column(nameof(UserId), DataType.Long)]
+        public override long UserId { get; set; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         [Column(nameof(LoginProvider), DataType.UnicodeString)]
@@ -35,7 +35,7 @@
 
         public ApplicationUser? User { get; set; }
 
-        int IIdentifiable<int>.Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        long IIdentifiable<long>.Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public void Configure([NotNull] EntityTypeBuilder<ApplicationUserToken> builder)
         {

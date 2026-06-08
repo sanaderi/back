@@ -11,7 +11,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(SchoolBoard))]
-    public class SchoolBoard : CreationableEntity<ApplicationUser, int>, IEntity<SchoolBoard, long>, ISchoolId
+    public class SchoolBoard : CreationableEntity<ApplicationUser, long>, IEntity<SchoolBoard, long>, ISchoolId
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

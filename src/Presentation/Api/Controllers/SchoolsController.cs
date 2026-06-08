@@ -458,7 +458,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             {
                 var specification = new ContributionIdEqualsSpecification(contributionId)
                     .And(new SchoolIdEqualsSpecification<SchoolImage>(schoolId))
-                    .And(new CreationUserIdEqualsSpecification<SchoolImage, ApplicationUser, int>(User.UserId()));
+                    .And(new CreationUserIdEqualsSpecification<SchoolImage, ApplicationUser, long>(User.UserId()));
                 var result = await schoolService.Value.RemoveSchoolImageAsync(specification);
                 return Ok(new ApiResponse<bool>
                 {
@@ -514,7 +514,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     PagingDto = request.PagingDto,
                     Specification = new IdentifierIdEqualsSpecification<Contribution>(schoolId)
-                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId()))
+                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId()))
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.School)),
                 });
                 if (result.Data.List is null)
@@ -558,7 +558,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             {
                 var specification = new IdEqualsSpecification<Contribution, long>(contributionId)
                     .And(new IdentifierIdEqualsSpecification<Contribution>(schoolId))
-                    .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId()))
+                    .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId()))
                     .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.School));
                 var result = await contributionService.Value.GetContributionAsync<SchoolContributionDto>(specification);
 
@@ -774,7 +774,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     PagingDto = request.PagingDto,
                     Specification = new IdentifierIdEqualsSpecification<Contribution>(schoolId)
-                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId()))
+                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId()))
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.SchoolIssues)),
                 }, false);
 

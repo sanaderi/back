@@ -12,7 +12,7 @@ namespace GamaEdtech.Presentation.ViewModel.Transaction
         public bool? IsDebit { get; set; }
 
         [Display]
-        public int? UserId { get; set; }
+        public long? UserId { get; set; }
 
         [Display]
         public string? Name { get; set; }

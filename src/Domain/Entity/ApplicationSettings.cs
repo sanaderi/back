@@ -13,7 +13,7 @@ namespace GamaEdtech.Domain.Entity
 
     [Table(nameof(ApplicationSettings))]
     [Audit((int)Constants.EntityType.ApplicationSetting)]
-    public class ApplicationSettings : VersionableEntity<ApplicationUser, int, int?>, IEntity<ApplicationSettings, string>
+    public class ApplicationSettings : VersionableEntity<ApplicationUser, long, long?>, IEntity<ApplicationSettings, string>
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.String)]

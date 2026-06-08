@@ -177,7 +177,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     return Ok<ManageTicketResponseViewModel>(new(new Error { Message = "Invalid Captcha" }));
                 }
 
-                int? userId = User.Identity?.IsAuthenticated == true ? User.UserId() : null;
+                long? userId = User.Identity?.IsAuthenticated == true ? User.UserId() : null;
                 var result = await ticketService.Value.CreateTicketAsync(new()
                 {
                     Body = request.Body,

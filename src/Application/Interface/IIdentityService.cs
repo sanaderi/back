@@ -17,11 +17,11 @@ namespace GamaEdtech.Application.Interface
         Task<ResultData<ListDataSource<ApplicationUserDto>>> GetUsersAsync(ListRequestDto<ApplicationUser>? requestDto = null);
         Task<ResultData<IEnumerable<ApplicationRoleDto>>> GetRolesAsync(ISpecification<ApplicationRoleDto>? specification = null);
         Task<ResultData<ApplicationUserDto>> GetUserAsync([NotNull] ISpecification<ApplicationUser> specification);
-        Task<ResultData<List<int>>> GetUserIdsAsync([NotNull] ISpecification<ApplicationUser> specification);
+        Task<ResultData<List<long>>> GetUserIdsAsync([NotNull] ISpecification<ApplicationUser> specification);
         Task<ResultData<List<string?>>> GetUsersEmailAsync([NotNull] ISpecification<ApplicationUser> specification);
-        Task<ResultData<(int Id, string? FullName)?>> GetUserFullNameAsync([NotNull] ISpecification<ApplicationUser> specification);
-        Task<ResultData<ICollection<string>>> GetUserRolesAsync([NotNull] int userId);
-        Task<ResultData<bool>> UserIsInRoleAsync([NotNull] int userId, [NotNull] string role);
+        Task<ResultData<(long Id, string? FullName)?>> GetUserFullNameAsync([NotNull] ISpecification<ApplicationUser> specification);
+        Task<ResultData<ICollection<string>>> GetUserRolesAsync([NotNull] long userId);
+        Task<ResultData<bool>> UserIsInRoleAsync([NotNull] long userId, [NotNull] string role);
         Task<ResultData<AuthenticationResponseDto>> AuthenticateAsync([NotNull] AuthenticationRequestDto requestDto);
         Task<ResultData<bool>> RegisterAsync([NotNull] RegistrationRequestDto requestDto);
         Task SendRegistrationEmailAsync([NotNull] RegistrationEmailRequestDto requestDto);
@@ -42,7 +42,7 @@ namespace GamaEdtech.Application.Interface
         Task<ResultData<ProfileSettingsDto>> GetProfileSettingsAsync([NotNull] ISpecification<ApplicationUser> specification);
         Task<ResultData<bool>> ManageProfileSettingsAsync([NotNull] ManageProfileSettingsRequestDto requestDto);
         Task<ResultData<string>> GenerateReferralUserAsync();
-        Task<ResultData<bool>> HasClaimAsync(int userId, SystemClaim claims);
+        Task<ResultData<bool>> HasClaimAsync(long userId, SystemClaim claims);
         Task<ResultData<List<UserPointsDto>>> GetTop100UsersAsync(Top100UsersRequestDto? requestDto);
         Task<ResultData<GenerateUserTokenResponseDto>> GenerateTokenByCoreTokenAsync([NotNull] GenerateTokenByCoreTokenRequestDto requestDto);
         Task<ResultData<Void>> AddLoginHistoryAsync([NotNull] LoginHistoryRequestDto requestDto);

@@ -349,7 +349,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         {
             try
             {
-                var result = await identityService.Value.GetProfileSettingsAsync(new IdEqualsSpecification<ApplicationUser, int>(User.UserId()));
+                var result = await identityService.Value.GetProfileSettingsAsync(new IdEqualsSpecification<ApplicationUser, long>(User.UserId()));
 
                 return Ok<ProfileSettingsResponseViewModel>(new(result.Errors)
                 {
@@ -643,7 +643,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     return Ok<bool>(new(authenticateResult.Errors));
                 }
 
-                var result = await identityService.Value.InitializeDeletingAccountAsync(new IdEqualsSpecification<ApplicationUser, int>(User.UserId()));
+                var result = await identityService.Value.InitializeDeletingAccountAsync(new IdEqualsSpecification<ApplicationUser, long>(User.UserId()));
 
                 return Ok<bool>(new(result.Errors)
                 {
@@ -676,7 +676,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     return Ok<bool>(new(authenticateResult.Errors));
                 }
 
-                var result = await identityService.Value.RecoverAccountAsync(new IdEqualsSpecification<ApplicationUser, int>(User.UserId()));
+                var result = await identityService.Value.RecoverAccountAsync(new IdEqualsSpecification<ApplicationUser, long>(User.UserId()));
 
                 return Ok<bool>(new(result.Errors)
                 {
