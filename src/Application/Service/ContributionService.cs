@@ -377,7 +377,7 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> IsCreatorOfContributionAsync(long contributionId, int userId)
+        public async Task<ResultData<bool>> IsCreatorOfContributionAsync(long contributionId, long userId)
         {
             try
             {

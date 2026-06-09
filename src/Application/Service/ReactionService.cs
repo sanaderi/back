@@ -65,18 +65,20 @@ namespace GamaEdtech.Application.Service
 
                 var specification = new CategoryTypeEqualsSpecification<Reaction>(requestDto.CategoryType)
                     .And(new IdentifierIdEqualsSpecification<Reaction>(requestDto.IdentifierId))
-                    .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(requestDto.CreationUserId));
+                    .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, long>(requestDto.CreationUserId));
 
                 var reaction = await repository.GetAsync(specification);
                 if (reaction is not null)
                 {
-                    if (reaction.IsLike != requestDto.IsLike)
+                    if (reaction.IsLike == requestDto.IsLike)
                     {
-                        reaction.IsLike = requestDto.IsLike;
-                        reaction.CreationDate = requestDto.CreationDate;
-
-                        _ = repository.Update(reaction);
+                        return new(OperationResult.NotValid) { Errors = [new() { Message = Localizer.Value["DuplicateReaction"], }] };
                     }
+
+                    reaction.IsLike = requestDto.IsLike;
+                    reaction.CreationDate = requestDto.CreationDate;
+
+                    _ = repository.Update(reaction);
                 }
                 else
                 {

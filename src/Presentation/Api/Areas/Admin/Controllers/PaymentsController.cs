@@ -41,7 +41,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
 
                 if (request.UserId.HasValue)
                 {
-                    var spec = new UserIdEqualsSpecification<Payment, int>(request.UserId.Value);
+                    var spec = new UserIdEqualsSpecification<Payment, long>(request.UserId.Value);
                     specification = specification is null ? spec : specification.And(spec);
                 }
 
@@ -131,6 +131,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     t.FirstName,
                     t.LastName,
                     t.City,
+                    t.State,
+                    t.Country,
                     t.Amount,
                     Currency = t.Currency.Name,
                     Status = t.Status.Name,

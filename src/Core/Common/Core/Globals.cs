@@ -374,12 +374,12 @@ namespace GamaEdtech.Common.Core
 
         public static string? UserAgent(this HttpContext? httpContext) => httpContext?.Request.Headers.UserAgent.ToString();
 
-        public static int UserId(this HttpContext? httpContext) => httpContext.UserId<int>();
+        public static long UserId(this HttpContext? httpContext) => httpContext.UserId<long>();
 
         public static T? UserId<T>(this HttpContext? httpContext)
             => (httpContext?.User).UserId<T>();
 
-        public static int UserId(this ClaimsPrincipal? claimsPrincipal) => claimsPrincipal.UserId<int>();
+        public static long UserId(this ClaimsPrincipal? claimsPrincipal) => claimsPrincipal.UserId<long>();
 
         public static T? UserId<T>(this ClaimsPrincipal? claimsPrincipal)
             => claimsPrincipal is null ? default : claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier).ValueOf<T>();

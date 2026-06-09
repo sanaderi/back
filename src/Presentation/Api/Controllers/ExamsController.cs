@@ -16,11 +16,11 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [Permission(policy: null)]
     public class ExamsController(Lazy<ILogger<ExamsController>> logger, Lazy<IExamService> examService)
         : ApiControllerBase<ExamsController>(logger)
     {
         [HttpGet("export"), Produces(typeof(IActionResult))]
-        [Permission(policy: null)]
         public async Task<IActionResult> Export([FromHeader(Name = "SecretKey")] string secretKey, [NotNull][FromQuery] ExportExamRequestViewModel request)
         {
             try

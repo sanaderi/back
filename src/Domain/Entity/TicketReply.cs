@@ -27,8 +27,8 @@ namespace GamaEdtech.Domain.Entity
         public long TicketId { get; set; }
         public Ticket Ticket { get; set; }
 
-        [Column(nameof(CreationUserId), DataType.Int)]
-        public int? CreationUserId { get; set; }
+        [Column(nameof(CreationUserId), DataType.Long)]
+        public long? CreationUserId { get; set; }
         public ApplicationUser? CreationUser { get; set; }
 
         [Column(nameof(CreationDate), DataType.DateTimeOffset)]

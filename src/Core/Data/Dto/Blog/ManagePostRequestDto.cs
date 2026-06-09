@@ -9,7 +9,7 @@ namespace GamaEdtech.Data.Dto.Blog
     public sealed class ManagePostRequestDto
     {
         public long? Id { get; set; }
-        public int CreationUserId { get; set; }
+        public long CreationUserId { get; set; }
         public DateTimeOffset CreationDate { get; set; }
         public string? Title { get; set; }
         public string? Slug { get; set; }

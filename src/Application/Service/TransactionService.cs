@@ -225,7 +225,7 @@ namespace GamaEdtech.Application.Service
         {
             IUnitOfWork? uow = null;
             IRepository<Transaction, long>? repository = null;
-            IRepository<ApplicationUser, int>? userRepository = null;
+            IRepository<ApplicationUser, long>? userRepository = null;
 
             var result = await SaveInternalAsync();
             return result.OperationResult switch
@@ -241,7 +241,7 @@ namespace GamaEdtech.Application.Service
                 {
                     uow ??= UnitOfWorkProvider.Value.CreateUnitOfWork();
                     repository ??= uow.GetRepository<Transaction>();
-                    userRepository ??= uow.GetRepository<ApplicationUser, int>();
+                    userRepository ??= uow.GetRepository<ApplicationUser>();
 
                     using var trn = uow.CreateTransactionScope();
 

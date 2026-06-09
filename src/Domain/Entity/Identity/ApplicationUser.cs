@@ -16,9 +16,9 @@ namespace GamaEdtech.Domain.Entity.Identity
 
     [Table(nameof(ApplicationUser))]
     [Audit((int)Common.Core.Constants.EntityType.ApplicationUser)]
-    public class ApplicationUser : IdentityUser<int>, IEntity<ApplicationUser, int>, IEnablable
+    public class ApplicationUser : IdentityUser<long>, IEntity<ApplicationUser, long>, IEnablable
     {
-        public const int DefaultUserId = 1;
+        public const long DefaultUserId = 1;
 
         public ApplicationUser()
         {
@@ -36,9 +36,9 @@ namespace GamaEdtech.Domain.Entity.Identity
 
         [System.ComponentModel.DataAnnotations.Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Column(nameof(Id), DataType.Int)]
+        [Column(nameof(Id), DataType.Long)]
         [Required]
-        public override int Id { get; set; }
+        public override long Id { get; set; }
 
         [Column(nameof(UserName), DataType.UnicodeString)]
         [StringLength(256)]
@@ -145,8 +145,8 @@ namespace GamaEdtech.Domain.Entity.Identity
         [Column(nameof(Group), DataType.Int)]
         public int? Group { get; set; }
 
-        [Column(nameof(CoreId), DataType.Int)]
-        public int? CoreId { get; set; }
+        [Column(nameof(CoreId), DataType.Long)]
+        public long? CoreId { get; set; }
 
         [Column(nameof(CurrentBalance), DataType.Long)]
         [Required]

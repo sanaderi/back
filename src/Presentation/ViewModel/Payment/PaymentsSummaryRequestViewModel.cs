@@ -9,7 +9,7 @@ namespace GamaEdtech.Presentation.ViewModel.Payment
     public sealed class PaymentsSummaryRequestViewModel
     {
         [Display]
-        public int? UserId { get; set; }
+        public long? UserId { get; set; }
 
         [Display]
         public DateOnly? StartDate { get; set; }

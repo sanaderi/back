@@ -12,19 +12,17 @@ namespace GamaEdtech.Domain.Entity.Identity
     using System.Diagnostics.CodeAnalysis;
 
     [Table(nameof(ApplicationUserLogin))]
-    public class ApplicationUserLogin : IdentityUserLogin<int>, IEntity<ApplicationUserLogin, int>
+    public class ApplicationUserLogin : IdentityUserLogin<long>, IEntity<ApplicationUserLogin, long>
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         [StringLength(128)]
         [Required]
         [Column(nameof(LoginProvider), DataType.UnicodeString)]
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public override string LoginProvider { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         [StringLength(128)]
         [Required]
         [Column(nameof(ProviderKey), DataType.UnicodeString)]
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public override string ProviderKey { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
@@ -33,12 +31,11 @@ namespace GamaEdtech.Domain.Entity.Identity
         public override string? ProviderDisplayName { get; set; }
 
         [Required]
-        [Column(nameof(UserId), DataType.Int)]
-        public override int UserId { get; set; }
-
+        [Column(nameof(UserId), DataType.Long)]
+        public override long UserId { get; set; }
         public required ApplicationUser User { get; set; }
 
-        int IIdentifiable<int>.Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        long IIdentifiable<long>.Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public void Configure([NotNull] EntityTypeBuilder<ApplicationUserLogin> builder)
         {

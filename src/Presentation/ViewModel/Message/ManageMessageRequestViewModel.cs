@@ -10,6 +10,6 @@ namespace GamaEdtech.Presentation.ViewModel.Message
 
         [Display]
         [Required]
-        public int? ConnectionId { get; set; }
+        public long? ConnectionId { get; set; }
     }
 }

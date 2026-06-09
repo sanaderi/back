@@ -20,14 +20,14 @@ namespace GamaEdtech.Domain.Entity
         [Required]
         public long Id { get; set; }
 
-        [Column(nameof(SenderId), DataType.Int)]
+        [Column(nameof(SenderId), DataType.Long)]
         [Required]
-        public int SenderId { get; set; }
+        public long SenderId { get; set; }
         public ApplicationUser Sender { get; set; }
 
-        [Column(nameof(ReceiverId), DataType.Int)]
+        [Column(nameof(ReceiverId), DataType.Long)]
         [Required]
-        public int ReceiverId { get; set; }
+        public long ReceiverId { get; set; }
         public ApplicationUser Receiver { get; set; }
 
         [Column(nameof(CreationDate), DataType.DateTimeOffset)]

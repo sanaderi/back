@@ -10,7 +10,7 @@ namespace GamaEdtech.Data.Dto.School
         public required ImageFileType FileType { get; set; }
         public long SchoolId { get; set; }
         public DateTimeOffset CreationDate { get; set; }
-        public int CreationUserId { get; set; }
+        public long CreationUserId { get; set; }
         public long? TagId { get; set; }
         public bool IsDefault { get; set; }
     }

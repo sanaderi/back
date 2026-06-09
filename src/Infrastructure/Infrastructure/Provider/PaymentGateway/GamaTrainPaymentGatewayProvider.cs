@@ -124,41 +124,5 @@ namespace GamaEdtech.Infrastructure.Provider.PaymentGateway
                 return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, }] };
             }
         }
-
-        public async Task<ResultData<ConvertResponseDto>> ConvertAsync([NotNull] ConvertRequestDto requestDto)
-        {
-            try
-            {
-                var response = await HttpProvider.Value.GetAsync<GamaTrainConvertRequest, GamaTrainConvertResponse, GamaTrainConvertRequest>(new()
-                {
-                    Uri = configuration.Value.GetValue<string>("PaymentGateway:ConvertUri"),
-                    Request = new(),
-                    Body = new()
-                    {
-                        Amount = (long)requestDto.Amount,
-                        SourceMint = requestDto.SourceMint,
-                        DestinationMint = requestDto.DestinationMint,
-                    },
-                });
-                if (response is null)
-                {
-                    return new(OperationResult.Failed) { Errors = [new() { Message = Localizer.Value["GeneralError"], }] };
-                }
-
-                var data = new ConvertResponseDto
-                {
-                    Amount = response.Amount,
-                };
-                return new(OperationResult.Succeeded)
-                {
-                    Data = data,
-                };
-            }
-            catch (Exception exc)
-            {
-                Logger.Value.LogException(exc);
-                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, }] };
-            }
-        }
     }
 }

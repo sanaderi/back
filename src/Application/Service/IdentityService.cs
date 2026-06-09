@@ -65,7 +65,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var query = uow.GetRepository<ApplicationUser, int>().GetManyQueryable(requestDto?.Specification);
+                var query = uow.GetRepository<ApplicationUser>().GetManyQueryable(requestDto?.Specification);
 
                 var result = await query.FilterListAsync(requestDto?.PagingDto);
 
@@ -97,7 +97,7 @@ namespace GamaEdtech.Application.Service
                 var lst = await cacheProvider.Value.GetAsync<IEnumerable<ApplicationRoleDto>?>(RolesCacheKey, async () =>
                 {
                     var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                    return await uow.GetRepository<ApplicationRole, int>().GetManyQueryable().Select(t => new ApplicationRoleDto
+                    return await uow.GetRepository<ApplicationRole>().GetManyQueryable().Select(t => new ApplicationRoleDto
                     {
                         Id = t.Id,
                         Name = t.Name!,
@@ -123,7 +123,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var user = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => new ApplicationUserDto
+                var user = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => new ApplicationUserDto
                 {
                     Id = t.Id,
                     Email = t.Email,
@@ -150,12 +150,12 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<List<int>>> GetUserIdsAsync([NotNull] ISpecification<ApplicationUser> specification)
+        public async Task<ResultData<List<long>>> GetUserIdsAsync([NotNull] ISpecification<ApplicationUser> specification)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var ids = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => t.Id).ToListAsync();
+                var ids = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => t.Id).ToListAsync();
 
                 return new(OperationResult.Succeeded)
                 {
@@ -174,7 +174,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var emails = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => t.Email).ToListAsync();
+                var emails = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => t.Email).ToListAsync();
 
                 return new(OperationResult.Succeeded)
                 {
@@ -188,12 +188,12 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<(int Id, string? FullName)?>> GetUserFullNameAsync([NotNull] ISpecification<ApplicationUser> specification)
+        public async Task<ResultData<(long Id, string? FullName)?>> GetUserFullNameAsync([NotNull] ISpecification<ApplicationUser> specification)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var data = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => new
+                var data = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => new
                 {
                     t.Id,
                     t.FirstName,
@@ -212,12 +212,12 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<ICollection<string>>> GetUserRolesAsync([NotNull] int userId)
+        public async Task<ResultData<ICollection<string>>> GetUserRolesAsync([NotNull] long userId)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var roles = await uow.GetRepository<ApplicationUserRole, int>().GetManyQueryable(t => t.UserId == userId).Select(t => t.Role!.Name!).ToListAsync();
+                var roles = await uow.GetRepository<ApplicationUserRole>().GetManyQueryable(t => t.UserId == userId).Select(t => t.Role!.Name!).ToListAsync();
                 return new(OperationResult.Succeeded) { Data = roles };
             }
             catch (Exception exc)
@@ -227,13 +227,13 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> UserIsInRoleAsync([NotNull] int userId, [NotNull] string role)
+        public async Task<ResultData<bool>> UserIsInRoleAsync([NotNull] long userId, [NotNull] string role)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var normalizedRoleName = role.ToUpperInvariant();
-                var result = await uow.GetRepository<ApplicationUserRole, int>().AnyAsync(t => t.UserId == userId && t.Role!.NormalizedName == normalizedRoleName);
+                var result = await uow.GetRepository<ApplicationUserRole>().AnyAsync(t => t.UserId == userId && t.Role!.NormalizedName == normalizedRoleName);
                 return new(OperationResult.Succeeded) { Data = result };
             }
             catch (Exception exc)
@@ -429,7 +429,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var user = await uow.GetRepository<ApplicationUser, int>().GetAsync(specification);
+                var user = await uow.GetRepository<ApplicationUser>().GetAsync(specification);
                 if (user is null)
                 {
                     return new(OperationResult.NotFound)
@@ -441,7 +441,7 @@ namespace GamaEdtech.Application.Service
 
                 user.Enabled = !user.Enabled;
 
-                _ = uow.GetRepository<ApplicationUser, int>().Update(user);
+                _ = uow.GetRepository<ApplicationUser>().Update(user);
                 _ = await uow.SaveChangesAsync();
 
                 return new(OperationResult.Succeeded) { Data = true };
@@ -458,7 +458,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var repository = uow.GetRepository<ApplicationUser, int>();
+                var repository = uow.GetRepository<ApplicationUser>();
                 var user = await repository.GetAsync(specification);
                 if (user is null)
                 {
@@ -671,7 +671,7 @@ namespace GamaEdtech.Application.Service
 
             var userId = context.Principal.UserId();
             var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-            var currentSecurityStamp = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Id == userId).Select(t => t.SecurityStamp).FirstOrDefaultAsync();
+            var currentSecurityStamp = await uow.GetRepository<ApplicationUser>().GetManyQueryable(t => t.Id == userId).Select(t => t.SecurityStamp).FirstOrDefaultAsync();
             var securityStampClaim = context.Principal?.FindFirstValue(userManager.Value.Options.ClaimsIdentity.SecurityStampClaimType);
             if (currentSecurityStamp != securityStampClaim)
             {
@@ -691,8 +691,8 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var data = await uow.GetRepository<ApplicationUser, int>()
-                    .GetManyQueryable(new IdEqualsSpecification<ApplicationUser, int>(requestDto.UserId))
+                var data = await uow.GetRepository<ApplicationUser>()
+                    .GetManyQueryable(new IdEqualsSpecification<ApplicationUser, long>(requestDto.UserId))
                     .Select(t => new
                     {
                         Claims = t.UserClaims!.Select(u => new { u.ClaimType, u.ClaimValue }).ToList(),
@@ -730,8 +730,8 @@ namespace GamaEdtech.Application.Service
                 }
 
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var userRolesRepository = uow.GetRepository<ApplicationUserRole, int>();
-                var userRoles = await userRolesRepository.GetManyQueryable(new UserIdEqualsSpecification<ApplicationUserRole, int>(requestDto.UserId))
+                var userRolesRepository = uow.GetRepository<ApplicationUserRole>();
+                var userRoles = await userRolesRepository.GetManyQueryable(new UserIdEqualsSpecification<ApplicationUserRole, long>(requestDto.UserId))
                     .Select(t => t.Role!.Name!).ToListAsync();
 
                 if (userRoles.Exists(t => t.Equals(nameof(Role.Admin), StringComparison.OrdinalIgnoreCase)) && requestDto.Roles?.ExistInFlags(Role.Admin) != true)
@@ -767,7 +767,7 @@ namespace GamaEdtech.Application.Service
 
                 var repository = uow.GetRepository<ApplicationUserClaim, int>();
 
-                var specification = new UserIdEqualsSpecification<ApplicationUserClaim, int>(requestDto.UserId)
+                var specification = new UserIdEqualsSpecification<ApplicationUserClaim, long>(requestDto.UserId)
                     .And(new ClaimTypeEqualsSpecification(PermissionConstants.PermissionPolicy)
                         .Or(new ClaimTypeEqualsSpecification(PermissionConstants.SystemClaim))
                     );
@@ -845,7 +845,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var data = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => new
+                var data = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => new
                 {
                     t.Id,
                     t.UserName,
@@ -885,7 +885,7 @@ namespace GamaEdtech.Application.Service
                     return new(OperationResult.Failed) { Errors = new[] { new Error { Message = "User not found." } } };
                 }
 
-                var skills = data.Skills?.Split(Delimiter);
+                var skills = data.Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
                 var experiences = data.Experiences?.Select(t => new ExperienceDto
                 {
                     Id = t.Id,
@@ -1003,7 +1003,7 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> HasClaimAsync(int userId, SystemClaim claims)
+        public async Task<ResultData<bool>> HasClaimAsync(long userId, SystemClaim claims)
         {
             try
             {
@@ -1039,7 +1039,7 @@ namespace GamaEdtech.Application.Service
                 }
 
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var userRepo = uow.GetRepository<ApplicationUser, int>();
+                var userRepo = uow.GetRepository<ApplicationUser>();
 
                 var user = await userRepo.GetAsync(userId.Value);
 
@@ -1104,7 +1104,7 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public static string GenerateReferralId(int userId)
+        public static string GenerateReferralId(long userId)
         {
             var inputBytes = Encoding.UTF8.GetBytes(
                 $"{userId}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}-{Guid.NewGuid()}"
@@ -1162,7 +1162,7 @@ namespace GamaEdtech.Application.Service
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var adminRole = nameof(Role.Admin).ToUpperInvariant();
-                var lst = uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => !t.UserRoles!.Any(r => r.Role!.NormalizedName == adminRole));
+                var lst = uow.GetRepository<ApplicationUser>().GetManyQueryable(t => !t.UserRoles!.Any(r => r.Role!.NormalizedName == adminRole));
 
                 if (requestDto is not null)
                 {
@@ -1318,7 +1318,7 @@ namespace GamaEdtech.Application.Service
                     UserAgent = requestDto.UserAgent,
                 });
                 _ = await uow.SaveChangesAsync();
-                _ = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Id == requestDto.UserId).ExecuteUpdateAsync(t => t.SetProperty(p => p.LastLoginDate, now));
+                _ = await uow.GetRepository<ApplicationUser>().GetManyQueryable(t => t.Id == requestDto.UserId).ExecuteUpdateAsync(t => t.SetProperty(p => p.LastLoginDate, now));
 
                 return new(OperationResult.Succeeded);
             }
@@ -1334,7 +1334,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var lst = uow.GetRepository<ApplicationUser, int>().GetManyQueryable(requestDto?.Specification);
+                var lst = uow.GetRepository<ApplicationUser>().GetManyQueryable(requestDto?.Specification);
                 int? total = requestDto?.PagingDto?.PageFilter?.ReturnTotalRecordsCount == true ? await lst.CountAsync() : null;
                 var query = lst.Select(t => new
                 {
@@ -1372,12 +1372,13 @@ namespace GamaEdtech.Application.Service
                 List<PublicProfileDto> result = new(items.Count);
                 for (var i = 0; i < items.Count; i++)
                 {
-                    var skills = items[i].Skills?.Split(Delimiter);
+                    var skills = items[i].Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
+                    var fullName = items[i].FirstName + " " + items[i].LastName;
                     result.Add(new()
                     {
                         Avatar = items[i].Avatar,
-                        FullName = items[i].FirstName + " " + items[i].LastName,
-                        Handle = items[i].Handle,
+                        FullName = fullName,
+                        Handle = string.IsNullOrEmpty(items[i].Handle) ? $"{items[i].Id}-{fullName.Slugify()}" : items[i].Handle,
                         Skills = skills,
                         OnlineStatus = OnlineStatus.Calculate(items[i].LastLoginDate),
                         UserRateLevel = UserRateLevel.Calculate(items[i].UserRateLevel)
@@ -1398,15 +1399,15 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var repository = uow.GetRepository<ApplicationUser, int>();
+                var repository = uow.GetRepository<ApplicationUser>();
 
-                var userId = await repository.GetManyQueryable(t => t.Handle == requestDto.ProfileHandle).Select(t => (int?)t.Id).FirstOrDefaultAsync();
+                var userId = await repository.GetManyQueryable(t => t.Handle == requestDto.ProfileHandle).Select(t => (long?)t.Id).FirstOrDefaultAsync();
                 if (userId is null)
                 {
                     var match = HandleRegex().Match(requestDto.ProfileHandle);
                     if (match.Success)
                     {
-                        userId = match.Value.ValueOf<int?>();
+                        userId = match.Value.ValueOf<long?>();
                     }
                 }
 
@@ -1463,7 +1464,7 @@ namespace GamaEdtech.Application.Service
 
                 _ = await repository.GetManyQueryable(t => t.Id == result.Id).ExecuteUpdateAsync(t => t.SetProperty(p => p.ProfileView, p => p.ProfileView + 1));
 
-                var skills = result.Skills?.Split(Delimiter);
+                var skills = result.Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
                 return new(OperationResult.Succeeded)
                 {
                     Data = new()
@@ -1494,7 +1495,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var affectedRows = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Id == requestDto.UserId)
+                var affectedRows = await uow.GetRepository<ApplicationUser>().GetManyQueryable(t => t.Id == requestDto.UserId)
                     .ExecuteUpdateAsync(t => t.SetProperty(p => p.Avatar, requestDto.Avatar));
 
                 return new(OperationResult.Succeeded)
@@ -1514,7 +1515,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var repository = uow.GetRepository<ApplicationUser, int>();
+                var repository = uow.GetRepository<ApplicationUser>();
                 var now = DateTimeOffset.UtcNow;
                 var affectedRows = await repository.GetManyQueryable(specification)
                     .ExecuteUpdateAsync(t => t.SetProperty(p => p.OrphanDate, now));
@@ -1555,7 +1556,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var repository = uow.GetRepository<ApplicationUser, int>();
+                var repository = uow.GetRepository<ApplicationUser>();
                 DateTimeOffset? orphanDate = null;
                 var affectedRows = await repository.GetManyQueryable(specification).Where(t => t.OrphanDate != null)
                     .ExecuteUpdateAsync(t => t.SetProperty(p => p.OrphanDate, orphanDate));
@@ -1584,7 +1585,7 @@ namespace GamaEdtech.Application.Service
 
                 var value = Globals.Slugify(requestDto.Handle);
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var exists = await uow.GetRepository<ApplicationUser, int>().AnyAsync(t => t.Handle == value && t.Id != requestDto.UserId);
+                var exists = await uow.GetRepository<ApplicationUser>().AnyAsync(t => t.Handle == value && t.Id != requestDto.UserId);
 
                 return exists
                     ? new(OperationResult.NotValid) { Errors = [new() { Message = Localizer.Value["InvalidHandle"] }] }
@@ -1601,7 +1602,7 @@ namespace GamaEdtech.Application.Service
 
         public ItemType ItemType => ItemType.Profile;
 
-        public IQueryable<SiteMapItemDto> GetSiteMapData([NotNull] IUnitOfWork uow) => uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Enabled && t.ProfileVisibility == ProfileVisibility.Public).Select(t => new SiteMapItemDto
+        public IQueryable<SiteMapItemDto> GetSiteMapData([NotNull] IUnitOfWork uow) => uow.GetRepository<ApplicationUser>().GetManyQueryable(t => t.Enabled && t.ProfileVisibility == ProfileVisibility.Public).Select(t => new SiteMapItemDto
         {
             Id = t.Id,
             Path1 = t.Handle,
@@ -1618,7 +1619,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var repository = uow.GetRepository<ApplicationUser, int>();
+                var repository = uow.GetRepository<ApplicationUser>();
                 var date = DateTimeOffset.UtcNow.AddDays(-7);
                 var lst = await repository.GetManyQueryable(t => t.OrphanDate != null && date >= t.OrphanDate.Value).Select(t => new
                 {
@@ -1697,7 +1698,7 @@ namespace GamaEdtech.Application.Service
 
         #endregion
 
-        private async Task<string> GetTimeZoneIdAsync(int userId)
+        private async Task<string> GetTimeZoneIdAsync(long userId)
         {
             try
             {

@@ -4,7 +4,7 @@ namespace GamaEdtech.Data.Dto.Identity
 
     public sealed class ManageProfileSettingsRequestDto
     {
-        public required int UserId { get; set; }
+        public required long UserId { get; set; }
         public int? CityId { get; set; }
         public long? SchoolId { get; set; }
         public string? FirstName { get; set; }
@@ -13,7 +13,7 @@ namespace GamaEdtech.Data.Dto.Identity
         public int? Board { get; set; }
         public int? Grade { get; set; }
         public int? Group { get; set; }
-        public int? CoreId { get; set; }
+        public long? CoreId { get; set; }
         public string? Avatar { get; set; }
         public string? WalletId { get; set; }
         public ProfileVisibility? ProfileVisibility { get; set; }

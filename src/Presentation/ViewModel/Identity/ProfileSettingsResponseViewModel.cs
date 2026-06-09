@@ -33,7 +33,7 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         public int? Group { get; set; }
 
-        public int? CoreId { get; set; }
+        public long? CoreId { get; set; }
 
         public string? Avatar { get; set; }
 

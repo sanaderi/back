@@ -24,6 +24,6 @@ namespace GamaEdtech.Data.Dto.School
             TuitionRatioRate
             ) / 8;
         public DateTimeOffset CreationDate { get; set; }
-        public int CreationUserId { get; set; }
+        public long CreationUserId { get; set; }
     }
 }

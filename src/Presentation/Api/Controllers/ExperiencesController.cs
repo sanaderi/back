@@ -35,7 +35,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 var result = await experienceService.Value.GetExperiencesAsync(new()
                 {
                     PagingDto = request.PagingDto,
-                    Specification = new UserIdEqualsSpecification<Experience, int>(User.UserId()),
+                    Specification = new UserIdEqualsSpecification<Experience, long>(User.UserId()),
                 });
 
                 return Ok<ListDataSource<ExperienceResponseViewModel>>(new(result.Errors)
@@ -69,7 +69,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             try
             {
                 var specification = new IdEqualsSpecification<Experience, long>(id)
-                    .And(new UserIdEqualsSpecification<Experience, int>(User.UserId()));
+                    .And(new UserIdEqualsSpecification<Experience, long>(User.UserId()));
                 var result = await experienceService.Value.GetExperienceAsync(specification);
 
                 return Ok<ExperienceResponseViewModel>(new(result.Errors)
@@ -152,7 +152,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             try
             {
                 var specification = new IdEqualsSpecification<Experience, long>(id)
-                    .And(new UserIdEqualsSpecification<Experience, int>(User.UserId()));
+                    .And(new UserIdEqualsSpecification<Experience, long>(User.UserId()));
                 var result = await experienceService.Value.RemoveExperienceAsync(specification);
                 return Ok<bool>(new(result.Errors)
                 {

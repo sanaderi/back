@@ -6,7 +6,7 @@ namespace GamaEdtech.Data.Dto.School
     {
         public long? Id { get; set; }
         public long? SchoolId { get; set; }
-        public int UserId { get; set; }
+        public long UserId { get; set; }
         public IFormFile? File { get; set; }
         public bool IsDefault { get; set; }
 

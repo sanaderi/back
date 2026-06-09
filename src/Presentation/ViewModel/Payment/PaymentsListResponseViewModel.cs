@@ -9,7 +9,7 @@ namespace GamaEdtech.Presentation.ViewModel.Payment
     {
         public long Id { get; set; }
 
-        public int UserId { get; set; }
+        public long UserId { get; set; }
 
         public string? FirstName { get; set; }
 
