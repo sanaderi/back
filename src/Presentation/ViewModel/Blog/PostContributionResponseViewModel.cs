@@ -30,6 +30,8 @@ namespace GamaEdtech.Presentation.ViewModel.Blog
 
         public IEnumerable<long>? Tags { get; set; }
 
+        public bool? Draft { get; set; }
+
         public IEnumerable<PostLocalizedValueViewModel>? LocalizedValues { get; set; }
     }
 }
