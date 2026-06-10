@@ -153,6 +153,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     UserId = User.UserId(),
                     Points = request.Points.GetValueOrDefault(),
+                    IdentifierId = request.IdentifierId.GetValueOrDefault(),
+                    ContentType = request.ContentType!,
                 });
 
                 return Ok<bool>(new(result.Errors)
