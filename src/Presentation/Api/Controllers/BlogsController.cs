@@ -353,6 +353,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Keywords = dto.Keywords,
                     Slug = dto.Slug,
                     PostId = result.Data.IdentifierId,
+                    Draft = dto.Draft,
                     LocalizedValues = dto.LocalizedValues?.Select(t => new PostLocalizedValueViewModel
                     {
                         LanguageId = t.LanguageId,
