@@ -137,7 +137,8 @@ namespace GamaEdtech.Application.Service
                 {
                     UserId = requestDto.UserId,
                     Points = requestDto.Points,
-                    Description = "Spend Game Points",
+                    Description = $"{requestDto.ContentType.Name} - Spend Game Points",
+                    IdentifierId = requestDto.IdentifierId,
                 };
                 var result = await transactionService.Value.DecreaseBalanceAsync(transactionRequest);
 
