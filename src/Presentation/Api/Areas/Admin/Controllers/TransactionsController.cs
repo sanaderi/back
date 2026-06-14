@@ -10,6 +10,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Common.DataAccess.Specification.Impl;
     using GamaEdtech.Common.Identity;
+    using GamaEdtech.Data.Dto.Transaction;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Domain.Specification;
@@ -96,6 +97,38 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 Logger.Value.LogException(exc);
 
                 return Ok<ListDataSource<TransactionsListResponseViewModel>>(new() { Errors = [new() { Message = exc.Message }] });
+            }
+        }
+
+        [HttpPost, Produces<ApiResponse<CreateTransactionResponseViewModel>>()]
+        public async Task<IActionResult<CreateTransactionResponseViewModel>> CreateTransaction([NotNull] CreateTransactionRequestViewModel request)
+        {
+            try
+            {
+                var dto = new CreateTransactionRequestDto()
+                {
+                    UserId = request.UserId.GetValueOrDefault(),
+                    Points = request.Points.GetValueOrDefault(),
+                    Description = $"{request.Description} - Admin CreateTransaction",
+                };
+                var result = request.IsDebit.GetValueOrDefault()
+                    ? await transactionService.Value.DecreaseBalanceAsync(dto)
+                    : await transactionService.Value.IncreaseBalanceAsync(dto);
+                if (result.OperationResult is not Constants.OperationResult.Succeeded)
+                {
+                    return Ok<CreateTransactionResponseViewModel>(new(result.Errors));
+                }
+
+                var balance = await transactionService.Value.GetCurrentBalanceAsync(new() { UserId = request.UserId.GetValueOrDefault() });
+                return Ok<CreateTransactionResponseViewModel>(new(balance.Errors)
+                {
+                    Data = new() { Balance = balance.Data, },
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return Ok<CreateTransactionResponseViewModel>(new() { Errors = [new() { Message = exc.Message }] });
             }
         }
     }
