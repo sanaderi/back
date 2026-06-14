@@ -10,8 +10,10 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Common.DataAccess.Specification.Impl;
     using GamaEdtech.Common.Identity;
+    using GamaEdtech.Data.Dto.ApplicationSettings;
     using GamaEdtech.Data.Dto.Transaction;
     using GamaEdtech.Domain.Entity;
+    using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Domain.Specification;
     using GamaEdtech.Domain.Specification.Transaction;
@@ -23,7 +25,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     [Route("api/v{version:apiVersion}/[area]/[controller]")]
     [ApiVersion("1.0")]
     [Permission(Roles = [nameof(Role.Admin)])]
-    public class TransactionsController(Lazy<ILogger<TransactionsController>> logger, Lazy<ITransactionService> transactionService)
+    public class TransactionsController(Lazy<ILogger<TransactionsController>> logger, Lazy<ITransactionService> transactionService, Lazy<IApplicationSettingsService> applicationSettingsService
+        , Lazy<IEmailService> emailService, Lazy<IIdentityService> identityService)
         : ApiControllerBase<TransactionsController>(logger)
     {
         [HttpGet, Produces<ApiResponse<ListDataSource<TransactionsListResponseViewModel>>>()]
@@ -120,6 +123,21 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 }
 
                 var balance = await transactionService.Value.GetCurrentBalanceAsync(new() { UserId = request.UserId.GetValueOrDefault() });
+
+                var user = await identityService.Value.GetUserAsync(new IdEqualsSpecification<ApplicationUser, long>(request.UserId.GetValueOrDefault()));
+                var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.AdminTransactionCreationEmailTemplate))).Data;
+                template = template?
+                    .Replace("[RECEIVER_NAME]", $"{user.Data!.FirstName} {user.Data.LastName}", StringComparison.OrdinalIgnoreCase)
+                    .Replace("[DESCRIPTION]", request.Description, StringComparison.OrdinalIgnoreCase)
+                    .Replace("[POINTS]", request.Points.ToString(), StringComparison.OrdinalIgnoreCase)
+                    .Replace("[CURRENT_BALANCE]", balance.Data.ToString(), StringComparison.OrdinalIgnoreCase);
+                _ = await emailService.Value.SendEmailAsync(new()
+                {
+                    Subject = "Transaction Creation",
+                    Body = template!,
+                    EmailAddresses = [user.Data!.Email!],
+                });
+
                 return Ok<CreateTransactionResponseViewModel>(new(balance.Errors)
                 {
                     Data = new() { Balance = balance.Data, },
