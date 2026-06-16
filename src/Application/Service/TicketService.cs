@@ -115,7 +115,7 @@ namespace GamaEdtech.Application.Service
                     Subject = ticket.Subject,
                     Body = ticket.Body,
                     Receivers = ticket.Receivers,
-                    FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = ticket.FileId, ContainerType = ContainerType.Ticket, }),
+                    FileId = ticket.FileId,
                 };
 
                 return new(OperationResult.Succeeded) { Data = result };
@@ -195,30 +195,17 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var lst = await uow.GetRepository<TicketReply>().GetManyQueryable(specification).Select(t => new
+                var lst = await uow.GetRepository<TicketReply>().GetManyQueryable(specification).Select(t => new TicketReplyDto
                 {
-                    t.Id,
-                    t.CreationDate,
-                    t.Body,
+                    Id = t.Id,
+                    CreationDate = t.CreationDate,
+                    Body = t.Body,
                     CreationUser = t.CreationUser == null ? null : t.CreationUser.FirstName + " " + t.CreationUser.LastName,
-                    t.FileId,
-                    t.Receivers,
+                    FileId = t.FileId,
+                    Receivers = t.Receivers,
                 }).ToListAsync();
 
-                List<TicketReplyDto> result = new(lst.Count);
-                for (var i = 0; i < lst.Count; i++)
-                {
-                    result.Add(new()
-                    {
-                        Id = lst[i].Id,
-                        Body = lst[i].Body,
-                        CreationDate = lst[i].CreationDate,
-                        CreationUser = lst[i].CreationUser,
-                        Receivers = lst[i].Receivers,
-                        FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = lst[i].FileId, ContainerType = ContainerType.Ticket, }),
-                    });
-                }
-                return new(OperationResult.Succeeded) { Data = result };
+                return new(OperationResult.Succeeded) { Data = lst };
             }
             catch (Exception exc)
             {

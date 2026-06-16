@@ -17,8 +17,7 @@ namespace GamaEdtech.Data.Dto.School
         public double? Score { get; set; }
         public double? ReviewScore => Score.HasValue ? Score.Value * 5 / 550 : null;
         public double? Distance { get; set; }
-        public long? DefaultImageId { get; set; }
-        public Uri? DefaultImageUri { get; set; }
+        public string? DefaultImageId { get; set; }
         public int? CountryRank { get; set; }
         public int? StateRank { get; set; }
         public int? CityRank { get; set; }

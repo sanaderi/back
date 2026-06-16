@@ -20,6 +20,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Domain.Specification.ApplicationSetting;
     using GamaEdtech.Domain.Specification.Identity;
     using GamaEdtech.Domain.Specification.School;
+    using GamaEdtech.Presentation.Api.Controllers;
     using GamaEdtech.Presentation.ViewModel.ApplicationSettings;
     using GamaEdtech.Presentation.ViewModel.Board;
     using GamaEdtech.Presentation.ViewModel.School;
@@ -35,7 +36,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     [ApiVersion("1.0")]
     [Permission(Roles = [nameof(Role.Admin)])]
     public class SchoolsController(Lazy<ILogger<SchoolsController>> logger, Lazy<ISchoolService> schoolService, Lazy<IGlobalService> globalService
-        , Lazy<IContributionService> contributionService, Lazy<IFileService> fileService, Lazy<ITagService> tagService, Lazy<IIdentityService> identityService)
+        , Lazy<IContributionService> contributionService, Lazy<ITagService> tagService, Lazy<IIdentityService> identityService)
         : ApiControllerBase<SchoolsController>(logger)
     {
         #region Schools
@@ -59,7 +60,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             Id = t.Id,
                             Name = t.Name,
                             LocalName = t.LocalName,
-                            DefaultImageUri = t.DefaultImageUri,
+                            DefaultImageUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = t.DefaultImageId, containerType = ContainerType.School }),
                             CountryRank = t.CountryRank,
                             StateRank = t.StateRank,
                             CityRank = t.CityRank,
@@ -419,7 +420,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             CreationDate = item.CreationDate,
                             SchoolId = item.IdentifierId.GetValueOrDefault(),
                             Status = item.Status,
-                            FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = item.Data?.FileId, ContainerType = ContainerType.School, }),
+                            FileUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = item.Data?.FileId, containerType = ContainerType.School }),
                             FileType = item.Data?.FileType,
                             IsDefault = item.Data?.IsDefault ?? false,
                         });
@@ -471,7 +472,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 SchoolImageContributionReviewViewModel result = new()
                 {
                     Id = contributionResult.Data.Id,
-                    FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.FileId, ContainerType = ContainerType.School, }),
+                    FileUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = contributionResult.Data.Data.FileId, containerType = ContainerType.School }),
                     FileType = contributionResult.Data.Data.FileType,
                     SchoolId = contributionResult.Data.Data.SchoolId,
                     IsDefault = contributionResult.Data.Data.IsDefault,
@@ -618,7 +619,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             SchoolId = item.Data?.SchoolId,
                             Description = item.Data?.Description,
                             Status = item.Status,
-                            FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = item.Data?.FileId, ContainerType = ContainerType.School, }),
+                            FileUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = item.Data?.FileId, containerType = ContainerType.School }),
                         });
                     }
                 }
@@ -662,7 +663,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 RemoveSchoolImageContributionReviewViewModel result = new()
                 {
                     Id = contributionResult.Data.Id,
-                    FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.FileId, ContainerType = ContainerType.School, }),
+                    FileUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = contributionResult.Data.Data.FileId, containerType = ContainerType.School }),
                     SchoolId = contributionResult.Data.Data.SchoolId,
                     SchoolName = schoolResult.Data?[0].Value,
                 };
@@ -1107,7 +1108,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
 
         #endregion
 
-        private static SchoolResponseViewModel? MapFrom(SchoolDto? dto) => dto is null ? null : new()
+        private SchoolResponseViewModel? MapFrom(SchoolDto? dto) => dto is null ? null : new()
         {
             Id = dto.Id,
             Address = dto.Address,
@@ -1130,7 +1131,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             PhoneNumber = dto.PhoneNumber,
             Quarter = dto.Quarter,
             OsmId = dto.OsmId,
-            DefaultImageUri = dto.DefaultImageUri,
+            DefaultImageUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = dto.DefaultImageId, containerType = ContainerType.School }),
             Tuition = dto.Tuition,
             Description = dto.Description,
             ViewCount = dto.ViewCount,

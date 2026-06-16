@@ -9,7 +9,7 @@ namespace GamaEdtech.Data.Dto.Ticket
         public string? CreationUser { get; set; }
         public string? Body { get; set; }
         public DateTimeOffset CreationDate { get; set; }
-        public Uri? FileUri { get; set; }
+        public string? FileId { get; set; }
         public IEnumerable<string?>? Receivers { get; set; }
     }
 }

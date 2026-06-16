@@ -98,11 +98,7 @@ namespace GamaEdtech.Application.Service
                         Id = schools[i].Id,
                         Name = schools[i].Name,
                         LocalName = schools[i].LocalName,
-                        DefaultImageUri = schools[i].DefaultImageId.HasValue ? await fileService.Value.GetFileUriAsync(new()
-                        {
-                            FileId = files.Find(c => c.Id == schools[i].DefaultImageId)?.FileId,
-                            ContainerType = ContainerType.School,
-                        }) : null,
+                        DefaultImageId = files.Find(c => c.Id == schools[i].DefaultImageId)?.FileId,
                         CountryRank = schools[i].CountryRank,
                         StateRank = schools[i].StateRank,
                         CityRank = schools[i].CityRank,
@@ -221,12 +217,7 @@ namespace GamaEdtech.Application.Service
                         HasEmail = !string.IsNullOrEmpty(items[i].Email),
                         HasPhoneNumber = !string.IsNullOrEmpty(items[i].PhoneNumber),
                         HasWebSite = !string.IsNullOrEmpty(items[i].WebSite),
-                        DefaultImageId = items[i].DefaultImageId,
-                        DefaultImageUri = await fileService.Value.GetFileUriAsync(new()
-                        {
-                            FileId = files.Find(c => c.Id == items[i].DefaultImageId)?.FileId,
-                            ContainerType = ContainerType.School,
-                        }),
+                        DefaultImageId = files.Find(c => c.Id == items[i].DefaultImageId)?.FileId,
                         CountryRank = items[i].CountryRank,
                         StateRank = items[i].StateRank,
                         CityRank = items[i].CityRank,
@@ -328,7 +319,7 @@ namespace GamaEdtech.Application.Service
                     Quarter = school.Quarter,
                     OsmId = school.OsmId,
                     Tuition = school.Tuition,
-                    DefaultImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = school.DefaultImageId, ContainerType = ContainerType.School, }),
+                    DefaultImageId = school.DefaultImageId,
                     Tags = school.Tags,
                     Boards = school.Boards,
                     Description = localizedValues.Data?.Find(t => t.ContentId == school.Id && t.Name == nameof(School.Description))?.Value ?? school.Description,
@@ -960,7 +951,7 @@ namespace GamaEdtech.Application.Service
                     lst.Add(new()
                     {
                         Id = result[i].Id,
-                        FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = result[i].FileId, ContainerType = ContainerType.School, }),
+                        FileId = result[i].FileId,
                         CreationUserId = result[i].CreationUserId,
                         CreationUser = result[i].CreationUser,
                         TagName = result[i].TagName,

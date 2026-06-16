@@ -29,7 +29,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
     [ApiVersion("1.0")]
     [Permission(policy: null)]
     public class BlogsController(Lazy<ILogger<BlogsController>> logger, Lazy<IBlogService> blogService
-        , Lazy<IContributionService> contributionService, Lazy<IFileService> fileService, Lazy<IGlobalService> globalService)
+        , Lazy<IContributionService> contributionService, Lazy<IGlobalService> globalService)
         : ApiControllerBase<BlogsController>(logger)
     {
         [HttpGet("posts"), Produces<ApiResponse<ListDataSource<PostsResponseViewModel>>>()]
@@ -78,7 +78,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             Summary = t.Summary,
                             LikeCount = t.LikeCount,
                             DislikeCount = t.DislikeCount,
-                            ImageUri = t.ImageUri,
+                            ImageUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = t.ImageId, containerType = ContainerType.Post }),
                             PublishDate = t.PublishDate,
                             VisibilityType = t.VisibilityType,
                         }),
@@ -130,8 +130,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         Slug = result.Data.Slug,
                         Summary = result.Data.Summary,
                         Body = result.Data.Body,
-                        ImageUri = result.Data.ImageUri,
-                        PodcastUri = result.Data.PodcastUri,
+                        ImageUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = result.Data.ImageId, containerType = ContainerType.Post }),
+                        PodcastUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = result.Data.PodcastId, containerType = ContainerType.Post }),
                         LikeCount = result.Data.LikeCount,
                         LikedByCurrentUser = result.Data.LikedByCurrentUser,
                         DislikeCount = result.Data.DislikeCount,
@@ -332,7 +332,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 PostContributionResponseViewModel? viewModel = null;
                 if (result.Data?.Data is not null)
                 {
-                    viewModel = result.Data.Data is null ? null : await MapFromAsync(result.Data.Data);
+                    viewModel = result.Data.Data is null ? null : MapFrom(result.Data.Data);
                 }
 
                 return Ok<PostContributionResponseViewModel>(new(result.Errors)
@@ -340,14 +340,14 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Data = viewModel,
                 });
 
-                async Task<PostContributionResponseViewModel> MapFromAsync(PostContributionDto dto) => new()
+                PostContributionResponseViewModel MapFrom(PostContributionDto dto) => new()
                 {
                     Title = dto.Title,
                     Summary = dto.Summary,
                     Body = dto.Body,
                     Tags = dto.Tags,
-                    ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = dto.ImageId, ContainerType = ContainerType.Post, }),
-                    PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = dto.PodcastId, ContainerType = ContainerType.Post, }),
+                    ImageUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = dto.ImageId, containerType = ContainerType.Post }),
+                    PodcastUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = dto.PodcastId, containerType = ContainerType.Post }),
                     PublishDate = dto.PublishDate.GetValueOrDefault(),
                     VisibilityType = dto.VisibilityType!,
                     Keywords = dto.Keywords,

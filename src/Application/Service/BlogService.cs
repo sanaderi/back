@@ -76,11 +76,7 @@ namespace GamaEdtech.Application.Service
                         Summary = localizedValues.Data?.Find(t => t.ContentId == blogs[i].Id && t.Name == nameof(Post.Summary))?.Value ?? blogs[i].Summary,
                         Title = localizedValues.Data?.Find(t => t.ContentId == blogs[i].Id && t.Name == nameof(Post.Title))?.Value ?? blogs[i].Title,
                         Slug = blogs[i].Slug,
-                        ImageUri = await fileService.Value.GetFileUriAsync(new()
-                        {
-                            FileId = blogs[i].ImageId,
-                            ContainerType = ContainerType.Post,
-                        }),
+                        ImageId = blogs[i].ImageId,
                         PublishDate = blogs[i].PublishDate,
                         VisibilityType = blogs[i].VisibilityType,
                     });
@@ -178,8 +174,8 @@ namespace GamaEdtech.Application.Service
                     Title = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Title))?.Value ?? post.Title,
                     Body = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Body))?.Value ?? post.Body,
                     Slug = post.Slug,
-                    ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.ImageId, ContainerType = ContainerType.Post, }),
-                    PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = post.PodcastId, ContainerType = ContainerType.Post, }),
+                    ImageId = post.ImageId,
+                    PodcastId = post.PodcastId,
                     LikeCount = post.LikeCount,
                     LikedByCurrentUser = likedByCurrentUser,
                     DislikeCount = post.DislikeCount,

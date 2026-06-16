@@ -14,6 +14,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Domain.Specification.Ticket;
+    using GamaEdtech.Presentation.Api.Controllers;
     using GamaEdtech.Presentation.ViewModel.Ticket;
 
     using Microsoft.AspNetCore.Mvc;
@@ -133,7 +134,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         Body = result.Data.Body,
                         Receivers = result.Data.Receivers,
                         CreationDate = result.Data.CreationDate,
-                        FileUri = result.Data.FileUri,
+                        FileUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = result.Data.FileId, containerType = ContainerType.Ticket }),
                     }
                 });
             }
@@ -168,7 +169,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         Body = t.Body,
                         CreationDate = t.CreationDate,
                         CreationUser = t.CreationUser,
-                        FileUri = t.FileUri,
+                        FileUri = Url.Action(nameof(FilesController.GetFile), "Files", new { id = t.FileId, containerType = ContainerType.Ticket }),
                         Receivers = t.Receivers,
                     }),
                 });

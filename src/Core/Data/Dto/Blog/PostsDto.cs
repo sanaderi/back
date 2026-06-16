@@ -12,7 +12,7 @@ namespace GamaEdtech.Data.Dto.Blog
         public string? Summary { get; set; }
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
-        public Uri? ImageUri { get; set; }
+        public string? ImageId { get; set; }
         public VisibilityType VisibilityType { get; set; }
         public DateTimeOffset PublishDate { get; set; }
     }
