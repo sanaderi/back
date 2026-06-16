@@ -1959,6 +1959,67 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.ToTable("Subjects");
                 });
 
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.SubscriptionPlan", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreationDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CreationDate");
+
+                    b.Property<long>("CreationUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("CreationUserId");
+
+                    b.Property<byte>("Currency")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Currency");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsActive");
+
+                    b.Property<DateTimeOffset?>("LastModifyDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("LastModifyDate");
+
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("LastModifyUserId");
+
+                    b.Property<long>("Point")
+                        .HasColumnType("bigint")
+                        .HasColumnName("Point");
+
+                    b.Property<Polygon>("Polygon")
+                        .HasColumnType("geography")
+                        .HasColumnName("Polygon");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(36, 18)
+                        .HasColumnType("numeric")
+                        .HasColumnName("Price");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Title");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreationUserId");
+
+                    b.HasIndex("LastModifyUserId");
+
+                    b.ToTable("SubscriptionPlans");
+                });
+
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Tag", b =>
                 {
                     b.Property<long>("Id")
@@ -2956,6 +3017,24 @@ namespace GamaEdtech.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Subject", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Identity.ApplicationUser", "CreationUser")
+                        .WithMany()
+                        .HasForeignKey("CreationUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("GamaEdtech.Domain.Entity.Identity.ApplicationUser", "LastModifyUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifyUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreationUser");
+
+                    b.Navigation("LastModifyUser");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.SubscriptionPlan", b =>
                 {
                     b.HasOne("GamaEdtech.Domain.Entity.Identity.ApplicationUser", "CreationUser")
                         .WithMany()
