@@ -115,7 +115,11 @@ namespace GamaEdtech.Application.Service
                     Subject = ticket.Subject,
                     Body = ticket.Body,
                     Receivers = ticket.Receivers,
-                    FileId = ticket.FileId,
+                    FileUri = fileService.Value.GetStaticFileUrl(new()
+                    {
+                        FileId = ticket.FileId,
+                        ContainerType = ContainerType.Ticket,
+                    }),
                 };
 
                 return new(OperationResult.Succeeded) { Data = result };
@@ -195,17 +199,35 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var lst = await uow.GetRepository<TicketReply>().GetManyQueryable(specification).Select(t => new TicketReplyDto
+                var lst = await uow.GetRepository<TicketReply>().GetManyQueryable(specification).Select(t => new
                 {
-                    Id = t.Id,
-                    CreationDate = t.CreationDate,
-                    Body = t.Body,
+                    t.Id,
+                    t.CreationDate,
+                    t.Body,
                     CreationUser = t.CreationUser == null ? null : t.CreationUser.FirstName + " " + t.CreationUser.LastName,
-                    FileId = t.FileId,
-                    Receivers = t.Receivers,
+                    t.FileId,
+                    t.Receivers,
                 }).ToListAsync();
 
-                return new(OperationResult.Succeeded) { Data = lst };
+                List<TicketReplyDto> result = new(lst.Count);
+                for (var i = 0; i < lst.Count; i++)
+                {
+                    result.Add(new()
+                    {
+                        Id = lst[i].Id,
+                        Body = lst[i].Body,
+                        CreationDate = lst[i].CreationDate,
+                        CreationUser = lst[i].CreationUser,
+                        Receivers = lst[i].Receivers,
+                        FileUri = fileService.Value.GetStaticFileUrl(new()
+                        {
+                            FileId = lst[i].FileId,
+                            ContainerType = ContainerType.Ticket,
+                        }),
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = result };
             }
             catch (Exception exc)
             {

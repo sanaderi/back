@@ -16,12 +16,12 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class LocalFileProvider(Lazy<ILogger<LocalFileProvider>> logger
-        , Lazy<IConfiguration> configuration, Lazy<IWebHostEnvironment> environment, Lazy<HttpContextAccessor> httpContextAccessor) : FileProviderBase
+    public sealed class LocalFileProvider(Lazy<ILogger<LocalFileProvider>> logger, Lazy<IConfiguration> configuration, Lazy<IWebHostEnvironment> environment, Lazy<HttpContextAccessor> httpContextAccessor)
+        : FileProviderBase(configuration)
     {
         public override FileProviderType ProviderType => FileProviderType.Local;
 
-        public override async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
+        public override async Task<ResultData<Uri?>> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
@@ -86,7 +86,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
         private string GetDirectoryPath([NotNull] ContainerType containerType, bool physicalPath)
         {
-            var path = configuration.Value.GetValue<string>("FileProvider:Local:Path")!;
+            var path = Configuration.Value.GetValue<string>("FileProvider:Local:Path")!;
             var container = GenerateBlobContainerName(containerType);
             if (physicalPath)
             {

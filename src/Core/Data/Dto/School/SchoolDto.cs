@@ -31,7 +31,7 @@ namespace GamaEdtech.Data.Dto.School
         public string? Quarter { get; set; }
         public long? OsmId { get; set; }
         public decimal? Tuition { get; set; }
-        public string? DefaultImageId { get; set; }
+        public string? DefaultImageUri { get; set; }
         public IEnumerable<TagDto>? Tags { get; set; }
         public IEnumerable<BoardDto>? Boards { get; set; }
         public string? Description { get; set; }
