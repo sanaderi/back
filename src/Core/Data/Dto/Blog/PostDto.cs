@@ -11,8 +11,8 @@ namespace GamaEdtech.Data.Dto.Blog
         public string? Slug { get; set; }
         public string? Summary { get; set; }
         public string? Body { get; set; }
-        public Uri? ImageUri { get; set; }
-        public Uri? PodcastUri { get; set; }
+        public string? ImageUri { get; set; }
+        public string? PodcastUri { get; set; }
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
         public string? CreationUser { get; set; }

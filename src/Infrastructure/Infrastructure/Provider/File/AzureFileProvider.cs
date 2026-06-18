@@ -16,11 +16,11 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class AzureFileProvider(Lazy<ILogger<AzureFileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase
+    public sealed class AzureFileProvider(Lazy<ILogger<AzureFileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase(configuration)
     {
         public override FileProviderType ProviderType => FileProviderType.Azure;
 
-        public override async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
+        public override async Task<ResultData<Uri?>> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
         private BlobClient GetClient([NotNull] ContainerType containerType, string fileId)
         {
-            var connection = configuration.Value.GetValue<string>("FileProvider:Azure:ConnectionString");
+            var connection = Configuration.Value.GetValue<string>("FileProvider:Azure:ConnectionString");
 
             return new BlobClient(connection, GenerateBlobContainerName(containerType), fileId);
         }

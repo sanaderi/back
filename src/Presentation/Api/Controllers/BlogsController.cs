@@ -29,7 +29,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
     [ApiVersion("1.0")]
     [Permission(policy: null)]
     public class BlogsController(Lazy<ILogger<BlogsController>> logger, Lazy<IBlogService> blogService
-        , Lazy<IContributionService> contributionService, Lazy<IFileService> fileService, Lazy<IGlobalService> globalService)
+        , Lazy<IContributionService> contributionService, Lazy<IGlobalService> globalService, Lazy<IFileService> fileService)
         : ApiControllerBase<BlogsController>(logger)
     {
         [HttpGet("posts"), Produces<ApiResponse<ListDataSource<PostsResponseViewModel>>>()]
@@ -332,7 +332,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 PostContributionResponseViewModel? viewModel = null;
                 if (result.Data?.Data is not null)
                 {
-                    viewModel = result.Data.Data is null ? null : await MapFromAsync(result.Data.Data);
+                    viewModel = result.Data.Data is null ? null : MapFrom(result.Data.Data);
                 }
 
                 return Ok<PostContributionResponseViewModel>(new(result.Errors)
@@ -340,14 +340,14 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Data = viewModel,
                 });
 
-                async Task<PostContributionResponseViewModel> MapFromAsync(PostContributionDto dto) => new()
+                PostContributionResponseViewModel MapFrom(PostContributionDto dto) => new()
                 {
                     Title = dto.Title,
                     Summary = dto.Summary,
                     Body = dto.Body,
                     Tags = dto.Tags,
-                    ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = dto.ImageId, ContainerType = ContainerType.Post, }),
-                    PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = dto.PodcastId, ContainerType = ContainerType.Post, }),
+                    ImageUri = fileService.Value.GetStaticFileUrl(new() { FileId = dto.ImageId, ContainerType = ContainerType.Post, }),
+                    PodcastUri = fileService.Value.GetStaticFileUrl(new() { FileId = dto.PodcastId, ContainerType = ContainerType.Post, }),
                     PublishDate = dto.PublishDate.GetValueOrDefault(),
                     VisibilityType = dto.VisibilityType!,
                     Keywords = dto.Keywords,

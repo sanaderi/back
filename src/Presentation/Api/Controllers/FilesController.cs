@@ -25,7 +25,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         {
             try
             {
-                var result = await fileService.Value.GetFileUriAsync(new() { FileId = id, ContainerType = containerType, });
+                var result = await fileService.Value.GetFileUrlAsync(new() { FileId = id, ContainerType = containerType, });
                 return result is null
                     ? Ok<string>(new())
                     : Redirect(result.ToString());
