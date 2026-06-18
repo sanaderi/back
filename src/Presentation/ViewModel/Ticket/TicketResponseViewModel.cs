@@ -12,7 +12,7 @@ namespace GamaEdtech.Presentation.ViewModel.Ticket
         public string? Body { get; set; }
         public string? CreationUser { get; set; }
         public DateTimeOffset CreationDate { get; set; }
-        public Uri? FileUri { get; set; }
+        public string? FileUri { get; set; }
         public IEnumerable<string?>? Receivers { get; set; }
     }
 }

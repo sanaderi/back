@@ -10,12 +10,20 @@ namespace GamaEdtech.Infrastructure.Provider.File
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Infrastructure.Interface;
 
-    public abstract class FileProviderBase : IFileProvider
+    using Microsoft.Extensions.Configuration;
+
+    public abstract class FileProviderBase(Lazy<IConfiguration> configuration) : IFileProvider
     {
+        protected Lazy<IConfiguration> Configuration => configuration;
+
         public abstract FileProviderType ProviderType { get; }
 
-        public abstract Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto);
+        public string? GetStaticFileUrl([NotNull] FileUriRequestDto requestDto) => $"{Configuration.Value.GetValue<string>("Core:Cdn")}/{GenerateBlobContainerName(requestDto.ContainerType)}/{requestDto.FileId}";
+
+        public abstract Task<ResultData<Uri?>> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto);
+
         public abstract Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto);
+
         public abstract Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto);
 
         protected static string GenerateBlobFileName(string? fileExtension) => $"{Guid.NewGuid():N}{fileExtension}";

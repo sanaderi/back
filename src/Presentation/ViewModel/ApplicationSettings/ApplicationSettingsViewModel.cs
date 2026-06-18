@@ -134,5 +134,10 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
         [Required]
         [RequiredTokens("[RECEIVER_NAME]")]
         public string? FinishedDeletingAccountEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]", "[DESCRIPTION]", "[POINTS]", "[CURRENT_BALANCE]")]
+        public string? AdminTransactionCreationEmailTemplate { get; set; }
     }
 }

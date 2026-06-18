@@ -9,7 +9,8 @@ namespace GamaEdtech.Application.Interface
     [Injectable]
     public interface IFileService
     {
-        Task<Uri?> GetFileUriAsync([NotNull] FileUriRequestDto requestDto);
+        string? GetStaticFileUrl([NotNull] FileUriRequestDto requestDto);
+        Task<Uri?> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto);
         Task<ResultData<string?>> CreateFileAsync([NotNull] CreateFileRequestDto requestDto);
         Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto);
     }

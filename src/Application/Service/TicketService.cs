@@ -115,7 +115,11 @@ namespace GamaEdtech.Application.Service
                     Subject = ticket.Subject,
                     Body = ticket.Body,
                     Receivers = ticket.Receivers,
-                    FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = ticket.FileId, ContainerType = ContainerType.Ticket, }),
+                    FileUri = fileService.Value.GetStaticFileUrl(new()
+                    {
+                        FileId = ticket.FileId,
+                        ContainerType = ContainerType.Ticket,
+                    }),
                 };
 
                 return new(OperationResult.Succeeded) { Data = result };
@@ -215,9 +219,14 @@ namespace GamaEdtech.Application.Service
                         CreationDate = lst[i].CreationDate,
                         CreationUser = lst[i].CreationUser,
                         Receivers = lst[i].Receivers,
-                        FileUri = await fileService.Value.GetFileUriAsync(new() { FileId = lst[i].FileId, ContainerType = ContainerType.Ticket, }),
+                        FileUri = fileService.Value.GetStaticFileUrl(new()
+                        {
+                            FileId = lst[i].FileId,
+                            ContainerType = ContainerType.Ticket,
+                        }),
                     });
                 }
+
                 return new(OperationResult.Succeeded) { Data = result };
             }
             catch (Exception exc)

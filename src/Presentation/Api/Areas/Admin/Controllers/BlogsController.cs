@@ -29,7 +29,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     [ApiVersion("1.0")]
     [Permission(Roles = [nameof(Role.Admin)])]
     public class BlogsController(Lazy<ILogger<BlogsController>> logger, Lazy<IBlogService> blogService, Lazy<IIdentityService> identityService
-        , Lazy<IContributionService> contributionService, Lazy<IFileService> fileService, Lazy<IGlobalService> globalService)
+        , Lazy<IContributionService> contributionService, Lazy<IGlobalService> globalService, Lazy<IFileService> fileService)
         : ApiControllerBase<BlogsController>(logger)
     {
         [HttpGet("contributions"), Produces<ApiResponse<ListDataSource<PostContributionListResponseViewModel>>>()]
@@ -114,8 +114,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     Title = contributionResult.Data.Data.Title,
                     Summary = contributionResult.Data.Data.Summary,
                     Body = contributionResult.Data.Data.Body,
-                    ImageUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.ImageId, ContainerType = ContainerType.Post, }),
-                    PodcastUri = await fileService.Value.GetFileUriAsync(new() { FileId = contributionResult.Data.Data.PodcastId, ContainerType = ContainerType.Post, }),
+                    ImageUri = fileService.Value.GetStaticFileUrl(new() { FileId = contributionResult.Data.Data.ImageId, ContainerType = ContainerType.Post, }),
+                    PodcastUri = fileService.Value.GetStaticFileUrl(new() { FileId = contributionResult.Data.Data.PodcastId, ContainerType = ContainerType.Post, }),
                     Tags = contributionResult.Data.Data.Tags,
                     PublishDate = contributionResult.Data.Data.PublishDate.GetValueOrDefault(),
                     VisibilityType = contributionResult.Data.Data.VisibilityType!,

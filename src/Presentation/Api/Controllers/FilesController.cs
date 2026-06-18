@@ -20,12 +20,12 @@ namespace GamaEdtech.Presentation.Api.Controllers
     public class FilesController(Lazy<ILogger<FilesController>> logger, Lazy<IFileService> fileService)
         : ApiControllerBase<FilesController>(logger)
     {
-        [HttpGet("{id}"), Produces<ApiResponse<string>>()]
-        public async Task<IActionResult> GetFile([FromRoute] string id)
+        [HttpGet("{containerType:ContainerType}/{id}"), Produces<ApiResponse<string>>()]
+        public async Task<IActionResult> GetFile([FromRoute] ContainerType containerType, [FromRoute] string id)
         {
             try
             {
-                var result = await fileService.Value.GetFileUriAsync(new() { FileId = id, ContainerType = ContainerType.Default, });
+                var result = await fileService.Value.GetFileUrlAsync(new() { FileId = id, ContainerType = containerType, });
                 return result is null
                     ? Ok<string>(new())
                     : Redirect(result.ToString());

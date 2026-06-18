@@ -48,6 +48,8 @@ namespace GamaEdtech.Application.Service
     using Microsoft.IdentityModel.JsonWebTokens;
     using Microsoft.IdentityModel.Tokens;
 
+    using NetTopologySuite.Geometries;
+
     using static GamaEdtech.Common.Core.Constants;
 
     using Error = Common.Data.Error;
@@ -203,6 +205,25 @@ namespace GamaEdtech.Application.Service
                 return new(data is null ? OperationResult.NotFound : OperationResult.Succeeded)
                 {
                     Data = data is not null ? (data.Id, $"{data.FirstName} {data.LastName}") : null,
+                };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogError(exc, nameof(GetUserAsync));
+                return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        public async Task<ResultData<Point?>> GetUserCoordinateAsync([NotNull] ISpecification<ApplicationUser> specification)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var data = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => t.City != null ? t.City.Coordinates : null).FirstOrDefaultAsync();
+
+                return new(data is null ? OperationResult.NotFound : OperationResult.Succeeded)
+                {
+                    Data = data,
                 };
             }
             catch (Exception exc)

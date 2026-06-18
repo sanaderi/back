@@ -11,6 +11,8 @@ namespace GamaEdtech.Application.Interface
 
     using Microsoft.AspNetCore.Authentication.Cookies;
 
+    using NetTopologySuite.Geometries;
+
     [Injectable]
     public interface IIdentityService
     {
@@ -20,6 +22,7 @@ namespace GamaEdtech.Application.Interface
         Task<ResultData<List<long>>> GetUserIdsAsync([NotNull] ISpecification<ApplicationUser> specification);
         Task<ResultData<List<string?>>> GetUsersEmailAsync([NotNull] ISpecification<ApplicationUser> specification);
         Task<ResultData<(long Id, string? FullName)?>> GetUserFullNameAsync([NotNull] ISpecification<ApplicationUser> specification);
+        Task<ResultData<Point?>> GetUserCoordinateAsync([NotNull] ISpecification<ApplicationUser> specification);
         Task<ResultData<ICollection<string>>> GetUserRolesAsync([NotNull] long userId);
         Task<ResultData<bool>> UserIsInRoleAsync([NotNull] long userId, [NotNull] string role);
         Task<ResultData<AuthenticationResponseDto>> AuthenticateAsync([NotNull] AuthenticationRequestDto requestDto);

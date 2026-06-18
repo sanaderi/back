@@ -17,11 +17,11 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class AmazonS3FileProvider(Lazy<ILogger<AmazonS3FileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase
+    public sealed class AmazonS3FileProvider(Lazy<ILogger<AmazonS3FileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase(configuration)
     {
         public override FileProviderType ProviderType => FileProviderType.AmazonS3;
 
-        public override async Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
+        public override async Task<ResultData<Uri?>> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
@@ -73,6 +73,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
                         PartSize = partSize,
                         FilePosition = filePosition,
                         InputStream = stream,
+                        DisablePayloadSigning = true,
                     };
 
                     // Upload a part and add the response to our list.
@@ -121,15 +122,15 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        private string BucketName => configuration.Value.GetValue<string>("FileProvider:AmazonS3:BucketName")!;
+        private string BucketName => Configuration.Value.GetValue<string>("FileProvider:AmazonS3:BucketName")!;
 
         private AmazonS3Client Client
         {
             get
             {
-                var serviceUrl = configuration.Value.GetValue<string>("FileProvider:AmazonS3:ServiceURL");
-                var secretAccessKey = configuration.Value.GetValue<string>("FileProvider:AmazonS3:SecretAccessKey");
-                var accessKeyId = configuration.Value.GetValue<string>("FileProvider:AmazonS3:AccessKeyId");
+                var serviceUrl = Configuration.Value.GetValue<string>("FileProvider:AmazonS3:ServiceURL");
+                var secretAccessKey = Configuration.Value.GetValue<string>("FileProvider:AmazonS3:SecretAccessKey");
+                var accessKeyId = Configuration.Value.GetValue<string>("FileProvider:AmazonS3:AccessKeyId");
 
                 return new AmazonS3Client(accessKeyId, secretAccessKey, new AmazonS3Config
                 {

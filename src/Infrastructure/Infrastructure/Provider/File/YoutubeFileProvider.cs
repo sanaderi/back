@@ -15,15 +15,16 @@ namespace GamaEdtech.Infrastructure.Provider.File
     using Google.Apis.YouTube.v3;
     using Google.Apis.YouTube.v3.Data;
 
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class YoutubeFileProvider(Lazy<ILogger<YoutubeFileProvider>> logger) : FileProviderBase
+    public sealed class YoutubeFileProvider(Lazy<ILogger<YoutubeFileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase(configuration)
     {
         public override FileProviderType ProviderType => FileProviderType.Youtube;
 
-        public override Task<ResultData<Uri?>> GetFileUriAsync([NotNull] FileUriRequestDto requestDto) => throw new NotImplementedException();
+        public override Task<ResultData<Uri?>> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto) => throw new NotImplementedException();
 
         public override Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto) => throw new NotImplementedException();
 

@@ -20,7 +20,7 @@ namespace GamaEdtech.Presentation.ViewModel.Blog
 
         public int DislikeCount { get; set; }
 
-        public Uri? ImageUri { get; set; }
+        public string? ImageUri { get; set; }
 
         [JsonConverter(typeof(EnumerationConverter<VisibilityType, byte>))]
         public VisibilityType? VisibilityType { get; set; }

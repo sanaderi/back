@@ -34,7 +34,22 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<Uri?> GetFileUriAsync([NotNull] FileUriRequestDto requestDto)
+        public string? GetStaticFileUrl([NotNull] FileUriRequestDto requestDto)
+        {
+            try
+            {
+                return string.IsNullOrEmpty(requestDto.FileId)
+                    ? null
+                    : FileProvider.GetStaticFileUrl(requestDto);
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return null;
+            }
+        }
+
+        public async Task<Uri?> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
@@ -43,7 +58,7 @@ namespace GamaEdtech.Application.Service
                     return null;
                 }
 
-                var result = await FileProvider.GetFileUriAsync(requestDto);
+                var result = await FileProvider.GetFileUrlAsync(requestDto);
                 return result.Data;
             }
             catch (Exception exc)
