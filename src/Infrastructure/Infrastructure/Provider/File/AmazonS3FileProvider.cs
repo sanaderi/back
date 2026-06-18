@@ -73,7 +73,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
                         PartSize = partSize,
                         FilePosition = filePosition,
                         InputStream = stream,
-                        //DisablePayloadSigning = true,
+                        DisablePayloadSigning = true,
                     };
 
                     // Upload a part and add the response to our list.
