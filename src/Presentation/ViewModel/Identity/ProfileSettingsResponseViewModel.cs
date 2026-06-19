@@ -59,5 +59,7 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public IEnumerable<ExperienceResponseViewModel>? Experiences { get; set; }
 
         public string? Handle { get; set; }
+
+        public DateTimeOffset? OrphanDate { get; set; }
     }
 }
