@@ -1030,7 +1030,7 @@ namespace GamaEdtech.Application.Service
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var userClaimsRepository = uow.GetRepository<ApplicationUserClaim, int>();
-                var names = claims.GetNames()!;
+                var names = claims.GetNames();
                 var exists = await userClaimsRepository.AnyAsync(t => t.UserId == userId && t.ClaimType == PermissionConstants.SystemClaim && names.Contains(t.ClaimValue));
 
                 return new(OperationResult.Succeeded)

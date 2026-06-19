@@ -11,6 +11,6 @@ namespace GamaEdtech.Common.DataAnnotation
         public override bool IsValid(object? value) => string.IsNullOrEmpty(value?.ToString())
 || (value is IEnumerable<string> lst
                 ? lst.All(t => string.IsNullOrEmpty(t) || Globals.ValidateNationalCode(t))
-                : Globals.ValidateNationalCode(value.ToString()!));
+                : Globals.ValidateNationalCode(value.ToString()));
     }
 }

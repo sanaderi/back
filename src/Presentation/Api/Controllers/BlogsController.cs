@@ -387,7 +387,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Podcast = request.Podcast,
                     Tags = request.Tags,
                     PublishDate = request.PublishDate.GetValueOrDefault(),
-                    VisibilityType = request.VisibilityType!,
+                    VisibilityType = request.VisibilityType,
                     Keywords = request.Keywords,
                     Draft = request.Draft,
                     LocalizedValues = request.LocalizedValues?.Select(t => new PostLocalizedValueDto

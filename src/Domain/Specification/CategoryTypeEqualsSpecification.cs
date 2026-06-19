@@ -9,6 +9,6 @@ namespace GamaEdtech.Domain.Specification
     public sealed class CategoryTypeEqualsSpecification<TClass>(CategoryType categoryType) : SpecificationBase<TClass>
         where TClass : ICategoryType
     {
-        public override Expression<Func<TClass, bool>> Expression() => (t) => t.CategoryType!.Equals(categoryType);
+        public override Expression<Func<TClass, bool>> Expression() => (t) => t.CategoryType.Equals(categoryType);
     }
 }
