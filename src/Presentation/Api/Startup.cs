@@ -33,8 +33,6 @@ namespace GamaEdtech.Presentation.Api
         })
     {
         public const string DefaultNamespace = "GamaEdtech";
-
-        private static readonly Lazy<IServiceProvider?> ServicesList = new(Common.Hosting.Host.CreateHost<Startup>([])?.Services);
         private const string AllowCorsPolicy = "allowCorsPolicy";
 
         public static Lazy<IServiceProvider?> Services
@@ -45,9 +43,9 @@ namespace GamaEdtech.Presentation.Api
                 {
                     CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = Globals.GetCulture(Globals.CurrentCulture);
                 }
-                return ServicesList;
+                return field;
             }
-        }
+        } = new(Common.Hosting.Host.CreateHost<Startup>([])?.Services);
 
         protected override void ConfigureServicesCore(IServiceCollection services, IMvcBuilder mvcBuilder)
         {

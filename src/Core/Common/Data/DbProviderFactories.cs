@@ -4,23 +4,21 @@ namespace GamaEdtech.Common.Data
 
     public static class DbProviderFactories
     {
-        private static DbProviderFactory? factory;
-
         public static DbProviderFactory GetFactory
         {
             get
             {
-                if (factory is not null)
+                if (field is not null)
                 {
-                    return factory;
+                    return field;
                 }
 
-                factory = Globals.ProviderType switch
+                field = Globals.ProviderType switch
                 {
                     DbProviderType.SqlServer => new SqlServerProvider(),
                     _ => throw new NotSupportedException(Globals.ProviderType.ToString()),
                 };
-                return factory;
+                return field;
             }
         }
     }

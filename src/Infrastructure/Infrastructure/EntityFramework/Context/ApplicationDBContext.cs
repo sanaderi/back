@@ -15,7 +15,7 @@ namespace GamaEdtech.Infrastructure.EntityFramework.Context
 
     [ServiceLifetime(ServiceLifetime.Transient, "System.IServiceProvider,System.ComponentModel")]
     public class ApplicationDBContext(IServiceProvider serviceProvider) : Common.DataAccess.Context.IdentityEntityContext<ApplicationDBContext, ApplicationUser, ApplicationRole,
-        long, ApplicationUserClaim, ApplicationUserRole, ApplicationUserLogin, ApplicationRoleClaim, ApplicationUserToken>(serviceProvider)
+        long, ApplicationUserClaim, ApplicationUserRole, ApplicationUserLogin, ApplicationRoleClaim, ApplicationUserToken, ApplicationUserPasskey>(serviceProvider)
     {
         protected override Assembly EntityAssembly => typeof(ApplicationUser).Assembly;
 

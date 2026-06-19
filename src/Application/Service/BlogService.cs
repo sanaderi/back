@@ -792,8 +792,8 @@ namespace GamaEdtech.Application.Service
                 {
                     Id = t.Id,
                     Comment = t.Comment,
-                    CreationUser = t.CreationUser!.FirstName + " " + t.CreationUser.LastName,
-                    CreationUserAvatar = t.CreationUser!.Avatar,
+                    CreationUser = t.CreationUser.FirstName + " " + t.CreationUser.LastName,
+                    CreationUserAvatar = t.CreationUser.Avatar,
                     CreationDate = t.CreationDate,
                     LikeCount = t.LikeCount,
                     DislikeCount = t.DislikeCount,

@@ -5,8 +5,6 @@ namespace GamaEdtech.Common.DataAnnotation
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public sealed class DataTypeAttribute : System.ComponentModel.DataAnnotations.DataTypeAttribute
     {
-        private DisplayFormatAttribute? displayFormat;
-
         public DataTypeAttribute(ElementDataType elementDataType)
             : base(elementDataType.ToString())
         {
@@ -58,9 +56,9 @@ namespace GamaEdtech.Common.DataAnnotation
 
         public new DisplayFormatAttribute? DisplayFormat
         {
-            get => displayFormat;
+            get;
 
-            private set => base.DisplayFormat = displayFormat = value;
+            private set => base.DisplayFormat = field = value;
         }
 
         public new string? ErrorMessage => base.ErrorMessage;

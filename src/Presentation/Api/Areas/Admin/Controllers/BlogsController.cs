@@ -341,9 +341,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 PostCommentContributionReviewViewModel result = new()
                 {
                     Id = contributionResult.Data.Id,
-                    PostId = contributionResult.Data.Data!.PostId,
+                    PostId = contributionResult.Data.Data.PostId,
                     PostTitle = postResult.Data?.Title,
-                    Comment = contributionResult.Data.Data!.Comment,
+                    Comment = contributionResult.Data.Data.Comment,
                 };
 
                 return Ok(new ApiResponse<PostCommentContributionReviewViewModel>

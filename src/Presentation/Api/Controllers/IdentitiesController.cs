@@ -699,7 +699,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             {
                 var result = await identityService.Value.ValidateHandleAsync(new()
                 {
-                    Handle = handle!,
+                    Handle = handle,
                     UserId = User.UserId(),
                 });
                 return Ok<string>(new(result.Errors)

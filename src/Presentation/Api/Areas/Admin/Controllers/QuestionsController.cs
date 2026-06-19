@@ -144,7 +144,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 var result = await questionService.Value.ManageQuestionAsync(new ManageQuestionRequestDto
                 {
                     Id = id,
-                    Body = request.Body!,
+                    Body = request.Body,
                     Options = options,
                 });
                 return Ok<ManageQuestionResponseViewModel>(new(result.Errors)
