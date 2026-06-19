@@ -891,6 +891,7 @@ namespace GamaEdtech.Application.Service
                     t.Skills,
                     t.CurrentStatusSentence,
                     t.Handle,
+                    t.OrphanDate,
                     Experiences = t.Experiences == null ? null : t.Experiences.Select(e => new
                     {
                         e.Id,
@@ -949,6 +950,7 @@ namespace GamaEdtech.Application.Service
                         Experiences = experiences,
                         UserRateLevel = UserRateLevel.Calculate(data.Avatar, data.FirstName, data.LastName, data.CurrentStatusSentence, data.Biography, skills, experiences?.Select(t => t.Id)),
                         Handle = handle,
+                        OrphanDate = data.OrphanDate,
                     },
                 };
             }
@@ -1450,6 +1452,7 @@ namespace GamaEdtech.Application.Service
                     t.ProfileVisibility,
                     t.Id,
                     t.LastLoginDate,
+                    t.OrphanDate,
                 }).FirstOrDefaultAsync();
                 if (result is null)
                 {
@@ -1496,6 +1499,7 @@ namespace GamaEdtech.Application.Service
                         Avatar = result.Avatar,
                         ProfileView = result.ProfileView + 1,    //add current view
                         OnlineStatus = OnlineStatus.Calculate(result.LastLoginDate),
+                        OrphanDate = result.Id == requestDto.UserId ? result.OrphanDate : null,
                         Biography = result.Biography,
                         Skills = skills,
                         CurrentStatusSentence = result.CurrentStatusSentence,
@@ -1550,7 +1554,8 @@ namespace GamaEdtech.Application.Service
                     }).FirstOrDefaultAsync();
                     var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.InitializeDeletingAccountEmailTemplate))).Data;
                     template = template?
-                        .Replace("[RECEIVER_NAME]", $"{data!.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                        .Replace("[RECEIVER_NAME]", $"{data!.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase)
+                        .Replace("[DATE]", now.AddDays(7).ToString(), StringComparison.OrdinalIgnoreCase);
                     _ = await emailService.Value.SendEmailAsync(new()
                     {
                         Subject = "Deleting Account Request",
@@ -1663,7 +1668,8 @@ namespace GamaEdtech.Application.Service
                         var data = lst[i];
                         var startTemplate = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.StartDeletingAccountEmailTemplate))).Data;
                         startTemplate = startTemplate?
-                            .Replace("[RECEIVER_NAME]", $"{data.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                            .Replace("[RECEIVER_NAME]", $"{data.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase)
+                            .Replace("[DATE]", DateTimeOffset.UtcNow.ToString(), StringComparison.OrdinalIgnoreCase);
                         _ = await emailService.Value.SendEmailAsync(new()
                         {
                             Subject = "Initialize Deleting Account",
@@ -1694,7 +1700,8 @@ namespace GamaEdtech.Application.Service
 
                         var finishedtemplate = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.FinishedDeletingAccountEmailTemplate))).Data;
                         finishedtemplate = finishedtemplate?
-                            .Replace("[RECEIVER_NAME]", $"{data.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                            .Replace("[RECEIVER_NAME]", $"{data.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase)
+                            .Replace("[DATE]", DateTimeOffset.UtcNow.ToString(), StringComparison.OrdinalIgnoreCase);
                         _ = await emailService.Value.SendEmailAsync(new()
                         {
                             Subject = "Finish Deleting Account",
