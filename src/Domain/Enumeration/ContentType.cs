@@ -11,8 +11,6 @@ namespace GamaEdtech.Domain.Enumeration
         [Display]
         public static readonly ContentType Test = new(nameof(Test), 2);
 
-        public string ApplicationSettingsName { get; }
-
         public ContentType()
         {
         }
