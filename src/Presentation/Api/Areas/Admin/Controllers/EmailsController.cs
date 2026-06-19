@@ -46,7 +46,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
 
                 if (request.Users?.Any() == true)
                 {
-                    var data = await identityService.Value.GetUsersEmailAsync(new IdContainsSpecification<ApplicationUser, int>(request.Users));
+                    var data = await identityService.Value.GetUsersEmailAsync(new IdContainsSpecification<ApplicationUser, long>(request.Users));
                     if (data.OperationResult is not Constants.OperationResult.Succeeded)
                     {
                         return Ok<Void>(new() { Errors = data.Errors });

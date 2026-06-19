@@ -17,5 +17,11 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         [Required]
         [Compare(nameof(Password))]
         public string? ConfirmPassword { get; set; }
+
+        [Display]
+        public string? FirstName { get; set; }
+
+        [Display]
+        public string? LastName { get; set; }
     }
 }

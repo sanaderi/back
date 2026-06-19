@@ -7,7 +7,7 @@ namespace GamaEdtech.Domain.Entity
     using GamaEdtech.Domain.Entity.Identity;
 
     [Table(nameof(Video))]
-    public class Video : VersionableEntity<ApplicationUser, int, int?>//, IEntity<Video, long>
+    public class Video : VersionableEntity<ApplicationUser, long, long?>//, IEntity<Video, long>
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]

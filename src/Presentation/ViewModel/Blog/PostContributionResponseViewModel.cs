@@ -8,12 +8,19 @@ namespace GamaEdtech.Presentation.ViewModel.Blog
     public sealed class PostContributionResponseViewModel
     {
         public string? Title { get; set; }
+
         public string? Slug { get; set; }
+
         public string? Summary { get; set; }
+
         public string? Body { get; set; }
-        public Uri? ImageUri { get; set; }
-        public Uri? PodcastUri { get; set; }
+
+        public string? ImageUri { get; set; }
+
+        public string? PodcastUri { get; set; }
+
         public string? Keywords { get; set; }
+
         public long? PostId { get; set; }
 
         [JsonConverter(typeof(EnumerationConverter<VisibilityType, byte>))]
@@ -22,5 +29,9 @@ namespace GamaEdtech.Presentation.ViewModel.Blog
         public DateTimeOffset PublishDate { get; set; }
 
         public IEnumerable<long>? Tags { get; set; }
+
+        public bool? Draft { get; set; }
+
+        public IEnumerable<PostLocalizedValueViewModel>? LocalizedValues { get; set; }
     }
 }

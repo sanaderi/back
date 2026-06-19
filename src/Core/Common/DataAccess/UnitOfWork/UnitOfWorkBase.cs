@@ -88,7 +88,7 @@ namespace GamaEdtech.Common.DataAccess.UnitOfWork
             {
                 var connection = Context.Database.GetDbConnection();
                 using var command = connection.CreateCommand();
-                command!.CommandText = sql.Replace(Constants.SchemaIdentifier, Context.Model.GetDefaultSchema(), StringComparison.OrdinalIgnoreCase);
+                command.CommandText = sql.Replace(Constants.SchemaIdentifier, Context.Model.GetDefaultSchema(), StringComparison.OrdinalIgnoreCase);
                 if (connection.State != ConnectionState.Open)
                 {
                     await connection.OpenAsync();

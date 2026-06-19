@@ -13,7 +13,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Post))]
-    public class Post : VersionableEntity<ApplicationUser, int, int?>, IEntity<Post, long>
+    public class Post : VersionableEntity<ApplicationUser, long, long?>, IEntity<Post, long>, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]
@@ -72,6 +72,7 @@ namespace GamaEdtech.Domain.Entity
         public long ViewCount { get; set; }
 
         public virtual ICollection<PostTag>? PostTags { get; set; }
+        public virtual ICollection<PostComment> PostComments { get; set; } = [];
 
         public void Configure([NotNull] EntityTypeBuilder<Post> builder)
         {

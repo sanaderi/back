@@ -31,10 +31,13 @@ namespace GamaEdtech.Data.Dto.School
         public string? Quarter { get; set; }
         public long? OsmId { get; set; }
         public decimal? Tuition { get; set; }
-        public Uri? DefaultImageUri { get; set; }
+        public string? DefaultImageUri { get; set; }
         public IEnumerable<TagDto>? Tags { get; set; }
         public IEnumerable<BoardDto>? Boards { get; set; }
         public string? Description { get; set; }
         public long ViewCount { get; set; }
+        public int? CountryRank { get; set; }
+        public int? StateRank { get; set; }
+        public int? CityRank { get; set; }
     }
 }

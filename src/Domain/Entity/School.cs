@@ -16,7 +16,7 @@ namespace GamaEdtech.Domain.Entity
     using NetTopologySuite.Geometries;
 
     [Table(nameof(School))]
-    public class School : VersionableEntity<ApplicationUser, int, int?>, IEntity<School, long>, IDeletable
+    public class School : VersionableEntity<ApplicationUser, long, long?>, IEntity<School, long>, IDeletable, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]
@@ -102,6 +102,15 @@ namespace GamaEdtech.Domain.Entity
 
         [Column(nameof(ViewCount), DataType.Long)]
         public long ViewCount { get; set; }
+
+        [Column(nameof(CountryRank), DataType.Int)]
+        public int? CountryRank { get; set; }
+
+        [Column(nameof(StateRank), DataType.Int)]
+        public int? StateRank { get; set; }
+
+        [Column(nameof(CityRank), DataType.Int)]
+        public int? CityRank { get; set; }
 
         public virtual ICollection<SchoolComment> SchoolComments { get; set; } = [];
         public virtual ICollection<SchoolTag> SchoolTags { get; set; } = [];

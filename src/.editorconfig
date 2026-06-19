@@ -1207,7 +1207,7 @@ dotnet_style_allow_statement_immediately_after_block_experimental = true:error
 
 
 dotnet_diagnostic.CA1008.severity = error
-dotnet_diagnostic.CA1055.severity = error
+dotnet_diagnostic.CA1055.severity = suggestion
 
 dotnet_diagnostic.CS0006.severity = none
 dotnet_diagnostic.CA1063.severity = error

@@ -7,27 +7,27 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
-    using GamaEdtech.Data.Dto.School;
+    using GamaEdtech.Data.Dto.File;
+    using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
-    using GamaEdtech.Infrastructure.Interface;
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class AzureFileProvider(Lazy<ILogger<AzureFileProvider>> logger, Lazy<IConfiguration> configuration) : IFileProvider
+    public sealed class AzureFileProvider(Lazy<ILogger<AzureFileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase(configuration)
     {
-        public FileProviderType ProviderType => FileProviderType.Azure;
+        public override FileProviderType ProviderType => FileProviderType.Azure;
 
-        public ResultData<Uri?> GetFileUri(string id, ContainerType containerType)
+        public override async Task<ResultData<Uri?>> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
-                var url = GetClient(containerType, id)
+                var url = GetClient(requestDto.ContainerType, requestDto.FileId!)
                     .GenerateSasUri(Azure.Storage.Sas.BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(10));
 
-                return new(OperationResult.Succeeded) { Data = url };
+                return new(OperationResult.Succeeded) { Data = await Task.FromResult(url) };
             }
             catch (Exception exc)
             {
@@ -36,11 +36,11 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        public async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
+        public override async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
         {
             try
             {
-                var name = $"{Guid.NewGuid():N}{requestDto.FileExtension}";
+                var name = GenerateBlobFileName(requestDto.FileExtension);
 
                 _ = await GetClient(requestDto.ContainerType, name).UploadAsync(new BinaryData(requestDto.File));
 
@@ -53,7 +53,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        public async Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto)
+        public override async Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto)
         {
             try
             {
@@ -75,20 +75,9 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
         private BlobClient GetClient([NotNull] ContainerType containerType, string fileId)
         {
-            var key = "FileProvider:Azure:ContainerName";
-            if (containerType == ContainerType.School)
-            {
-                key = "FileProvider:Azure:SchoolContainerName";
-            }
-            else if (containerType == ContainerType.Post)
-            {
-                key = "FileProvider:Azure:PostContainerName";
-            }
+            var connection = Configuration.Value.GetValue<string>("FileProvider:Azure:ConnectionString");
 
-            var container = configuration.Value.GetValue<string>(key);
-            var connection = configuration.Value.GetValue<string>("FileProvider:Azure:ConnectionString");
-
-            return new BlobClient(connection, container, fileId);
+            return new BlobClient(connection, GenerateBlobContainerName(containerType), fileId);
         }
     }
 }

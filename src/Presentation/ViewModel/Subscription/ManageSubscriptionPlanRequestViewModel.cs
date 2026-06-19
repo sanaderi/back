@@ -1,0 +1,30 @@
+namespace GamaEdtech.Presentation.ViewModel.Subscription
+{
+    using System.Text.Json.Serialization;
+
+    using GamaEdtech.Common.Converter;
+    using GamaEdtech.Common.DataAnnotation;
+    using GamaEdtech.Domain.Enumeration;
+
+    public sealed class ManageSubscriptionPlanRequestViewModel
+    {
+        [Display]
+        public string? Title { get; set; }
+
+        [Display]
+        [JsonConverter(typeof(EnumerationConverter<Currency, byte>))]
+        public Currency? Currency { get; set; }
+
+        [Display]
+        public decimal? Price { get; set; }
+
+        [Display]
+        public IEnumerable<CoordinateViewModel>? Polygon { get; set; }
+
+        [Display]
+        public long? Point { get; set; }
+
+        [Display]
+        public bool? IsActive { get; set; }
+    }
+}

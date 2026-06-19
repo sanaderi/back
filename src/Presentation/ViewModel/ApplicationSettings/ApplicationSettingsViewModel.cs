@@ -10,6 +10,7 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
 
         [Display]
         [Required]
+        [TimeZoneId]
         public string? DefaultTimeZoneId { get; set; }
 
         [Display]
@@ -71,6 +72,11 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
 
         [Display]
         [Required]
+        [RequiredTokens("[RECEIVER_NAME]", "[POST_TITLE]", "[POST_ID]", "[COMMENT]")]
+        public string? PostCommentContributionConfirmationEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
         [RequiredTokens("[RECEIVER_NAME]", "[SCHOOL_NAME]", "[SCHOOL_ID]")]
         public string? SchoolImageContributionConfirmationEmailTemplate { get; set; }
 
@@ -98,5 +104,40 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
         [Required]
         [RequiredTokens("[RECEIVER_NAME]", "[BODY]")]
         public string? TicketConfirmationEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]")]
+        public string? RegistrationEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]", "[SCHOOL_NAME]", "[SCHOOL_ID]", "[REJECTION_REASON]")]
+        public string? SchoolContributionRejectionEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]", "[SCHOOL_NAME]", "[SCHOOL_ID]", "[REJECTION_REASON]")]
+        public string? SchoolImageContributionRejectionEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]")]
+        public string? InitializeDeletingAccountEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]")]
+        public string? StartDeletingAccountEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]")]
+        public string? FinishedDeletingAccountEmailTemplate { get; set; }
+
+        [Display]
+        [Required]
+        [RequiredTokens("[RECEIVER_NAME]", "[DESCRIPTION]", "[POINTS]", "[CURRENT_BALANCE]")]
+        public string? AdminTransactionCreationEmailTemplate { get; set; }
     }
 }

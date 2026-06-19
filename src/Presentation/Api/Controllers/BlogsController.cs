@@ -22,15 +22,19 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
     using Hangfire;
 
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
+    [Permission(policy: null)]
     public class BlogsController(Lazy<ILogger<BlogsController>> logger, Lazy<IBlogService> blogService
-        , Lazy<IContributionService> contributionService, Lazy<IFileService> fileService)
+        , Lazy<IContributionService> contributionService, Lazy<IGlobalService> globalService, Lazy<IFileService> fileService)
         : ApiControllerBase<BlogsController>(logger)
     {
         [HttpGet("posts"), Produces<ApiResponse<ListDataSource<PostsResponseViewModel>>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 120)]
+        [AllowAnonymous]
         public async Task<IActionResult<ListDataSource<PostsResponseViewModel>>> GetPosts([NotNull, FromQuery] PostsRequestViewModel request)
         {
             try
@@ -91,6 +95,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("posts/random"), Produces<ApiResponse<ListDataSource<PostsResponseViewModel>>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
+        [AllowAnonymous]
         public async Task<IActionResult<ListDataSource<PostsResponseViewModel>>> GetRandomPosts([NotNull, FromQuery] RandomPostsRequestViewModel request) => await GetPosts(new()
         {
             PagingDto = new()
@@ -101,6 +107,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
         });
 
         [HttpGet("posts/{postId:long}"), Produces<ApiResponse<PostResponseViewModel>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 300)]
+        [AllowAnonymous]
         public async Task<IActionResult<PostResponseViewModel>> GetPost([FromRoute] long postId)
         {
             try
@@ -125,7 +133,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         ImageUri = result.Data.ImageUri,
                         PodcastUri = result.Data.PodcastUri,
                         LikeCount = result.Data.LikeCount,
+                        LikedByCurrentUser = result.Data.LikedByCurrentUser,
                         DislikeCount = result.Data.DislikeCount,
+                        DislikedByCurrentUser = result.Data.DislikedByCurrentUser,
                         CreationUser = result.Data.CreationUser,
                         CreationUserAvatar = result.Data.CreationUserAvatar,
                         VisibilityType = result.Data.VisibilityType,
@@ -153,7 +163,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpDelete("posts/{postId:long}"), Produces<ApiResponse<bool>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<bool>> RemovePost([FromRoute] long postId)
         {
             try
@@ -176,7 +185,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPatch("posts/{postId:long}/like"), Produces<ApiResponse<bool>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<bool>> LikePost([FromRoute] long postId)
         {
             try
@@ -199,7 +207,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPatch("posts/{postId:long}/dislike"), Produces<ApiResponse<bool>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<bool>> DislikePost([FromRoute] long postId)
         {
             try
@@ -222,13 +229,12 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("slugs/generate"), Produces<ApiResponse<string>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<string>> GenerateSlug([FromQuery, Required] string title)
         {
             try
             {
                 var slug = Globals.Slugify(title);
-                var result = await GenerateSlugAsync(slug!);
+                var result = await GenerateSlugAsync(slug);
 
                 return Ok<string>(new()
                 {
@@ -242,7 +248,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 return Ok<string>(new(new Error { Message = exc.Message }));
             }
 
-            async Task<string> GenerateSlugAsync(string slug)
+            async Task<string?> GenerateSlugAsync(string? slug)
             {
                 var result = await blogService.Value.PostExistsAsync(new SlugEqualsSpecification(slug));
                 if (result.OperationResult is Constants.OperationResult.Succeeded && !result.Data)
@@ -256,8 +262,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("slugs/validate"), Produces<ApiResponse<bool>>()]
-        [Permission(policy: null)]
-        public async Task<IActionResult<bool>> ValidateSlug([FromQuery, Required] string slug)
+        public async Task<IActionResult<bool>> ValidateSlug([FromQuery, Required] string? slug)
         {
             try
             {
@@ -278,7 +283,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         #region Contributions
 
         [HttpGet("contributions"), Produces<ApiResponse<ListDataSource<PostContributionListResponseViewModel>>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ListDataSource<PostContributionListResponseViewModel>>> GetPostContributionList([NotNull, FromQuery] PostContributionListRequestViewModel request)
         {
             try
@@ -286,7 +290,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 var result = await contributionService.Value.GetContributionsAsync<PostContributionDto>(new ListRequestDto<Contribution>
                 {
                     PagingDto = request.PagingDto,
-                    Specification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId())
+                    Specification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId())
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.Post)),
                 }, true);
                 return Ok<ListDataSource<PostContributionListResponseViewModel>>(new(result.Errors)
@@ -316,13 +320,12 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("contributions/{contributionId:long}"), Produces<ApiResponse<PostContributionResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<PostContributionResponseViewModel>> GetPostContribution([FromRoute] long contributionId)
         {
             try
             {
                 var specification = new IdEqualsSpecification<Contribution, long>(contributionId)
-                    .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId()))
+                    .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId()))
                     .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.Post));
                 var result = await contributionService.Value.GetContributionAsync<PostContributionDto>(specification);
 
@@ -343,13 +346,21 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Summary = dto.Summary,
                     Body = dto.Body,
                     Tags = dto.Tags,
-                    ImageUri = fileService.Value.GetFileUri(dto.ImageId, ContainerType.Post).Data,
-                    PodcastUri = fileService.Value.GetFileUri(dto.PodcastId, ContainerType.Post).Data,
+                    ImageUri = fileService.Value.GetStaticFileUrl(new() { FileId = dto.ImageId, ContainerType = ContainerType.Post, }),
+                    PodcastUri = fileService.Value.GetStaticFileUrl(new() { FileId = dto.PodcastId, ContainerType = ContainerType.Post, }),
                     PublishDate = dto.PublishDate.GetValueOrDefault(),
                     VisibilityType = dto.VisibilityType!,
                     Keywords = dto.Keywords,
                     Slug = dto.Slug,
                     PostId = result.Data.IdentifierId,
+                    Draft = dto.Draft,
+                    LocalizedValues = dto.LocalizedValues?.Select(t => new PostLocalizedValueViewModel
+                    {
+                        LanguageId = t.LanguageId,
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
             }
             catch (Exception exc)
@@ -361,7 +372,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("contributions"), Produces<ApiResponse<ManagePostContributionResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ManagePostContributionResponseViewModel>> CreatePostContribution([NotNull, FromForm] PostContributionViewModel request)
         {
             try
@@ -377,9 +387,16 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     Podcast = request.Podcast,
                     Tags = request.Tags,
                     PublishDate = request.PublishDate.GetValueOrDefault(),
-                    VisibilityType = request.VisibilityType!,
+                    VisibilityType = request.VisibilityType,
                     Keywords = request.Keywords,
                     Draft = request.Draft,
+                    LocalizedValues = request.LocalizedValues?.Select(t => new PostLocalizedValueDto
+                    {
+                        LanguageId = t.LanguageId.GetValueOrDefault(),
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
                 var result = await blogService.Value.ManagePostContributionAsync(dto);
 
@@ -397,7 +414,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPut("contributions/{contributionId:long}"), Produces<ApiResponse<ManagePostContributionResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ManagePostContributionResponseViewModel>> UpdatePostContribution([FromRoute] long contributionId, [NotNull, FromForm] UpdatePostContributionViewModel request)
         {
             try
@@ -424,6 +440,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     VisibilityType = request.VisibilityType,
                     Keywords = request.Keywords,
                     Draft = request.Draft,
+                    LocalizedValues = request.LocalizedValues?.Select(t => new PostLocalizedValueDto
+                    {
+                        LanguageId = t.LanguageId.GetValueOrDefault(),
+                        Title = t.Title,
+                        Summary = t.Summary,
+                        Body = t.Body,
+                    }),
                 };
                 var result = await blogService.Value.ManagePostContributionAsync(dto);
 
@@ -437,6 +460,133 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 Logger.Value.LogException(exc);
 
                 return Ok<ManagePostContributionResponseViewModel>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        #endregion
+
+        #region Comments
+
+        [HttpGet("posts/{postId:long}/comments"), Produces<ApiResponse<ListDataSource<PostCommentsResponseViewModel>>>()]
+        [AllowAnonymous]
+        public async Task<IActionResult<ListDataSource<PostCommentsResponseViewModel>>> GetPostComments([FromRoute] long postId, [NotNull, FromQuery] PostCommentsRequestViewModel request)
+        {
+            try
+            {
+                var result = await blogService.Value.GetPostCommentsAsync(new ListRequestDto<PostComment>
+                {
+                    PagingDto = request.PagingDto,
+                    Specification = new PostIdEqualsSpecification<PostComment>(postId),
+                });
+                return Ok<ListDataSource<PostCommentsResponseViewModel>>(new(result.Errors)
+                {
+                    Data = result.Data.List is null ? new() : new()
+                    {
+                        List = result.Data.List.Select(t => new PostCommentsResponseViewModel
+                        {
+                            Id = t.Id,
+                            Comment = t.Comment,
+                            CreationDate = t.CreationDate,
+                            CreationUser = t.CreationUser,
+                            CreationUserAvatar = t.CreationUserAvatar,
+                            DislikeCount = t.DislikeCount,
+                            LikeCount = t.LikeCount,
+                            LikedByCurrentUser = t.LikedByCurrentUser,
+                            DislikedByCurrentUser = t.DislikedByCurrentUser,
+                        }),
+                        TotalRecordsCount = result.Data.TotalRecordsCount,
+                    }
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<ListDataSource<PostCommentsResponseViewModel>>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPost("posts/{postId:long}/comments"), Produces<ApiResponse<ManagePostCommentResponseViewModel>>()]
+        public async Task<IActionResult<ManagePostCommentResponseViewModel>> CreatePostComment([FromRoute] long postId, [NotNull] ManagePostCommentRequestViewModel request)
+        {
+            try
+            {
+                var validateCaptcha = await globalService.Value.VerifyCaptchaAsync(request.Captcha);
+                if (!validateCaptcha.Data)
+                {
+                    return Ok<ManagePostCommentResponseViewModel>(new(new Error { Message = "Invalid Captcha" }));
+                }
+
+                var result = await blogService.Value.CreatePostCommentContributionAsync(new()
+                {
+                    UserId = User.UserId(),
+                    PostId = postId,
+                    CommentContribution = new()
+                    {
+                        Comment = request.Comment,
+                        PostId = postId,
+                        CreationDate = DateTimeOffset.UtcNow,
+                        CreationUserId = User.UserId(),
+                    }
+                });
+                return Ok<ManagePostCommentResponseViewModel>(new(result.Errors)
+                {
+                    Data = new() { Id = result.Data, },
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<ManagePostCommentResponseViewModel>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPatch("posts/{postId:long}/comments/{commentId:long}/like"), Produces<ApiResponse<bool>>()]
+        public async Task<IActionResult<bool>> LikePostComment([FromRoute] long postId, [FromRoute] long commentId)
+        {
+            try
+            {
+                var result = await blogService.Value.LikePostCommentAsync(new()
+                {
+                    CommentId = commentId,
+                    PostId = postId,
+                    UserId = User.UserId(),
+                });
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
+            }
+        }
+
+        [HttpPatch("posts/{postId:long}/comments/{commentId:long}/dislike"), Produces<ApiResponse<bool>>()]
+        public async Task<IActionResult<bool>> DislikePostComment([FromRoute] long postId, [FromRoute] long commentId)
+        {
+            try
+            {
+                var result = await blogService.Value.DislikePostCommentAsync(new()
+                {
+                    CommentId = commentId,
+                    PostId = postId,
+                    UserId = User.UserId(),
+                });
+                return Ok<bool>(new(result.Errors)
+                {
+                    Data = result.Data,
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+
+                return Ok<bool>(new(new Error { Message = exc.Message }));
             }
         }
 

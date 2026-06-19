@@ -14,7 +14,7 @@ namespace GamaEdtech.Common.Swagger
         public void Apply([NotNull] OpenApiParameter parameter, [NotNull] ParameterFilterContext context)
         {
             var routeInfo = context.ApiParameterDescription.RouteInfo;
-            if (routeInfo?.Constraints != null && routeInfo.Constraints.Any(t => t.GetType().Name == type.Name))
+            if (routeInfo?.Constraints != null && routeInfo.Constraints.Any(t => t?.GetType()?.Name == type.Name))
             {
                 var lst = EnumerationExtensions.GetNames(type);
                 if (lst is not null)

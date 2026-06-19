@@ -1,7 +1,7 @@
-﻿namespace GamaEdtech.Data.Dto.Identity
+namespace GamaEdtech.Data.Dto.Identity
 {
     public sealed class UserPermissionsRequestDto
     {
-        public int UserId { get; set; }
+        public long UserId { get; set; }
     }
 }

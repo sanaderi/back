@@ -12,7 +12,7 @@ namespace GamaEdtech.Data.Dto.Ticket
         public string? Subject { get; set; }
         public string? Body { get; set; }
         public DateTimeOffset CreationDate { get; set; }
-        public Uri? FileUri { get; set; }
+        public string? FileUri { get; set; }
         public ICollection<string?>? Receivers { get; set; }
     }
 }

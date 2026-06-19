@@ -6,27 +6,29 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
-    using GamaEdtech.Data.Dto.School;
+    using GamaEdtech.Data.Dto.File;
+    using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
-    using GamaEdtech.Infrastructure.Interface;
 
     using Google.Apis.Auth.OAuth2;
     using Google.Apis.Services;
     using Google.Apis.YouTube.v3;
     using Google.Apis.YouTube.v3.Data;
 
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class YoutubeFileProvider(Lazy<ILogger<YoutubeFileProvider>> logger) : IFileProvider
+    public sealed class YoutubeFileProvider(Lazy<ILogger<YoutubeFileProvider>> logger, Lazy<IConfiguration> configuration) : FileProviderBase(configuration)
     {
-        public FileProviderType ProviderType => FileProviderType.Youtube;
+        public override FileProviderType ProviderType => FileProviderType.Youtube;
 
-        public ResultData<Uri?> GetFileUri(string id, ContainerType containerType) => throw new NotImplementedException();
-        public Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto) => throw new NotImplementedException();
+        public override Task<ResultData<Uri?>> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto) => throw new NotImplementedException();
 
-        public async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
+        public override Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto) => throw new NotImplementedException();
+
+        public override async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
         {
             try
             {
@@ -67,7 +69,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
                     _ = fdfdf.Exception;
                 }
 
-                var name = $"{Guid.NewGuid():N}{requestDto.FileExtension}";
+                var name = GenerateBlobFileName(requestDto.FileExtension);
 
                 return new(OperationResult.Succeeded) { Data = name };
             }

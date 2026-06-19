@@ -43,6 +43,32 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 {
                     specification = new HasReferralSpecification(request.HasReferral.Value);
                 }
+
+                if (!string.IsNullOrEmpty(request.FirstName))
+                {
+                    specification = new FirstNameContainsSpecification(request.FirstName);
+                }
+
+                if (!string.IsNullOrEmpty(request.LastName))
+                {
+                    specification = new LastNameContainsSpecification(request.LastName);
+                }
+
+                if (!string.IsNullOrEmpty(request.Email))
+                {
+                    specification = new EmailEqualsSpecification(request.Email);
+                }
+
+                if (!string.IsNullOrEmpty(request.ReferralId))
+                {
+                    specification = new ReferralIdEqualsSpecification(request.ReferralId);
+                }
+
+                if (request.Roles is not null)
+                {
+                    specification = new RoleEqualsSpecification(request.Roles);
+                }
+
                 var result = await identityService.Value.GetUsersAsync(new()
                 {
                     PagingDto = request.PagingDto,
@@ -62,6 +88,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             Enabled = t.Enabled,
                             ReferralId = t.ReferralId,
                             RegistrationDate = t.RegistrationDate,
+                            FirstName = t.FirstName,
+                            LastName = t.LastName,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }
@@ -75,13 +103,13 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpGet("{userId:int}"), Produces(typeof(ApiResponse<UserResponseViewModel>))]
+        [HttpGet("{userId:long}"), Produces(typeof(ApiResponse<UserResponseViewModel>))]
         [Display(Name = "User Details")]
-        public async Task<IActionResult<UserResponseViewModel>> Get([FromRoute] int userId)
+        public async Task<IActionResult<UserResponseViewModel>> Get([FromRoute] long userId)
         {
             try
             {
-                var result = await identityService.Value.GetUserAsync(new IdEqualsSpecification<ApplicationUser, int>(userId));
+                var result = await identityService.Value.GetUserAsync(new IdEqualsSpecification<ApplicationUser, long>(userId));
                 return Ok<UserResponseViewModel>(new(result.Errors)
                 {
                     Data = result.Data is null ? null : new()
@@ -92,6 +120,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         PhoneNumber = result.Data.PhoneNumber,
                         Enabled = result.Data.Enabled,
                         RegistrationDate = result.Data.RegistrationDate,
+                        FirstName = result.Data.FirstName,
+                        LastName = result.Data.LastName,
+                        ReferralId = result.Data.ReferralId,
                     }
                 });
             }
@@ -129,9 +160,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpPut("{userId:int}"), Produces(typeof(ApiResponse<Void>))]
+        [HttpPut("{userId:long}"), Produces(typeof(ApiResponse<Void>))]
         [Display(Name = "Edit User")]
-        public async Task<IActionResult<Void>> Update([FromRoute] int userId, [NotNull, FromBody] EditUserRequestViewModel request)
+        public async Task<IActionResult<Void>> Update([FromRoute] long userId, [NotNull, FromBody] EditUserRequestViewModel request)
         {
             try
             {
@@ -155,13 +186,13 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpDelete("{userId:int}"), Produces(typeof(ApiResponse<bool>))]
+        [HttpDelete("{userId:long}"), Produces(typeof(ApiResponse<bool>))]
         [Display(Name = "Remove User")]
-        public async Task<IActionResult> Remove([FromRoute] int userId)
+        public async Task<IActionResult> Remove([FromRoute] long userId)
         {
             try
             {
-                var result = await identityService.Value.RemoveUserAsync(new IdEqualsSpecification<ApplicationUser, int>(userId));
+                var result = await identityService.Value.RemoveUserAsync(new IdEqualsSpecification<ApplicationUser, long>(userId));
                 return Ok<bool>(new(result.Errors)
                 {
                     Data = result.Data
@@ -175,13 +206,13 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpPatch("{userId:int}/toggle"), Produces(typeof(ApiResponse<Void>))]
+        [HttpPatch("{userId:long}/toggle"), Produces(typeof(ApiResponse<Void>))]
         [Display(Name = "Enable/Disable User")]
-        public async Task<IActionResult> Toggle([FromRoute] int userId)
+        public async Task<IActionResult> Toggle([FromRoute] long userId)
         {
             try
             {
-                var result = await identityService.Value.ToggleUserAsync(new IdEqualsSpecification<ApplicationUser, int>(userId));
+                var result = await identityService.Value.ToggleUserAsync(new IdEqualsSpecification<ApplicationUser, long>(userId));
                 return Ok<Void>(new(result.Errors)
                 {
                     Data = new()
@@ -195,9 +226,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpGet("{userId:int}/token"), Produces(typeof(ApiResponse<GetTokenResponseViewModel>))]
+        [HttpGet("{userId:long}/token"), Produces(typeof(ApiResponse<GetTokenResponseViewModel>))]
         [Display(Name = "View User Token")]
-        public async Task<IActionResult> GetUserToken([FromRoute] int userId)
+        public async Task<IActionResult> GetUserToken([FromRoute] long userId)
         {
             try
             {
@@ -223,9 +254,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpPost("{userId:int}/token"), Produces(typeof(ApiResponse<GenerateTokenResponseViewModel>))]
+        [HttpPost("{userId:long}/token"), Produces(typeof(ApiResponse<GenerateTokenResponseViewModel>))]
         [Display(Name = "Generate User Token")]
-        public async Task<IActionResult<GenerateTokenResponseViewModel>> GenerateToken([FromRoute] int userId)
+        public async Task<IActionResult<GenerateTokenResponseViewModel>> GenerateToken([FromRoute] long userId)
         {
             try
             {
@@ -251,9 +282,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpDelete("{userId:int}/token"), Produces(typeof(ApiResponse<bool>))]
+        [HttpDelete("{userId:long}/token"), Produces(typeof(ApiResponse<bool>))]
         [Display(Name = "Remove User Token")]
-        public async Task<IActionResult<bool>> RemoveToken([FromRoute] int userId)
+        public async Task<IActionResult<bool>> RemoveToken([FromRoute] long userId)
         {
             try
             {
@@ -276,13 +307,13 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpPut("{userId:int}/reset-password"), Produces(typeof(ApiResponse<Void>))]
+        [HttpPut("{userId:long}/reset-password"), Produces(typeof(ApiResponse<Void>))]
         [Display(Name = "Reset User Password")]
-        public async Task<IActionResult<Void>> ResetPassword([FromRoute] int userId, [NotNull] ResetPasswordRequestViewModel request)
+        public async Task<IActionResult<Void>> ResetPassword([FromRoute] long userId, [NotNull] ResetPasswordRequestViewModel request)
         {
             try
             {
-                var userResult = await identityService.Value.GetUserAsync(new IdEqualsSpecification<ApplicationUser, int>(userId));
+                var userResult = await identityService.Value.GetUserAsync(new IdEqualsSpecification<ApplicationUser, long>(userId));
                 if (userResult.OperationResult is not OperationResult.Succeeded)
                 {
                     return Ok<Void>(new(userResult.Errors));
@@ -302,9 +333,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpGet("{userId:int}/permissions"), Produces(typeof(ApiResponse<UserPermissionsResponseViewModel>))]
+        [HttpGet("{userId:long}/permissions"), Produces(typeof(ApiResponse<UserPermissionsResponseViewModel>))]
         [Display(Name = "View User Permissions")]
-        public async Task<IActionResult<UserPermissionsResponseViewModel>> Permissions([FromRoute] int userId)
+        public async Task<IActionResult<UserPermissionsResponseViewModel>> Permissions([FromRoute] long userId)
         {
             try
             {
@@ -357,9 +388,9 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             }
         }
 
-        [HttpPut("{userId:int}/permissions"), Produces(typeof(ApiResponse<Void>))]
+        [HttpPut("{userId:long}/permissions"), Produces(typeof(ApiResponse<Void>))]
         [Display(Name = "Edit User Permissions")]
-        public async Task<IActionResult<Void>> ManageUserPermissions([FromRoute] int userId, [NotNull] ManageUserPermissionsRequestViewModel request)
+        public async Task<IActionResult<Void>> ManageUserPermissions([FromRoute] long userId, [NotNull] ManageUserPermissionsRequestViewModel request)
         {
             try
             {

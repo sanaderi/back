@@ -16,7 +16,7 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x'
+          dotnet-version: '10.x'
 
       - name: Build Rest API Project
         run: |
@@ -46,18 +46,20 @@ jobs:
       - name: Deploy to VPS via SSH
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.SANDBOX_VPS_HOST }}
+          username: ${{ secrets.SANDBOX_VPS_USER }}
+          key: ${{ secrets.SANDBOX_VPS_SSH_KEY }}
+          port: ${{ secrets.SANDBOX_VPS_PORT }}
           source: '.'
-          target: '/var/www/staginggamacoreapp'
+          target: '/var/www/stagegamacoreapp'
 
       - name: Restart application on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.SANDBOX_VPS_HOST }}
+          username: ${{ secrets.SANDBOX_VPS_USER }}
+          key: ${{ secrets.SANDBOX_VPS_SSH_KEY }}
+          port: ${{ secrets.SANDBOX_VPS_PORT }}
           script: |
-            cd /var/www/staginggamacoreapp
-            systemctl restart staginggamacoreapp.service
+            cd /var/www/stagegamacoreapp
+            sudo systemctl restart stagegamacoreapp.service

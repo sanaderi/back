@@ -5,16 +5,21 @@ namespace GamaEdtech.Presentation.Api.Controllers
     using GamaEdtech.Application.Interface;
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
+    using GamaEdtech.Common.Identity;
     using GamaEdtech.Presentation.ViewModel.Board;
 
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
+    [Permission(policy: null)]
+    [AllowAnonymous]
     public class BoardsController(Lazy<ILogger<BoardsController>> logger, Lazy<IBoardService> boardService)
         : ApiControllerBase<BoardsController>(logger)
     {
         [HttpGet, Produces<ApiResponse<IEnumerable<BoardsListResponseViewModel>>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 300)]
         public async Task<IActionResult<IEnumerable<BoardsListResponseViewModel>>> GetBoards()
         {
             try

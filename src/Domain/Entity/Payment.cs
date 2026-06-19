@@ -13,7 +13,7 @@ namespace GamaEdtech.Domain.Entity
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
     [Table(nameof(Payment))]
-    public class Payment : IEntity<Payment, long>, IUserId<int>, ICreationDate
+    public class Payment : IEntity<Payment, long>, IUserId<long>, ICreationDate
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Long)]
@@ -21,9 +21,9 @@ namespace GamaEdtech.Domain.Entity
         [Required]
         public long Id { get; set; }
 
-        [Column(nameof(UserId), DataType.Int)]
+        [Column(nameof(UserId), DataType.Long)]
         [Required]
-        public int UserId { get; set; }
+        public long UserId { get; set; }
         public ApplicationUser? User { get; set; }
 
         [Column(nameof(Amount), DataType.Decimal)]
@@ -37,6 +37,10 @@ namespace GamaEdtech.Domain.Entity
         [Column(nameof(Status), DataType.Byte)]
         [Required]
         public PaymentStatus Status { get; set; }
+
+        [Column(nameof(Gateway), DataType.Byte)]
+        [Required]
+        public PaymentGateway Gateway { get; set; }
 
         [Column(nameof(CreationDate), DataType.DateTimeOffset)]
         [Required]
@@ -62,7 +66,8 @@ namespace GamaEdtech.Domain.Entity
             _ = builder.Property(t => t.Amount).HasPrecision(36, 18);
             _ = builder.OwnEnumeration<Payment, Currency, byte>(t => t.Currency);
             _ = builder.OwnEnumeration<Payment, PaymentStatus, byte>(t => t.Status);
-            _ = builder.HasIndex(t => t.TransactionId).IsUnique();
+            _ = builder.OwnEnumeration<Payment, PaymentGateway, byte>(t => t.Gateway);
+            _ = builder.HasIndex(t => new { t.TransactionId, t.Gateway }).IsUnique();
         }
     }
 }

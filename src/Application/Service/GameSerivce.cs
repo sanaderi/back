@@ -88,7 +88,7 @@ namespace GamaEdtech.Application.Service
 
                 await cacheProvider.Value.RemoveAsync(key);
 
-                var points = await applicationSettingsService.Value.GetSettingAsync<long>(EnumerationExtensions.ToEnumeration<CoinType, byte>(coin.Name).ApplicationSettingsName);
+                var points = await applicationSettingsService.Value.GetSettingAsync<long>(coin.Name.ToEnumeration<CoinType, byte>().ApplicationSettingsName);
                 if (points.Data > 0)
                 {
                     var transactionRequest = new CreateTransactionRequestDto
@@ -137,7 +137,8 @@ namespace GamaEdtech.Application.Service
                 {
                     UserId = requestDto.UserId,
                     Points = requestDto.Points,
-                    Description = "Spend Game Points",
+                    Description = $"Spend Game Points - {requestDto.ContentType.Name}",
+                    IdentifierId = requestDto.IdentifierId,
                 };
                 var result = await transactionService.Value.DecreaseBalanceAsync(transactionRequest);
 

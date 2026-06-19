@@ -113,15 +113,26 @@ namespace GamaEdtech.Common.Converter
         public override void Write([NotNull] Utf8JsonWriter writer, T? value, [NotNull] JsonSerializerOptions options)
         {
             IFormatProvider provider = formatProvider == FormatProvider.CurrentCulture ? CultureInfo.CurrentCulture : CultureInfo.InvariantCulture;
-
-            if (value is DateTimeOffset offset)
+            string? result;
+            if (value is DateTimeOffset dateTimeOffset)
             {
-                writer.WriteStringValue(offset.UtcDateTime.Add(GetTimeSpan(options)).ToString(format, provider));
+                result = dateTimeOffset.UtcDateTime.Add(GetTimeSpan(options)).ToString(format ?? "MM/dd/yyyy HH:mm:ss", provider);
+            }
+            else if (value is DateTime dateTime)
+            {
+                result = dateTime.ToString(format ?? "MM/dd/yyyy HH:mm:ss", provider);
+            }
+            else if (value is DateOnly dateOnly)
+            {
+                _ = dateOnly;   //bypass analyzer
+                result = dateOnly.ToString(format ?? "MM/dd/yyyy", provider);
             }
             else
             {
-                writer.WriteStringValue((value as ISpanFormattable)?.ToString(format, provider));
+                result = (value as ISpanFormattable)?.ToString(format, provider);
             }
+
+            writer.WriteStringValue(result);
         }
 
         public override bool CanConvert(Type typeToConvert) => typeToConvert == typeof(DateTime) ||

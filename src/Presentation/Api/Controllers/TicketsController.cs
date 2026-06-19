@@ -15,19 +15,22 @@ namespace GamaEdtech.Presentation.Api.Controllers
     using GamaEdtech.Domain.Specification.Ticket;
     using GamaEdtech.Presentation.ViewModel.Ticket;
 
+    using Hangfire;
+
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
     using static GamaEdtech.Common.Core.Constants;
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
+    [Permission(policy: null)]
     public class TicketsController(Lazy<ILogger<TicketsController>> logger, Lazy<ITicketService> ticketService
         , Lazy<IGlobalService> globalService)
         : ApiControllerBase<TicketsController>(logger)
     {
         [HttpGet, Produces<ApiResponse<ListDataSource<TicketsResponseViewModel>>>()]
         [Display(Name = "Get List of Tickets")]
-        [Permission(policy: null)]
         public async Task<IActionResult<ListDataSource<TicketsResponseViewModel>>> GetTickets([NotNull, FromQuery] TicketsRequestViewModel request)
         {
             try
@@ -64,7 +67,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpGet("{id:long}"), Produces<ApiResponse<TicketResponseViewModel>>()]
         [Display(Name = "Get a Ticket Details")]
-        [Permission(policy: null)]
         public async Task<IActionResult<TicketResponseViewModel>> GetTicket([FromRoute] long id)
         {
             try
@@ -105,7 +107,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpGet("{id:long}/replys"), Produces<ApiResponse<IEnumerable<TicketReplyResponseViewModel>>>()]
         [Display(Name = "Get All of Replys of a Ticket")]
-        [Permission(policy: null)]
         public async Task<IActionResult<IEnumerable<TicketReplyResponseViewModel>>> GetTicketReplys([FromRoute] long id)
         {
             try
@@ -142,7 +143,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
         [HttpPost("{id:long}/replys"), Produces(typeof(ApiResponse<Void>))]
         [Display(Name = "Reply a Ticket")]
-        [Permission(policy: null)]
         public async Task<IActionResult> Reply([FromRoute] long id, [NotNull, FromForm] ReplyTicketByUserRequestViewModel request)
         {
             try
@@ -166,6 +166,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost, Produces<ApiResponse<ManageTicketResponseViewModel>>()]
+        [AllowAnonymous]
         public async Task<IActionResult<ManageTicketResponseViewModel>> CreateTicket([NotNull, FromForm] CreateTicketRequestViewModel request)
         {
             try
@@ -176,7 +177,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     return Ok<ManageTicketResponseViewModel>(new(new Error { Message = "Invalid Captcha" }));
                 }
 
-                int? userId = User.Identity?.IsAuthenticated == true ? User.UserId() : null;
+                long? userId = User.Identity?.IsAuthenticated == true ? User.UserId() : null;
                 var result = await ticketService.Value.CreateTicketAsync(new()
                 {
                     Body = request.Body,
@@ -188,14 +189,14 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 });
                 if (result.OperationResult is OperationResult.Succeeded)
                 {
-                    _ = await ticketService.Value.SendTicketConfirmationAsync(new()
+                    _ = BackgroundJob.Enqueue<ITicketService>(t => t.SendTicketConfirmationAsync(new()
                     {
                         Body = request.Body,
                         ReceiverEmail = request.Email,
                         ReceiverName = request.FullName,
                         Subject = request.Subject,
                         TicketId = result.Data,
-                    });
+                    }));
                 }
 
                 return Ok<ManageTicketResponseViewModel>(new(result.Errors)
@@ -211,6 +212,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("inbound-webhook"), Produces<ApiResponse<Void>>()]
+        [AllowAnonymous]
         public async Task<IActionResult<Void>> InboundWebHook()
         {
             try

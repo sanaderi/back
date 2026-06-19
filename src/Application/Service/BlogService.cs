@@ -2,7 +2,6 @@ namespace GamaEdtech.Application.Service
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
-    using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -37,7 +36,7 @@ namespace GamaEdtech.Application.Service
 
     public class BlogService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<BlogService>> localizer
         , Lazy<ILogger<BlogService>> logger, Lazy<IReactionService> reactionService, Lazy<IFileService> fileService, Lazy<IIdentityService> identityService, Lazy<IEmailService> emailService
-        , Lazy<IContributionService> contributionService, Lazy<ITagService> tagService, Lazy<IConfiguration> configuration, Lazy<IApplicationSettingsService> applicationSettingsService)
+        , Lazy<IContributionService> contributionService, Lazy<ITagService> tagService, Lazy<IConfiguration> configuration, Lazy<IApplicationSettingsService> applicationSettingsService, Lazy<IContentLocalizationService> contentLocalizationService)
         : LocalizableServiceBase<BlogService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IBlogService, ISiteMapHandler
     {
         public async Task<ResultData<ListDataSource<PostsDto>>> GetPostsAsync(ListRequestDto<Post>? requestDto = null)
@@ -59,18 +58,33 @@ namespace GamaEdtech.Application.Service
                     t.VisibilityType,
                 }).ToListAsync();
 
-                var result = blogs.Select(t => new PostsDto
+                var ids = blogs.Select(t => t.Id);
+                var localizedValues = await contentLocalizationService.Value.GetLocalizedValuesAsync(new()
                 {
-                    Id = t.Id,
-                    DislikeCount = t.DislikeCount,
-                    LikeCount = t.LikeCount,
-                    Summary = t.Summary,
-                    Title = t.Title,
-                    Slug = t.Slug,
-                    ImageUri = fileService.Value.GetFileUri(t.ImageId, ContainerType.Post).Data,
-                    PublishDate = t.PublishDate,
-                    VisibilityType = t.VisibilityType,
+                    ContentIds = ids,
+                    ContentType = nameof(Post),
                 });
+
+                List<PostsDto> result = new(blogs.Count);
+                for (var i = 0; i < blogs.Count; i++)
+                {
+                    result.Add(new()
+                    {
+                        Id = blogs[i].Id,
+                        DislikeCount = blogs[i].DislikeCount,
+                        LikeCount = blogs[i].LikeCount,
+                        Summary = localizedValues.Data?.Find(t => t.ContentId == blogs[i].Id && t.Name == nameof(Post.Summary))?.Value ?? blogs[i].Summary,
+                        Title = localizedValues.Data?.Find(t => t.ContentId == blogs[i].Id && t.Name == nameof(Post.Title))?.Value ?? blogs[i].Title,
+                        Slug = blogs[i].Slug,
+                        ImageUri = fileService.Value.GetStaticFileUrl(new()
+                        {
+                            FileId = blogs[i].ImageId,
+                            ContainerType = ContainerType.Post,
+                        }),
+                        PublishDate = blogs[i].PublishDate,
+                        VisibilityType = blogs[i].VisibilityType,
+                    });
+                }
 
                 return new(OperationResult.Succeeded) { Data = new() { List = result, TotalRecordsCount = lst.TotalRecordsCount } };
             }
@@ -81,7 +95,7 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<IReadOnlyList<KeyValuePair<long, string?>>>> GetPostsNameAsync([NotNull] ISpecification<Post> specification)
+        public async Task<ResultData<IReadOnlyList<KeyValuePair<long, string?>>>> GetPostsTitleAsync([NotNull] ISpecification<Post> specification)
         {
             try
             {
@@ -139,16 +153,37 @@ namespace GamaEdtech.Application.Service
                 var nextId = await repository.GetManyQueryable(new PublishDateSpecification()).Where(t => t.Id > post.Id).OrderBy(t => t.Id).Select(t => (long?)t.Id).FirstOrDefaultAsync();
                 var previousId = await repository.GetManyQueryable(new PublishDateSpecification()).Where(t => t.Id > post.Id).OrderByDescending(t => t.Id).Select(t => (long?)t.Id).FirstOrDefaultAsync();
 
+                var localizedValues = await contentLocalizationService.Value.GetLocalizedValuesAsync(new()
+                {
+                    ContentIds = [post.Id],
+                    ContentType = nameof(Post),
+                });
+
+                var likedByCurrentUser = false;
+                var dislikedByCurrentUser = false;
+                if (HttpContextAccessor.Value.HttpContext?.User.Identity?.IsAuthenticated == true)
+                {
+                    var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.Post)
+                        .And(new IdentifierIdEqualsSpecification<Reaction>(post.Id))
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, long>(HttpContextAccessor.Value.HttpContext.UserId()));
+                    var reaction = await reactionService.Value.GetReactionsAsync(spec);
+
+                    likedByCurrentUser = reaction.Data?.FirstOrDefault()?.Like > 0;
+                    dislikedByCurrentUser = reaction.Data?.FirstOrDefault()?.Dislike > 0;
+                }
+
                 PostDto result = new()
                 {
-                    Title = post.Title,
+                    Summary = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Summary))?.Value ?? post.Summary,
+                    Title = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Title))?.Value ?? post.Title,
+                    Body = localizedValues.Data?.Find(t => t.ContentId == post.Id && t.Name == nameof(Post.Body))?.Value ?? post.Body,
                     Slug = post.Slug,
-                    Summary = post.Summary,
-                    Body = post.Body,
-                    ImageUri = fileService.Value.GetFileUri(post.ImageId, ContainerType.Post).Data,
-                    PodcastUri = fileService.Value.GetFileUri(post.PodcastId, ContainerType.Post).Data,
+                    ImageUri = fileService.Value.GetStaticFileUrl(new() { FileId = post.ImageId, ContainerType = ContainerType.Post, }),
+                    PodcastUri = fileService.Value.GetStaticFileUrl(new() { FileId = post.PodcastId, ContainerType = ContainerType.Post, }),
                     LikeCount = post.LikeCount,
+                    LikedByCurrentUser = likedByCurrentUser,
                     DislikeCount = post.DislikeCount,
+                    DislikedByCurrentUser = dislikedByCurrentUser,
                     CreationUser = post.CreationUser,
                     CreationUserAvatar = post.Avatar,
                     Tags = post.Tags,
@@ -177,7 +212,7 @@ namespace GamaEdtech.Application.Service
                 if (requestDto.ContributionId.HasValue)
                 {
                     var specification = new IdEqualsSpecification<Contribution, long>(requestDto.ContributionId.Value)
-                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(requestDto.UserId))
+                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(requestDto.UserId))
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.Post))
                         .AndNot(new StatusEqualsSpecification<Contribution>(Status.Deleted));
                     var data = await contributionService.Value.ExistsContributionAsync(specification);
@@ -193,7 +228,7 @@ namespace GamaEdtech.Application.Service
                     }
                 }
 
-                ISpecification<Post> slugSpecification = new SlugEqualsSpecification(requestDto.Slug!);
+                ISpecification<Post> slugSpecification = new SlugEqualsSpecification(requestDto.Slug);
                 if (requestDto.ContributionId.HasValue)
                 {
                     identifierId = (await contributionService.Value.GetIdentifierIdAsync(new IdEqualsSpecification<Contribution, long>(requestDto.ContributionId.Value))).Data;
@@ -252,6 +287,7 @@ namespace GamaEdtech.Application.Service
                     VisibilityType = requestDto.VisibilityType,
                     Keywords = requestDto.Keywords,
                     Draft = requestDto.Draft,
+                    LocalizedValues = requestDto.LocalizedValues,
                 };
 
                 var contributionResult = await contributionService.Value.ManageContributionAsync(new ManageContributionRequestDto<PostContributionDto>
@@ -269,8 +305,8 @@ namespace GamaEdtech.Application.Service
 
                 if (!requestDto.Draft.GetValueOrDefault())
                 {
-                    var hasAutoConfirmSchoolComment = await identityService.Value.HasClaimAsync(requestDto.UserId, SystemClaim.AutoConfirmPost);
-                    if (hasAutoConfirmSchoolComment.Data || configuration.Value.GetValue<bool>("AutoConfirmPosts"))
+                    var hasAutoConfirmPostComment = await identityService.Value.HasClaimAsync(requestDto.UserId, SystemClaim.AutoConfirmPost);
+                    if (hasAutoConfirmPostComment.Data || configuration.Value.GetValue<bool>("AutoConfirmPosts"))
                     {
                         _ = await ConfirmPostContributionAsync(new()
                         {
@@ -591,18 +627,18 @@ namespace GamaEdtech.Application.Service
                     _ = await ManagePostAsync(new()
                     {
                         Body = result.Data.Data!.Body,
-                        CreationUserId = result.Data.Data!.CreationUserId.GetValueOrDefault(),
-                        CreationDate = result.Data.Data!.CreationDate.GetValueOrDefault(),
-                        ImageId = result.Data.Data!.ImageId,
-                        PodcastId = result.Data.Data!.PodcastId,
-                        RemovePodcast = result.Data.Data!.RemovePodcast,
-                        Title = result.Data.Data!.Title,
-                        Slug = result.Data.Data!.Slug,
-                        Summary = result.Data.Data!.Summary,
-                        PublishDate = result.Data.Data!.PublishDate.GetValueOrDefault(),
-                        VisibilityType = result.Data.Data!.VisibilityType!,
-                        Keywords = result.Data.Data!.Keywords,
-                        Tags = result.Data.Data!.Tags,
+                        CreationUserId = result.Data.Data.CreationUserId.GetValueOrDefault(),
+                        CreationDate = result.Data.Data.CreationDate.GetValueOrDefault(),
+                        ImageId = result.Data.Data.ImageId,
+                        PodcastId = result.Data.Data.PodcastId,
+                        RemovePodcast = result.Data.Data.RemovePodcast,
+                        Title = result.Data.Data.Title,
+                        Slug = result.Data.Data.Slug,
+                        Summary = result.Data.Data.Summary,
+                        PublishDate = result.Data.Data.PublishDate.GetValueOrDefault(),
+                        VisibilityType = result.Data.Data.VisibilityType!,
+                        Keywords = result.Data.Data.Keywords,
+                        Tags = result.Data.Data.Tags,
                         Id = postId.Value,
                     });
                 }
@@ -611,20 +647,20 @@ namespace GamaEdtech.Application.Service
                     Post post = new()
                     {
                         Body = result.Data.Data!.Body,
-                        CreationUserId = result.Data.Data!.CreationUserId.GetValueOrDefault(),
-                        CreationDate = result.Data.Data!.CreationDate.GetValueOrDefault(),
-                        ImageId = result.Data.Data!.ImageId,
-                        PodcastId = result.Data.Data!.PodcastId,
-                        Title = result.Data.Data!.Title,
-                        Slug = result.Data.Data!.Slug,
-                        Summary = result.Data.Data!.Summary,
-                        PublishDate = result.Data.Data!.PublishDate.GetValueOrDefault(),
-                        VisibilityType = result.Data.Data!.VisibilityType!,
-                        Keywords = result.Data.Data!.Keywords,
-                        PostTags = result.Data.Data!.Tags?.Select(t => new PostTag
+                        CreationUserId = result.Data.Data.CreationUserId.GetValueOrDefault(),
+                        CreationDate = result.Data.Data.CreationDate.GetValueOrDefault(),
+                        ImageId = result.Data.Data.ImageId,
+                        PodcastId = result.Data.Data.PodcastId,
+                        Title = result.Data.Data.Title,
+                        Slug = result.Data.Data.Slug,
+                        Summary = result.Data.Data.Summary,
+                        PublishDate = result.Data.Data.PublishDate.GetValueOrDefault(),
+                        VisibilityType = result.Data.Data.VisibilityType!,
+                        Keywords = result.Data.Data.Keywords,
+                        PostTags = result.Data.Data.Tags?.Select(t => new PostTag
                         {
-                            CreationUserId = result.Data.Data!.CreationUserId.GetValueOrDefault(),
-                            CreationDate = result.Data.Data!.CreationDate.GetValueOrDefault(),
+                            CreationUserId = result.Data.Data.CreationUserId.GetValueOrDefault(),
+                            CreationDate = result.Data.Data.CreationDate.GetValueOrDefault(),
                             TagId = t,
                         }).ToList(),
                     };
@@ -635,6 +671,41 @@ namespace GamaEdtech.Application.Service
                     postId = post.Id;
                     _ = await contributionService.Value.UpdateIdentifierIdAsync(requestDto.ContributionId, post.Id);
                 }
+
+                if (result.Data.Data.LocalizedValues is not null)
+                {
+                    foreach (var item in result.Data.Data.LocalizedValues)
+                    {
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Title),
+                            Value = item.Title,
+                        });
+
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Summary),
+                            Value = item.Summary,
+                        });
+
+                        _ = await contentLocalizationService.Value.ManageContentLocalizationAsync(new()
+                        {
+                            ContentId = postId.GetValueOrDefault(),
+                            LanguageId = item.LanguageId,
+                            ContentType = nameof(Post),
+                            Name = nameof(Post.Body),
+                            Value = item.Body,
+                        });
+                    }
+                }
+
+                scope.Complete();
 
                 if (requestDto.NotifyUser)
                 {
@@ -651,8 +722,6 @@ namespace GamaEdtech.Application.Service
                     });
                 }
 
-                scope.Complete();
-
                 return new(OperationResult.Succeeded) { Data = true };
             }
             catch (Exception exc)
@@ -662,12 +731,12 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> IsCreatorOfPostAsync(long postId, int userId)
+        public async Task<ResultData<bool>> IsCreatorOfPostAsync(long postId, long userId)
         {
             try
             {
                 var specification = new IdEqualsSpecification<Post, long>(postId)
-                    .And(new CreationUserIdEqualsSpecification<Post, ApplicationUser, int>(userId));
+                    .And(new CreationUserIdEqualsSpecification<Post, ApplicationUser, long>(userId));
 
                 var exists = await PostExistsAsync(specification);
 
@@ -700,20 +769,278 @@ namespace GamaEdtech.Application.Service
                 return (null, null);
             }
 
-            using MemoryStream stream = new();
-            await file.CopyToAsync(stream);
-
-            var fileId = await fileService.Value.UploadFileAsync(new()
+            var fileId = await fileService.Value.CreateFileAsync(new()
             {
-                File = stream.ToArray(),
+                File = file,
                 ContainerType = ContainerType.Post,
-                FileExtension = Path.GetExtension(file.FileName),
             });
 
             return fileId.OperationResult is OperationResult.Succeeded
                 ? ((string? ImageId, IEnumerable<Error>? Errors))(fileId.Data, null)
                 : new(null, fileId.Errors);
         }
+
+        #region Comments
+
+        public async Task<ResultData<ListDataSource<PostCommentDto>>> GetPostCommentsAsync(ListRequestDto<PostComment>? requestDto = null)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var result = await uow.GetRepository<PostComment>().GetManyQueryable(requestDto?.Specification).FilterListAsync(requestDto?.PagingDto);
+                var lst = await result.List.Select(t => new PostCommentDto
+                {
+                    Id = t.Id,
+                    Comment = t.Comment,
+                    CreationUser = t.CreationUser.FirstName + " " + t.CreationUser.LastName,
+                    CreationUserAvatar = t.CreationUser.Avatar,
+                    CreationDate = t.CreationDate,
+                    LikeCount = t.LikeCount,
+                    DislikeCount = t.DislikeCount,
+                }).ToListAsync();
+                if (lst is null)
+                {
+                    return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
+                }
+
+                if (HttpContextAccessor.Value.HttpContext?.User.Identity?.IsAuthenticated == true)
+                {
+                    var ids = lst.Select(t => t.Id);
+                    var spec = new CategoryTypeEqualsSpecification<Reaction>(CategoryType.PostComment)
+                        .And(new IdentifierIdContainsSpecification<Reaction>(ids))
+                        .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, long>(HttpContextAccessor.Value.HttpContext.UserId()));
+                    var reactions = await reactionService.Value.GetReactionsAsync(spec);
+                    if (reactions.Data is not null)
+                    {
+                        foreach (var item in reactions.Data)
+                        {
+                            var reaction = lst.Find(t => t.Id == item.IdentifierId);
+                            if (reaction is not null)
+                            {
+                                reaction.LikedByCurrentUser = reaction.LikeCount > 0;
+                                reaction.DislikedByCurrentUser = reaction.DislikeCount > 0;
+                            }
+                        }
+                    }
+                }
+
+                return new(OperationResult.Succeeded) { Data = new() { List = lst, TotalRecordsCount = result.TotalRecordsCount } };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> LikePostCommentAsync([NotNull] PostCommentReactionRequestDto requestDto)
+        {
+            try
+            {
+                var specification = new IdEqualsSpecification<PostComment, long>(requestDto.CommentId)
+                    .And(new PostIdEqualsSpecification<PostComment>(requestDto.PostId));
+                var exists = await CommentExistsAsync(specification);
+                if (!exists.Data)
+                {
+                    return new(OperationResult.NotFound)
+                    {
+                        Errors = [new() { Message = Localizer.Value["InvalidRequest"] },],
+                    };
+                }
+
+                var reactionResult = await reactionService.Value.ManageReactionAsync(new()
+                {
+                    CategoryType = CategoryType.PostComment,
+                    CreationDate = DateTimeOffset.UtcNow,
+                    CreationUserId = requestDto.UserId,
+                    IdentifierId = requestDto.CommentId,
+                    IsLike = true,
+                });
+                if (reactionResult.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(OperationResult.Failed) { Errors = reactionResult.Errors };
+                }
+
+                var result = await UpdatePostCommentReactionsAsync(requestDto.CommentId);
+
+                return result;
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> DislikePostCommentAsync([NotNull] PostCommentReactionRequestDto requestDto)
+        {
+            try
+            {
+                var specification = new IdEqualsSpecification<PostComment, long>(requestDto.CommentId)
+                    .And(new PostIdEqualsSpecification<PostComment>(requestDto.PostId));
+                var exists = await CommentExistsAsync(specification);
+                if (!exists.Data)
+                {
+                    return new(OperationResult.NotFound)
+                    {
+                        Errors = [new() { Message = Localizer.Value["InvalidRequest"] },],
+                    };
+                }
+
+                var reactionResult = await reactionService.Value.ManageReactionAsync(new()
+                {
+                    CategoryType = CategoryType.PostComment,
+                    CreationDate = DateTimeOffset.UtcNow,
+                    CreationUserId = requestDto.UserId,
+                    IdentifierId = requestDto.CommentId,
+                    IsLike = false,
+                });
+                if (reactionResult.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(OperationResult.Failed) { Errors = reactionResult.Errors };
+                }
+
+                var result = await UpdatePostCommentReactionsAsync(requestDto.CommentId);
+
+                return result;
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        public async Task<ResultData<long>> CreatePostCommentContributionAsync([NotNull] ManagePostCommentContributionRequestDto requestDto)
+        {
+            try
+            {
+                var commentSpecification = new PostIdEqualsSpecification<PostComment>(requestDto.PostId)
+                        .And(new CreationUserIdEqualsSpecification<PostComment, ApplicationUser, long>(requestDto.UserId));
+                var commentExists = await CommentExistsAsync(commentSpecification);
+                if (commentExists.Data)
+                {
+                    return new(OperationResult.Failed) { Errors = [new() { Message = "Comment Exists for Current User and Post", }] };
+                }
+
+                var contributionSpecification = new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(requestDto.UserId)
+                    .And(new IdentifierIdEqualsSpecification<Contribution>(requestDto.PostId))
+                    .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.PostComment))
+                    .And(
+                        new StatusEqualsSpecification<Contribution>(Status.Draft)
+                        .Or(new StatusEqualsSpecification<Contribution>(Status.Review))
+                    );
+                var contributionExists = await contributionService.Value.ExistsContributionAsync(contributionSpecification);
+                if (contributionExists.Data)
+                {
+                    return new(OperationResult.Failed) { Errors = [new() { Message = "there is a pending Comment", }] };
+                }
+
+                var contributionResult = await contributionService.Value.ManageContributionAsync(new ManageContributionRequestDto<PostCommentContributionDto>
+                {
+                    CategoryType = CategoryType.PostComment,
+                    IdentifierId = requestDto.PostId,
+                    Status = Status.Review,
+                    Data = requestDto.CommentContribution,
+                });
+                if (contributionResult.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(contributionResult.OperationResult) { Errors = contributionResult.Errors };
+                }
+
+                var hasAutoConfirmPostComment = await identityService.Value.HasClaimAsync(requestDto.UserId, SystemClaim.AutoConfirmPostComment);
+                if (hasAutoConfirmPostComment.Data || configuration.Value.GetValue<bool>("AutoConfirmComments"))
+                {
+                    _ = await ConfirmPostCommentContributionAsync(new()
+                    {
+                        ContributionId = contributionResult.Data,
+                        NotifyUser = false,
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = contributionResult.Data };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, }] };
+            }
+        }
+
+        private async Task CreatePostCommentAsync(PostCommentContributionDto dto)
+        {
+            var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+            var postCommentRepository = uow.GetRepository<PostComment>();
+            postCommentRepository.Add(new()
+            {
+                PostId = dto.PostId,
+                Comment = dto.Comment,
+                CreationUserId = dto.CreationUserId,
+                CreationDate = dto.CreationDate,
+            });
+            _ = await uow.SaveChangesAsync();
+        }
+
+        public async Task<ResultData<bool>> ConfirmPostCommentContributionAsync([NotNull] ConfirmPostCommentContributionRequestDto requestDto)
+        {
+            try
+            {
+                var contributionSpecification = new IdEqualsSpecification<Contribution, long>(requestDto.ContributionId)
+                    .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.PostComment));
+                var result = await contributionService.Value.ConfirmContributionAsync<PostCommentContributionDto>(new()
+                {
+                    Specification = contributionSpecification,
+                });
+                if (result.Data is null)
+                {
+                    return new(OperationResult.Failed) { Errors = result.Errors };
+                }
+
+                await CreatePostCommentAsync(result.Data.Data!);
+
+                if (requestDto.NotifyUser)
+                {
+                    var name = await GetPostsTitleAsync(new IdEqualsSpecification<Post, long>(result.Data.Data!.PostId));
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.PostCommentContributionConfirmationEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", result.Data.FullName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[POST_TITLE]", name.Data?[0].Value, StringComparison.OrdinalIgnoreCase)
+                        .Replace("[POST_ID]", result.Data.Data.PostId.ToString(), StringComparison.OrdinalIgnoreCase)
+                        .Replace("[COMMENT]", result.Data.Data.Comment, StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "Post Comment Contribution Confirmation",
+                        Body = template!,
+                        EmailAddresses = [result.Data.Email],
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = true };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> CommentExistsAsync([NotNull] ISpecification<PostComment> specification)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var exists = await uow.GetRepository<PostComment>().AnyAsync(specification);
+
+                return new(OperationResult.Succeeded) { Data = exists };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        #endregion
 
         #region SiteMap
 
@@ -725,7 +1052,8 @@ namespace GamaEdtech.Application.Service
             return uow.GetRepository<Post>().GetManyQueryable(t => t.PublishDate <= now && t.VisibilityType == VisibilityType.General).Select(t => new SiteMapItemDto
             {
                 Id = t.Id,
-                Title = t.Slug ?? t.Title,
+                Path1 = t.Id.ToString(),
+                Path2 = t.Slug ?? t.Title,
                 LastModifyDate = t.LastModifyDate ?? t.CreationDate,
             });
         }
@@ -739,11 +1067,58 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var where = postId.HasValue ? $"WHERE p.Id={postId.Value}" : "";
-                var query = $@"UPDATE p SET
-                    LikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.Post.Value} AND r.IdentifierId=p.Id AND r.IsLike=1)
-                    ,DislikeCount=(SELECT COUNT(1) FROM Reactions r WHERE r.CategoryType={CategoryType.Post.Value} AND r.IdentifierId=p.Id AND r.IsLike=0)
-                FROM Posts p {where}";
+                var where = postId.HasValue ? $" c.Id={postId.Value} AND " : "";
+                var query = $@"
+;WITH ReactionAgg AS
+(
+    SELECT r.IdentifierId, SUM(CASE WHEN r.IsLike = 1 THEN 1 ELSE 0 END) AS LikeCount, SUM(CASE WHEN r.IsLike = 0 THEN 1 ELSE 0 END) AS DislikeCount
+    FROM Reactions r WHERE r.CategoryType = {CategoryType.Post.Value} GROUP BY r.IdentifierId
+)
+UPDATE c
+SET
+    c.LikeCount    = ISNULL(ra.LikeCount, 0),
+    c.DislikeCount = ISNULL(ra.DislikeCount, 0)
+FROM Posts c
+LEFT JOIN ReactionAgg ra ON ra.IdentifierId = c.Id
+WHERE {where} (
+    c.LikeCount <> ISNULL(ra.LikeCount, 0)
+    OR c.DislikeCount <> ISNULL(ra.DislikeCount, 0)
+    OR c.LikeCount IS NULL OR c.DislikeCount IS NULL);";
+
+                _ = await uow.ExecuteSqlCommandAsync(query);
+
+                return new(OperationResult.Succeeded) { Data = true };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> UpdatePostCommentReactionsAsync(long? postCommentId = null)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var where = postCommentId.HasValue ? $" c.Id={postCommentId.Value} AND " : "";
+                var query = $@"
+;WITH ReactionAgg AS
+(
+    SELECT r.IdentifierId, SUM(CASE WHEN r.IsLike = 1 THEN 1 ELSE 0 END) AS LikeCount, SUM(CASE WHEN r.IsLike = 0 THEN 1 ELSE 0 END) AS DislikeCount
+    FROM Reactions r WHERE r.CategoryType = {CategoryType.PostComment.Value} GROUP BY r.IdentifierId
+)
+UPDATE c
+SET
+    c.LikeCount    = ISNULL(ra.LikeCount, 0),
+    c.DislikeCount = ISNULL(ra.DislikeCount, 0)
+FROM PostComments c
+LEFT JOIN ReactionAgg ra ON ra.IdentifierId = c.Id
+WHERE {where} (
+    c.LikeCount <> ISNULL(ra.LikeCount, 0)
+    OR c.DislikeCount <> ISNULL(ra.DislikeCount, 0)
+    OR c.LikeCount IS NULL OR c.DislikeCount IS NULL);";
+
                 _ = await uow.ExecuteSqlCommandAsync(query);
 
                 return new(OperationResult.Succeeded) { Data = true };

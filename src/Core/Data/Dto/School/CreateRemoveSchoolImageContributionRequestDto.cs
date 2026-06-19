@@ -4,7 +4,7 @@ namespace GamaEdtech.Data.Dto.School
     {
         public long SchoolId { get; set; }
         public long ImageId { get; set; }
-        public int CreationUserId { get; set; }
+        public long CreationUserId { get; set; }
         public string? Description { get; set; }
     }
 }

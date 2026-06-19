@@ -4,6 +4,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
 
     using Asp.Versioning;
 
+    using ClosedXML.Excel;
+
     using GamaEdtech.Application.Interface;
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
@@ -13,6 +15,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Domain.Specification;
+    using GamaEdtech.Domain.Specification.Payment;
     using GamaEdtech.Presentation.ViewModel.Payment;
 
     using Microsoft.AspNetCore.Mvc;
@@ -21,7 +24,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     [Route("api/v{version:apiVersion}/[area]/[controller]")]
     [ApiVersion("1.0")]
     [Permission(Roles = [nameof(Role.Admin)])]
-    public class PaymentsController(Lazy<ILogger<PaymentsController>> logger, Lazy<IPaymentService> transactionService)
+    public class PaymentsController(Lazy<ILogger<PaymentsController>> logger, Lazy<IPaymentService> paymentService)
         : ApiControllerBase<PaymentsController>(logger)
     {
         [HttpGet, Produces<ApiResponse<ListDataSource<PaymentsListResponseViewModel>>>()]
@@ -38,11 +41,23 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
 
                 if (request.UserId.HasValue)
                 {
-                    var spec = new UserIdEqualsSpecification<Payment, int>(request.UserId.Value);
+                    var spec = new UserIdEqualsSpecification<Payment, long>(request.UserId.Value);
                     specification = specification is null ? spec : specification.And(spec);
                 }
 
-                var result = await transactionService.Value.GetPaymentsAsync(new ListRequestDto<Payment>
+                if (request.Gateway is not null)
+                {
+                    var spec = new GatewayEqualsSpecification(request.Gateway);
+                    specification = specification is null ? spec : specification.And(spec);
+                }
+
+                if (request.Status is not null)
+                {
+                    var spec = new StatusEqualsSpecification(request.Status);
+                    specification = specification is null ? spec : specification.And(spec);
+                }
+
+                var result = await paymentService.Value.GetPaymentsAsync(new ListRequestDto<Payment>
                 {
                     PagingDto = request.PagingDto,
                     Specification = specification,
@@ -66,6 +81,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                             Status = t.Status,
                             TransactionId = t.TransactionId,
                             VerifyDate = t.VerifyDate,
+                            Gateway = t.Gateway,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }
@@ -76,6 +92,80 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 Logger.Value.LogException(exc);
 
                 return Ok<ListDataSource<PaymentsListResponseViewModel>>(new() { Errors = [new() { Message = exc.Message }] });
+            }
+        }
+
+        [HttpGet("export"), Produces<ApiResponse<string>>()]
+        public async Task<IActionResult> Export([NotNull, FromQuery] ExportPaymentsListRequestViewModel request)
+        {
+            try
+            {
+                ISpecification<Payment>? specification = null;
+
+                if (request.StartDate.HasValue || request.EndDate.HasValue)
+                {
+                    specification = new CreationDateBetweenSpecification<Payment>(request.StartDate, request.EndDate);
+                }
+
+                if (request.Gateway is not null)
+                {
+                    var spec = new GatewayEqualsSpecification(request.Gateway);
+                    specification = specification is null ? spec : specification.And(spec);
+                }
+
+                if (request.Status is not null)
+                {
+                    var spec = new StatusEqualsSpecification(request.Status);
+                    specification = specification is null ? spec : specification.And(spec);
+                }
+
+                var result = await paymentService.Value.GetPaymentsAsync(new ListRequestDto<Payment>
+                {
+                    Specification = specification,
+                });
+
+                var data = result.Data.List?.Select(t => new
+                {
+                    t.Id,
+                    t.UserId,
+                    t.FirstName,
+                    t.LastName,
+                    t.City,
+                    t.State,
+                    t.Country,
+                    t.Amount,
+                    Currency = t.Currency.Name,
+                    Status = t.Status.Name,
+                    t.CreationDate,
+                    t.VerifyDate,
+                    t.SourceWallet,
+                    t.Comment,
+                    t.TransactionId,
+                    Gateway = t.Gateway.Name,
+                });
+
+                using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("DataSheet");
+
+                // Insert the list into the worksheet starting at cell A1
+                // It automatically handles headers based on object properties
+                _ = worksheet.Cell(1, 1).InsertTable(data);
+
+                // Adjust column widths automatically
+                _ = worksheet.Columns().AdjustToContents();
+
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+
+                return new FileContentResult(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                {
+                    FileDownloadName = "Payments.xlsx",
+                };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return Ok<string>(new() { Errors = [new() { Message = exc.Message }] });
             }
         }
     }

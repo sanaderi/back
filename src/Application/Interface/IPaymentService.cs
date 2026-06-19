@@ -3,6 +3,7 @@ namespace GamaEdtech.Application.Interface
     using System.Diagnostics.CodeAnalysis;
 
     using GamaEdtech.Common.Data;
+    using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Common.DataAnnotation;
     using GamaEdtech.Data.Dto.Payment;
     using GamaEdtech.Domain.Entity;
@@ -11,7 +12,8 @@ namespace GamaEdtech.Application.Interface
     public interface IPaymentService
     {
         Task<ResultData<ListDataSource<PaymentDto>>> GetPaymentsAsync(ListRequestDto<Payment>? requestDto = null);
-        Task<ResultData<long>> CreatePaymentAsync([NotNull] CreatePaymentRequestDto requestDto);
+        Task<ResultData<CreatePaymentResponseDto>> CreatePaymentAsync([NotNull] CreatePaymentRequestDto requestDto);
         Task<ResultData<bool>> VerifyPaymentAsync([NotNull] VerifyPaymentRequestDto requestDto);
+        Task<ResultData<List<PaymentsSummaryDto>>> GetPaymentsSummaryAsync(ISpecification<Payment>? specification);
     }
 }

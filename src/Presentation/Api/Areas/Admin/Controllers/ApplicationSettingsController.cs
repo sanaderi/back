@@ -50,11 +50,19 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                         ExamIncorrectTestSubmissionPoints = result.Data.ExamIncorrectTestSubmissionPoints,
                         TicketConfirmationEmailTemplate = result.Data.TicketConfirmationEmailTemplate,
                         SchoolCommentContributionConfirmationEmailTemplate = result.Data.SchoolCommentContributionConfirmationEmailTemplate,
+                        PostCommentContributionConfirmationEmailTemplate = result.Data.PostCommentContributionConfirmationEmailTemplate,
                         SchoolImageContributionConfirmationEmailTemplate = result.Data.SchoolImageContributionConfirmationEmailTemplate,
                         RemoveSchoolImageContributionConfirmationEmailTemplate = result.Data.RemoveSchoolImageContributionConfirmationEmailTemplate,
                         SchoolContributionConfirmationEmailTemplate = result.Data.SchoolContributionConfirmationEmailTemplate,
                         SchoolIssuesContributionConfirmationEmailTemplate = result.Data.SchoolIssuesContributionConfirmationEmailTemplate,
                         PostContributionConfirmationEmailTemplate = result.Data.PostContributionConfirmationEmailTemplate,
+                        RegistrationEmailTemplate = result.Data.RegistrationEmailTemplate,
+                        SchoolContributionRejectionEmailTemplate = result.Data.SchoolContributionRejectionEmailTemplate,
+                        SchoolImageContributionRejectionEmailTemplate = result.Data.SchoolImageContributionRejectionEmailTemplate,
+                        InitializeDeletingAccountEmailTemplate = result.Data.InitializeDeletingAccountEmailTemplate,
+                        StartDeletingAccountEmailTemplate = result.Data.StartDeletingAccountEmailTemplate,
+                        FinishedDeletingAccountEmailTemplate = result.Data.FinishedDeletingAccountEmailTemplate,
+                        AdminTransactionCreationEmailTemplate = result.Data.AdminTransactionCreationEmailTemplate,
                     }
                 });
             }
@@ -90,11 +98,19 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                     ExamIncorrectTestSubmissionPoints = request.ExamIncorrectTestSubmissionPoints.GetValueOrDefault(),
                     TicketConfirmationEmailTemplate = request.TicketConfirmationEmailTemplate,
                     SchoolCommentContributionConfirmationEmailTemplate = request.SchoolCommentContributionConfirmationEmailTemplate,
+                    PostCommentContributionConfirmationEmailTemplate = request.PostCommentContributionConfirmationEmailTemplate,
                     SchoolImageContributionConfirmationEmailTemplate = request.SchoolImageContributionConfirmationEmailTemplate,
                     RemoveSchoolImageContributionConfirmationEmailTemplate = request.RemoveSchoolImageContributionConfirmationEmailTemplate,
                     SchoolContributionConfirmationEmailTemplate = request.SchoolContributionConfirmationEmailTemplate,
                     SchoolIssuesContributionConfirmationEmailTemplate = request.SchoolIssuesContributionConfirmationEmailTemplate,
                     PostContributionConfirmationEmailTemplate = request.PostContributionConfirmationEmailTemplate,
+                    RegistrationEmailTemplate = request.RegistrationEmailTemplate,
+                    SchoolContributionRejectionEmailTemplate = request.SchoolContributionRejectionEmailTemplate,
+                    SchoolImageContributionRejectionEmailTemplate = request.SchoolImageContributionRejectionEmailTemplate,
+                    InitializeDeletingAccountEmailTemplate = request.InitializeDeletingAccountEmailTemplate,
+                    StartDeletingAccountEmailTemplate = request.StartDeletingAccountEmailTemplate,
+                    FinishedDeletingAccountEmailTemplate = request.FinishedDeletingAccountEmailTemplate,
+                    AdminTransactionCreationEmailTemplate = request.AdminTransactionCreationEmailTemplate,
                 });
                 return Ok<bool>(new(result.Errors) { Data = result.Data });
             }

@@ -36,9 +36,12 @@ namespace GamaEdtech.Presentation.ViewModel.School
         public long? OsmId { get; set; }
         public IEnumerable<TagResponseViewModel>? Tags { get; set; }
         public IEnumerable<BoardsListResponseViewModel>? Boards { get; set; }
-        public Uri? DefaultImageUri { get; set; }
+        public string? DefaultImageUri { get; set; }
         public decimal? Tuition { get; set; }
         public string? Description { get; set; }
         public long ViewCount { get; set; }
+        public int? CountryRank { get; set; }
+        public int? StateRank { get; set; }
+        public int? CityRank { get; set; }
     }
 }

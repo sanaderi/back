@@ -15,7 +15,7 @@ namespace GamaEdtech.Infrastructure.EntityFramework.Context
 
     [ServiceLifetime(ServiceLifetime.Transient, "System.IServiceProvider,System.ComponentModel")]
     public class ApplicationDBContext(IServiceProvider serviceProvider) : Common.DataAccess.Context.IdentityEntityContext<ApplicationDBContext, ApplicationUser, ApplicationRole,
-        int, ApplicationUserClaim, ApplicationUserRole, ApplicationUserLogin, ApplicationRoleClaim, ApplicationUserToken>(serviceProvider)
+        long, ApplicationUserClaim, ApplicationUserRole, ApplicationUserLogin, ApplicationRoleClaim, ApplicationUserToken, ApplicationUserPasskey>(serviceProvider)
     {
         protected override Assembly EntityAssembly => typeof(ApplicationUser).Assembly;
 
@@ -27,7 +27,7 @@ namespace GamaEdtech.Infrastructure.EntityFramework.Context
                 ? optionsBuilder.UseInMemoryDatabase(Guid.NewGuid().ToString(), t => _ = t.EnableNullChecks(true))
                 : optionsBuilder.UseSqlServer(ConnectionName, t =>
                 {
-                    _ = t.CommandTimeout(60 * 5);
+                    _ = t.CommandTimeout((int)TimeSpan.FromMinutes(5).TotalSeconds);
                     _ = t.UseNetTopologySuite();
                 });
 

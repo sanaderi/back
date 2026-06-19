@@ -5,7 +5,6 @@ namespace GamaEdtech.Common.Swagger
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Reflection;
-    using System.Text.Json;
 
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data.Enumeration;
@@ -71,12 +70,18 @@ namespace GamaEdtech.Common.Swagger
                             continue;
                         }
 
-                        var serializedList = JsonSerializer.Serialize(operation.Parameters.Where(t => !t.Name.StartsWith(item.Name + ".", StringComparison.OrdinalIgnoreCase)));
-                        var list = JsonSerializer.Deserialize<IEnumerable<OpenApiParameter>>(serializedList)!;
-                        operation.Parameters.Clear();
-                        foreach (var param in list)
+                        List<OpenApiParameter> lst = [];
+                        for (var p = 0; p < operation.Parameters.Count; p++)
                         {
-                            operation.Parameters.Add(param);
+                            if (operation.Parameters[p].Name.StartsWith(item.Name + ".", StringComparison.OrdinalIgnoreCase))
+                            {
+                                lst.Add(operation.Parameters[p]);
+                            }
+                        }
+
+                        for (var d = 0; d < lst.Count; d++)
+                        {
+                            _ = operation.Parameters.Remove(lst[d]);
                         }
 
                         var names = EnumerationExtensions.GetNames(item.PropertyType)!

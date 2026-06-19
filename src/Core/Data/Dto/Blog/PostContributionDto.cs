@@ -16,9 +16,10 @@ namespace GamaEdtech.Data.Dto.Blog
         public VisibilityType? VisibilityType { get; set; }
         public DateTimeOffset? PublishDate { get; set; }
         public DateTimeOffset? CreationDate { get; set; }
-        public int? CreationUserId { get; set; }
+        public long? CreationUserId { get; set; }
         public IEnumerable<long>? Tags { get; set; }
         public string? Keywords { get; set; }
         public bool? Draft { get; set; }
+        public IEnumerable<PostLocalizedValueDto>? LocalizedValues { get; set; }
     }
 }

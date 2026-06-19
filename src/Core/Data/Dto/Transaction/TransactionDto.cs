@@ -8,6 +8,6 @@ namespace GamaEdtech.Data.Dto.Transaction
         public long CurrentBalance { get; set; }
         public DateTimeOffset CreationDate { get; set; }
         public bool IsDebit { get; set; }
-        public int UserId { get; set; }
+        public long UserId { get; set; }
     }
 }

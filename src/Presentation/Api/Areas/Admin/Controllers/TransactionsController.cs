@@ -10,7 +10,10 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     using GamaEdtech.Common.DataAccess.Specification;
     using GamaEdtech.Common.DataAccess.Specification.Impl;
     using GamaEdtech.Common.Identity;
+    using GamaEdtech.Data.Dto.ApplicationSettings;
+    using GamaEdtech.Data.Dto.Transaction;
     using GamaEdtech.Domain.Entity;
+    using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Domain.Specification;
     using GamaEdtech.Domain.Specification.Transaction;
@@ -22,7 +25,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     [Route("api/v{version:apiVersion}/[area]/[controller]")]
     [ApiVersion("1.0")]
     [Permission(Roles = [nameof(Role.Admin)])]
-    public class TransactionsController(Lazy<ILogger<TransactionsController>> logger, Lazy<ITransactionService> transactionService)
+    public class TransactionsController(Lazy<ILogger<TransactionsController>> logger, Lazy<ITransactionService> transactionService, Lazy<IApplicationSettingsService> applicationSettingsService
+        , Lazy<IEmailService> emailService, Lazy<IIdentityService> identityService)
         : ApiControllerBase<TransactionsController>(logger)
     {
         [HttpGet, Produces<ApiResponse<ListDataSource<TransactionsListResponseViewModel>>>()]
@@ -45,7 +49,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
 
                 if (request.UserId.HasValue)
                 {
-                    var spec = new UserIdEqualsSpecification<Transaction, int>(request.UserId.Value);
+                    var spec = new UserIdEqualsSpecification<Transaction, long>(request.UserId.Value);
                     specification = specification is null ? spec : specification.And(spec);
                 }
 
@@ -96,6 +100,53 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 Logger.Value.LogException(exc);
 
                 return Ok<ListDataSource<TransactionsListResponseViewModel>>(new() { Errors = [new() { Message = exc.Message }] });
+            }
+        }
+
+        [HttpPost, Produces<ApiResponse<CreateTransactionResponseViewModel>>()]
+        public async Task<IActionResult<CreateTransactionResponseViewModel>> CreateTransaction([NotNull] CreateTransactionRequestViewModel request)
+        {
+            try
+            {
+                var dto = new CreateTransactionRequestDto()
+                {
+                    UserId = request.UserId.GetValueOrDefault(),
+                    Points = request.Points.GetValueOrDefault(),
+                    Description = $"{request.Description} - Admin CreateTransaction",
+                };
+                var result = request.IsDebit.GetValueOrDefault()
+                    ? await transactionService.Value.DecreaseBalanceAsync(dto)
+                    : await transactionService.Value.IncreaseBalanceAsync(dto);
+                if (result.OperationResult is not Constants.OperationResult.Succeeded)
+                {
+                    return Ok<CreateTransactionResponseViewModel>(new(result.Errors));
+                }
+
+                var balance = await transactionService.Value.GetCurrentBalanceAsync(new() { UserId = request.UserId.GetValueOrDefault() });
+
+                var user = await identityService.Value.GetUserAsync(new IdEqualsSpecification<ApplicationUser, long>(request.UserId.GetValueOrDefault()));
+                var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.AdminTransactionCreationEmailTemplate))).Data;
+                template = template?
+                    .Replace("[RECEIVER_NAME]", $"{user.Data!.FirstName} {user.Data.LastName}", StringComparison.OrdinalIgnoreCase)
+                    .Replace("[DESCRIPTION]", request.Description, StringComparison.OrdinalIgnoreCase)
+                    .Replace("[POINTS]", request.Points.ToString(), StringComparison.OrdinalIgnoreCase)
+                    .Replace("[CURRENT_BALANCE]", balance.Data.ToString(), StringComparison.OrdinalIgnoreCase);
+                _ = await emailService.Value.SendEmailAsync(new()
+                {
+                    Subject = "Transaction Creation",
+                    Body = template!,
+                    EmailAddresses = [user.Data!.Email!],
+                });
+
+                return Ok<CreateTransactionResponseViewModel>(new(balance.Errors)
+                {
+                    Data = new() { Balance = balance.Data, },
+                });
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return Ok<CreateTransactionResponseViewModel>(new() { Errors = [new() { Message = exc.Message }] });
             }
         }
     }

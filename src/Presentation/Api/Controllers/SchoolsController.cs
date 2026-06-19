@@ -24,17 +24,20 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
     using Hangfire;
 
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
     using NetTopologySuite.Geometries;
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
+    [Permission(policy: null)]
     public class SchoolsController(Lazy<ILogger<SchoolsController>> logger, Lazy<ISchoolService> schoolService
         , Lazy<IContributionService> contributionService, Lazy<IGlobalService> globalService)
         : ApiControllerBase<SchoolsController>(logger)
     {
         [HttpGet, Produces<ApiResponse<ListDataSource<SchoolInfoResponseViewModel>>>()]
+        [AllowAnonymous]
         public async Task<IActionResult<ListDataSource<SchoolInfoResponseViewModel>>> GetSchools([NotNull, FromQuery] SchoolInfoRequestViewModel request)
         {
             try
@@ -75,9 +78,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     baseSpecification = baseSpecification is null ? specification : baseSpecification.And(specification);
                 }
 
-                if (request.BoardCodes is not null)
+                if (request.Boards is not null)
                 {
-                    var specification = new BoardCodeContainsSpecification(request.BoardCodes);
+                    var specification = new BoardIdContainsSpecification(request.Boards);
                     baseSpecification = baseSpecification is null ? specification : baseSpecification.And(specification);
                 }
 
@@ -112,6 +115,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             Slug = t.Name.Slugify(),
                             LastModifyDate = t.LastModifyDate,
                             Score = t.Score,
+                            ReviewScore = t.ReviewScore,
                             CityTitle = t.CityTitle,
                             CountryTitle = t.CountryTitle,
                             HasEmail = t.HasEmail,
@@ -123,6 +127,9 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             StateTitle = t.StateTitle,
                             DefaultImageUri = t.DefaultImageUri,
                             Distance = t.Distance,
+                            CountryRank = t.CountryRank,
+                            StateRank = t.StateRank,
+                            CityRank = t.CityRank,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     },
@@ -142,6 +149,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("{id:long}"), Produces<ApiResponse<SchoolResponseViewModel>>()]
+        [AllowAnonymous]
         public async Task<IActionResult<SchoolResponseViewModel>> GetSchool([FromRoute] long id)
         {
             try
@@ -194,9 +202,14 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         }),
                         Boards = result.Data.Boards?.Select(t => new BoardsListResponseViewModel
                         {
+                            Id = t.Id,
+                            Icon = t.Icon,
                             Code = t.Code,
                             Title = t.Title,
                         }),
+                        CountryRank = result.Data.CountryRank,
+                        StateRank = result.Data.StateRank,
+                        CityRank = result.Data.CityRank,
                     }
                 });
             }
@@ -211,6 +224,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         #region Comments
 
         [HttpGet("{schoolId:long}/rate"), Produces<ApiResponse<SchoolRateResponseViewModel>>()]
+        [AllowAnonymous]
         public async Task<IActionResult<SchoolRateResponseViewModel>> GetSchoolRate([FromRoute] long schoolId)
         {
             try
@@ -243,6 +257,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("{schoolId:long}/comments"), Produces<ApiResponse<ListDataSource<SchoolCommentsResponseViewModel>>>()]
+        [AllowAnonymous]
         public async Task<IActionResult<ListDataSource<SchoolCommentsResponseViewModel>>> GetSchoolComments([FromRoute] long schoolId, [NotNull, FromQuery] SchoolCommentsRequestViewModel request)
         {
             try
@@ -266,6 +281,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             CreationUserAvatar = t.CreationUserAvatar,
                             DislikeCount = t.DislikeCount,
                             LikeCount = t.LikeCount,
+                            LikedByCurrentUser = t.LikedByCurrentUser,
+                            DislikedByCurrentUser = t.DislikedByCurrentUser,
                         }),
                         TotalRecordsCount = result.Data.TotalRecordsCount,
                     }
@@ -280,7 +297,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("{schoolId:long}/comments"), Produces<ApiResponse<ManageSchoolCommentResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ManageSchoolCommentResponseViewModel>> CreateSchoolComment([FromRoute] long schoolId, [NotNull] ManageSchoolCommentRequestViewModel request)
         {
             try
@@ -325,7 +341,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPatch("{schoolId:long}/comments/{commentId:long}/like"), Produces<ApiResponse<bool>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<bool>> LikeSchoolComment([FromRoute] long schoolId, [FromRoute] long commentId)
         {
             try
@@ -349,7 +364,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPatch("{schoolId:long}/comments/{commentId:long}/dislike"), Produces<ApiResponse<bool>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<bool>> DislikeSchoolComment([FromRoute] long schoolId, [FromRoute] long commentId)
         {
             try
@@ -377,6 +391,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         #region Images
 
         [HttpGet("{schoolId:long}/images/{fileType:ImageFileType}"), Produces<ApiResponse<IEnumerable<SchoolImageInfoViewModel>>>()]
+        [AllowAnonymous]
         public async Task<IActionResult<IEnumerable<SchoolImageInfoViewModel>>> GetSchoolImagesList([FromRoute] long schoolId, [FromRoute] ImageFileType fileType)
         {
             try
@@ -408,7 +423,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("{schoolId:long}/images"), Produces<ApiResponse<CreateSchoolImageResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<CreateSchoolImageResponseViewModel>> CreateSchoolImageContribution([FromRoute] long schoolId, [NotNull, FromForm] CreateSchoolImageRequestViewModel request)
         {
             try
@@ -437,7 +451,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpDelete("{schoolId:long}/images/{contributionId:long}"), Produces<ApiResponse<bool>>()]
-        [Permission(policy: null)]
         [Display(Name = "Removing an Image by creator")]
         public async Task<IActionResult<bool>> RemoveMySchoolImageContribution([FromRoute] long schoolId, [FromRoute] long contributionId)
         {
@@ -445,7 +458,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             {
                 var specification = new ContributionIdEqualsSpecification(contributionId)
                     .And(new SchoolIdEqualsSpecification<SchoolImage>(schoolId))
-                    .And(new CreationUserIdEqualsSpecification<SchoolImage, ApplicationUser, int>(User.UserId()));
+                    .And(new CreationUserIdEqualsSpecification<SchoolImage, ApplicationUser, long>(User.UserId()));
                 var result = await schoolService.Value.RemoveSchoolImageAsync(specification);
                 return Ok(new ApiResponse<bool>
                 {
@@ -462,7 +475,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("{schoolId:long}/images/{imageId:long}/contributions"), Produces<ApiResponse<bool>>()]
-        [Permission(policy: null)]
         [Display(Name = "Request Removing an Image as a Contribution")]
         public async Task<IActionResult<RemoveSchoolImageContributionResponseViewModel>> RemoveSchoolImageContribution([FromRoute] long schoolId, [FromRoute] long imageId, [NotNull] RemoveSchoolImageContributionRequestViewModel request)
         {
@@ -494,7 +506,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         #region Contributions
 
         [HttpGet("{schoolId:long}/contributions"), Produces<ApiResponse<ListDataSource<SchoolContributionInfoListResponseViewModel>>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ListDataSource<SchoolContributionInfoListResponseViewModel>>> GetSchoolContributionList([FromRoute] long schoolId, [NotNull, FromQuery] SchoolContributionListRequestViewModel request)
         {
             try
@@ -503,7 +514,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     PagingDto = request.PagingDto,
                     Specification = new IdentifierIdEqualsSpecification<Contribution>(schoolId)
-                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId()))
+                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId()))
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.School)),
                 });
                 if (result.Data.List is null)
@@ -541,14 +552,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpGet("{schoolId:long}/contributions/{contributionId:long}"), Produces<ApiResponse<SchoolContributionViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<SchoolContributionViewModel>> GetSchoolContribution([FromRoute] long schoolId, [FromRoute] long contributionId)
         {
             try
             {
                 var specification = new IdEqualsSpecification<Contribution, long>(contributionId)
                     .And(new IdentifierIdEqualsSpecification<Contribution>(schoolId))
-                    .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId()))
+                    .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId()))
                     .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.School));
                 var result = await contributionService.Value.GetContributionAsync<SchoolContributionDto>(specification);
 
@@ -572,7 +582,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("{schoolId:long}/contributions"), Produces<ApiResponse<ManageSchoolContributionResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ManageSchoolContributionResponseViewModel>> CreateSchoolContribution([FromRoute] long schoolId, [NotNull, FromBody] ManageSchoolContributionRequestViewModel request)
         {
             try
@@ -600,10 +609,17 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         WebSite = request.WebSite,
                         ZipCode = request.ZipCode,
                         Tags = request.Tags,
-                        BoardCodes = request.BoardCodes,
+                        Boards = request.Boards,
                         DefaultImageId = request.DefaultImageId,
                         Tuition = request.Tuition,
                         Description = request.Description,
+                        LocalizedValues = request.LocalizedValues?.Select(t => new SchoolLocalizedValueDto
+                        {
+                            LanguageId = t.LanguageId.GetValueOrDefault(),
+                            Description = t.Description,
+                            Name = t.Name,
+                            Address = t.Address,
+                        }),
                     },
                 });
 
@@ -621,7 +637,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPut("{schoolId:long}/contributions/{contributionId:long}"), Produces<ApiResponse<ManageSchoolContributionResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ManageSchoolContributionResponseViewModel>> UpdateSchoolContribution([FromRoute] long schoolId, [FromRoute] long contributionId, [NotNull, FromBody] ManageSchoolContributionRequestViewModel request)
         {
             try
@@ -650,10 +665,17 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         WebSite = request.WebSite,
                         ZipCode = request.ZipCode,
                         Tags = request.Tags,
-                        BoardCodes = request.BoardCodes,
+                        Boards = request.Boards,
                         DefaultImageId = request.DefaultImageId,
                         Tuition = request.Tuition,
                         Description = request.Description,
+                        LocalizedValues = request.LocalizedValues?.Select(t => new SchoolLocalizedValueDto
+                        {
+                            LanguageId = t.LanguageId.GetValueOrDefault(),
+                            Description = t.Description,
+                            Name = t.Name,
+                            Address = t.Address,
+                        }),
                     },
                 });
 
@@ -671,7 +693,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("contributions"), Produces<ApiResponse<ManageSchoolContributionResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ManageSchoolContributionResponseViewModel>> CreateNewSchoolContribution([NotNull, FromForm] ManageNewSchoolContributionRequestViewModel request)
         {
             try
@@ -700,7 +721,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         WebSite = request.WebSite,
                         ZipCode = request.ZipCode,
                         Tags = request.Tags,
-                        BoardCodes = request.BoardCodes,
+                        Boards = request.Boards,
                         Tuition = request.Tuition,
                         Description = request.Description,
                         Comment = request.Comment is null ? null : new()
@@ -717,6 +738,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
                             CreationDate = DateTimeOffset.UtcNow,
                             CreationUserId = User.UserId(),
                         },
+                        LocalizedValues = request.LocalizedValues?.Select(t => new SchoolLocalizedValueDto
+                        {
+                            LanguageId = t.LanguageId.GetValueOrDefault(),
+                            Description = t.Description,
+                            Name = t.Name,
+                            Address = t.Address,
+                        }),
                     },
                 });
 
@@ -738,7 +766,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         #region Issues
 
         [HttpGet("{schoolId:long}/issues"), Produces<ApiResponse<ListDataSource<SchoolIssuesContributionResponseViewModel>>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ListDataSource<SchoolIssuesContributionResponseViewModel>>> GetSchoolIssuesContributionList([FromRoute] long schoolId, [NotNull, FromQuery] SchoolIssuesContributionListRequestViewModel request)
         {
             try
@@ -747,7 +774,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                 {
                     PagingDto = request.PagingDto,
                     Specification = new IdentifierIdEqualsSpecification<Contribution>(schoolId)
-                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, int>(User.UserId()))
+                        .And(new CreationUserIdEqualsSpecification<Contribution, ApplicationUser, long>(User.UserId()))
                         .And(new CategoryTypeEqualsSpecification<Contribution>(CategoryType.SchoolIssues)),
                 }, false);
 
@@ -787,7 +814,6 @@ namespace GamaEdtech.Presentation.Api.Controllers
         }
 
         [HttpPost("{schoolId:long}/issues"), Produces<ApiResponse<ManageSchoolIssuesContributionResponseViewModel>>()]
-        [Permission(policy: null)]
         public async Task<IActionResult<ManageSchoolIssuesContributionResponseViewModel>> CreateSchoolIssuesContribution([FromRoute] long schoolId, [NotNull] ManageSchoolIssuesContributionRequestViewModel request)
         {
             try
@@ -835,9 +861,16 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     WebSite = dto.WebSite,
                     ZipCode = dto.ZipCode,
                     Tags = dto.Tags,
-                    BoardCodes = dto.BoardCodes,
+                    Boards = dto.Boards,
                     Tuition = dto.Tuition,
                     Description = dto.Description,
+                    LocalizedValues = dto.LocalizedValues?.Select(t => new SchoolLocalizedValueViewModel
+                    {
+                        LanguageId = t.LanguageId,
+                        Description = t.Description,
+                        Name = t.Name,
+                        Address = t.Address,
+                    }),
                 };
     }
 }

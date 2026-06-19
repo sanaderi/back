@@ -28,6 +28,10 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
         public GenderType? Gender { get; set; }
 
         [Display]
+        [JsonConverter(typeof(EnumerationConverter<ProfileVisibility, byte>))]
+        public ProfileVisibility? ProfileVisibility { get; set; }
+
+        [Display]
         public int? Board { get; set; }
 
         [Display]
@@ -43,5 +47,17 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         [Display]
         public string? WalletId { get; set; }
+
+        [Display]
+        public string? Biography { get; set; }
+
+        [Display]
+        public IEnumerable<string?>? Skills { get; set; }
+
+        [Display]
+        public string? CurrentStatusSentence { get; set; }
+
+        [Display]
+        public string? Handle { get; set; }
     }
 }

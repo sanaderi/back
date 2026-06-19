@@ -66,7 +66,7 @@ namespace GamaEdtech.Common.Startup
                 return;
             }
 
-            var files = Directory.GetFiles(dir, $"{startupOption.DefaultNamespace}.*.dll").Where(t => !t.Contains(frameworkAssembly.ManifestModule.Name!, StringComparison.OrdinalIgnoreCase));
+            var files = Directory.GetFiles(dir, $"{startupOption.DefaultNamespace}.*.dll").Where(t => !t.Contains(frameworkAssembly.ManifestModule.Name, StringComparison.OrdinalIgnoreCase));
 
             var assemblies = files.Select(Assembly.LoadFrom)
                 .Where(t => t.GetCustomAttribute<InjectableAttribute>() is not null)
@@ -94,7 +94,18 @@ namespace GamaEdtech.Common.Startup
                 _ = app.UseHttpsRedirection();
             }
 
-            _ = app.UseStaticFiles();
+            _ = app.UseStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = context =>
+                {
+                    // add time expires header
+                    const int durationInSeconds = 60 * 60 * 24 * 30; // Expires time. I set to 30 days
+                    context.Context.Response.Headers.CacheControl = $"public,max-age={durationInSeconds},immutable";
+                    context.Context.Response.Headers.Vary = "Accept";
+                    context.Context.Response.Headers.XContentTypeOptions = "nosniff";
+                    context.Context.Response.Headers.AccessControlAllowOrigin = "*";
+                }
+            });
             _ = app.UseRouting();
 
             if (startupOption.Authentication)
@@ -129,7 +140,7 @@ namespace GamaEdtech.Common.Startup
             {
                 Type userStoreType;
                 Type roleStoreType;
-                var identityContext = FindGenericBaseType(contextType, typeof(IdentityDbContext<,,,,,,,>));
+                var identityContext = FindGenericBaseType(contextType, typeof(IdentityDbContext<,,,,,,,,>));
                 if (identityContext is null)
                 {
                     // If its a custom DbContext, we can only add the default POCOs
@@ -138,13 +149,14 @@ namespace GamaEdtech.Common.Startup
                 }
                 else
                 {
-                    userStoreType = typeof(UserStore<,,,,,,,,>).MakeGenericType(userType, roleType, contextType,
+                    userStoreType = typeof(UserStore<,,,,,,,,,>).MakeGenericType(userType, roleType, contextType,
                         identityContext.GenericTypeArguments[2],
                         identityContext.GenericTypeArguments[3],
                         identityContext.GenericTypeArguments[4],
                         identityContext.GenericTypeArguments[5],
                         identityContext.GenericTypeArguments[7],
-                        identityContext.GenericTypeArguments[6]);
+                        identityContext.GenericTypeArguments[6],
+                        identityContext.GenericTypeArguments[8]);
                     roleStoreType = typeof(RoleStore<,,,,>).MakeGenericType(roleType, contextType,
                         identityContext.GenericTypeArguments[2],
                         identityContext.GenericTypeArguments[4],
@@ -157,7 +169,7 @@ namespace GamaEdtech.Common.Startup
             else
             { // No Roles
                 Type userStoreType;
-                var identityContext = FindGenericBaseType(contextType, typeof(IdentityUserContext<,,,,>));
+                var identityContext = FindGenericBaseType(contextType, typeof(IdentityUserContext<,,,,,>));
                 if (identityContext is null)
                 {
                     // If its a custom DbContext, we can only add the default POCOs
@@ -169,7 +181,8 @@ namespace GamaEdtech.Common.Startup
                         identityContext.GenericTypeArguments[1],
                         identityContext.GenericTypeArguments[2],
                         identityContext.GenericTypeArguments[3],
-                        identityContext.GenericTypeArguments[4]);
+                        identityContext.GenericTypeArguments[4],
+                        identityContext.GenericTypeArguments[5]);
                 }
 
                 services.TryAddScoped(typeof(IUserStore<>).MakeGenericType(userType), userStoreType);
@@ -440,7 +453,11 @@ namespace GamaEdtech.Common.Startup
                 if (startupOption.Identity && serviceType == typeof(IEntityContext))
                 {
                     _ = services
-                        .AddIdentity<TUser, TRole>(options => Configuration.Bind("IdentityOptions", options))
+                        .AddIdentity<TUser, TRole>(options =>
+                        {
+                            Configuration.Bind("IdentityOptions", options);
+                            options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+                        })
                         .AddDefaultTokenProviders()
                         .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
 

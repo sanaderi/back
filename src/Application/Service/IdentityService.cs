@@ -7,6 +7,7 @@ namespace GamaEdtech.Application.Service
     using System.Security.Claims;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Text.RegularExpressions;
 
     using EntityFramework.Exceptions.Common;
 
@@ -25,7 +26,11 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.Mapping;
     using GamaEdtech.Common.Service;
     using GamaEdtech.Common.Service.Factory;
+    using GamaEdtech.Data.Dto.ApplicationSettings;
+    using GamaEdtech.Data.Dto.Experience;
     using GamaEdtech.Data.Dto.Identity;
+    using GamaEdtech.Data.Dto.SiteMap;
+    using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
     using GamaEdtech.Domain.Specification;
@@ -43,15 +48,17 @@ namespace GamaEdtech.Application.Service
     using Microsoft.IdentityModel.JsonWebTokens;
     using Microsoft.IdentityModel.Tokens;
 
+    using NetTopologySuite.Geometries;
+
     using static GamaEdtech.Common.Core.Constants;
 
     using Error = Common.Data.Error;
     using Void = Common.Data.Void;
 
-    public class IdentityService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<IdentityService>> localizer, Lazy<ILogger<IdentityService>> logger
-            , Lazy<UserManager<ApplicationUser>> userManager, Lazy<IGenericFactory<IAuthenticationProvider, AuthenticationProvider>> genericFactory
-            , Lazy<SignInManager<ApplicationUser>> signInManager, Lazy<ICacheProvider> cacheProvider, Lazy<IConfiguration> configuration, Lazy<ICoreProvider> coreProvider)
-        : LocalizableServiceBase<IdentityService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IIdentityService, ITokenService
+    public partial class IdentityService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor, Lazy<IStringLocalizer<IdentityService>> localizer, Lazy<ILogger<IdentityService>> logger
+            , Lazy<UserManager<ApplicationUser>> userManager, Lazy<IGenericFactory<IAuthenticationProvider, AuthenticationProvider>> genericFactory, Lazy<IApplicationSettingsService> applicationSettingsService
+            , Lazy<SignInManager<ApplicationUser>> signInManager, Lazy<ICacheProvider> cacheProvider, Lazy<IConfiguration> configuration, Lazy<ICoreProvider> coreProvider, Lazy<IEmailService> emailService)
+        : LocalizableServiceBase<IdentityService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IIdentityService, ITokenService, ISiteMapHandler
     {
         private const string RolesCacheKey = "Roles";
 
@@ -60,7 +67,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var query = uow.GetRepository<ApplicationUser, int>().GetManyQueryable(requestDto?.Specification);
+                var query = uow.GetRepository<ApplicationUser>().GetManyQueryable(requestDto?.Specification);
 
                 var result = await query.FilterListAsync(requestDto?.PagingDto);
 
@@ -73,6 +80,8 @@ namespace GamaEdtech.Application.Service
                     UserName = t.UserName,
                     RegistrationDate = t.RegistrationDate,
                     ReferralId = t.ReferralId,
+                    FirstName = t.FirstName,
+                    LastName = t.LastName,
                 }).ToListAsync();
                 return new(OperationResult.Succeeded) { Data = new ListDataSource<ApplicationUserDto> { List = users, TotalRecordsCount = result.TotalRecordsCount } };
             }
@@ -90,7 +99,7 @@ namespace GamaEdtech.Application.Service
                 var lst = await cacheProvider.Value.GetAsync<IEnumerable<ApplicationRoleDto>?>(RolesCacheKey, async () =>
                 {
                     var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                    return await uow.GetRepository<ApplicationRole, int>().GetManyQueryable().Select(t => new ApplicationRoleDto
+                    return await uow.GetRepository<ApplicationRole>().GetManyQueryable().Select(t => new ApplicationRoleDto
                     {
                         Id = t.Id,
                         Name = t.Name!,
@@ -116,7 +125,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var user = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => new ApplicationUserDto
+                var user = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => new ApplicationUserDto
                 {
                     Id = t.Id,
                     Email = t.Email,
@@ -124,6 +133,9 @@ namespace GamaEdtech.Application.Service
                     PhoneNumber = t.PhoneNumber,
                     UserName = t.UserName,
                     RegistrationDate = t.RegistrationDate,
+                    FirstName = t.FirstName,
+                    LastName = t.LastName,
+                    ReferralId = t.ReferralId,
                 }).FirstOrDefaultAsync();
 
                 return user is null
@@ -140,12 +152,12 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<List<int>>> GetUserIdsAsync([NotNull] ISpecification<ApplicationUser> specification)
+        public async Task<ResultData<List<long>>> GetUserIdsAsync([NotNull] ISpecification<ApplicationUser> specification)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var ids = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => t.Id).ToListAsync();
+                var ids = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => t.Id).ToListAsync();
 
                 return new(OperationResult.Succeeded)
                 {
@@ -164,7 +176,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var emails = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => t.Email).ToListAsync();
+                var emails = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => t.Email).ToListAsync();
 
                 return new(OperationResult.Succeeded)
                 {
@@ -178,12 +190,12 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<(int Id, string? FullName)?>> GetUserFullNameAsync([NotNull] ISpecification<ApplicationUser> specification)
+        public async Task<ResultData<(long Id, string? FullName)?>> GetUserFullNameAsync([NotNull] ISpecification<ApplicationUser> specification)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var data = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => new
+                var data = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => new
                 {
                     t.Id,
                     t.FirstName,
@@ -202,12 +214,31 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<ICollection<string>>> GetUserRolesAsync([NotNull] int userId)
+        public async Task<ResultData<Point?>> GetUserCoordinateAsync([NotNull] ISpecification<ApplicationUser> specification)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var roles = await uow.GetRepository<ApplicationUserRole, int>().GetManyQueryable(t => t.UserId == userId).Select(t => t.Role!.Name!).ToListAsync();
+                var data = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => t.City != null ? t.City.Coordinates : null).FirstOrDefaultAsync();
+
+                return new(data is null ? OperationResult.NotFound : OperationResult.Succeeded)
+                {
+                    Data = data,
+                };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogError(exc, nameof(GetUserAsync));
+                return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        public async Task<ResultData<ICollection<string>>> GetUserRolesAsync([NotNull] long userId)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var roles = await uow.GetRepository<ApplicationUserRole>().GetManyQueryable(t => t.UserId == userId).Select(t => t.Role!.Name!).ToListAsync();
                 return new(OperationResult.Succeeded) { Data = roles };
             }
             catch (Exception exc)
@@ -217,13 +248,13 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> UserIsInRoleAsync([NotNull] int userId, [NotNull] string role)
+        public async Task<ResultData<bool>> UserIsInRoleAsync([NotNull] long userId, [NotNull] string role)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var normalizedRoleName = role.ToUpperInvariant();
-                var result = await uow.GetRepository<ApplicationUserRole, int>().AnyAsync(t => t.UserId == userId && t.Role!.NormalizedName == normalizedRoleName);
+                var result = await uow.GetRepository<ApplicationUserRole>().AnyAsync(t => t.UserId == userId && t.Role!.NormalizedName == normalizedRoleName);
                 return new(OperationResult.Succeeded) { Data = result };
             }
             catch (Exception exc)
@@ -256,11 +287,14 @@ namespace GamaEdtech.Application.Service
                     Email = requestDto.Email,
                     RegistrationDate = DateTime.UtcNow,
                     Enabled = true,
+                    ProfileVisibility = ProfileVisibility.Private,
+                    FirstName = requestDto.FirstName,
+                    LastName = requestDto.LastName,
                 };
                 var identityResult = await userManager.Value.CreateAsync(user, requestDto.Password);
-                return !identityResult.Succeeded
-                    ? new(OperationResult.NotValid) { Data = false, Errors = MapUserManagerErrors(identityResult) }
-                    : new(OperationResult.Succeeded) { Data = true };
+                return identityResult.Succeeded
+                    ? new(OperationResult.Succeeded) { Data = true }
+                    : new(OperationResult.NotValid) { Data = false, Errors = MapUserManagerErrors(identityResult) };
             }
             catch (UniqueConstraintException)
             {
@@ -271,6 +305,25 @@ namespace GamaEdtech.Application.Service
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
             }
+        }
+
+        public async Task SendRegistrationEmailAsync([NotNull] RegistrationEmailRequestDto requestDto)
+        {
+            var name = requestDto.FirstName + " " + requestDto.LastName;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = "Dear User";
+            }
+            var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.RegistrationEmailTemplate))).Data;
+            template = template?
+                .Replace("[RECEIVER_NAME]", name, StringComparison.OrdinalIgnoreCase);
+            _ = await emailService.Value.SendEmailAsync(new()
+            {
+                Subject = "Gamatrain Registration",
+                Body = template!,
+                EmailAddresses = [requestDto.Email],
+                From = emailService.Value.GetNoReplyEmail(),
+            });
         }
 
         public async Task<ResultData<SignInResponseDto>> SignInAsync([NotNull] SignInRequestDto requestDto)
@@ -397,7 +450,7 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var user = await uow.GetRepository<ApplicationUser, int>().GetAsync(specification);
+                var user = await uow.GetRepository<ApplicationUser>().GetAsync(specification);
                 if (user is null)
                 {
                     return new(OperationResult.NotFound)
@@ -409,7 +462,7 @@ namespace GamaEdtech.Application.Service
 
                 user.Enabled = !user.Enabled;
 
-                _ = uow.GetRepository<ApplicationUser, int>().Update(user);
+                _ = uow.GetRepository<ApplicationUser>().Update(user);
                 _ = await uow.SaveChangesAsync();
 
                 return new(OperationResult.Succeeded) { Data = true };
@@ -426,7 +479,8 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var user = await uow.GetRepository<ApplicationUser, int>().GetAsync(specification);
+                var repository = uow.GetRepository<ApplicationUser>();
+                var user = await repository.GetAsync(specification);
                 if (user is null)
                 {
                     return new(OperationResult.NotFound)
@@ -436,7 +490,7 @@ namespace GamaEdtech.Application.Service
                     };
                 }
 
-                uow.GetRepository<ApplicationUser, int>().Remove(user);
+                repository.Remove(user);
                 _ = await uow.SaveChangesAsync();
                 return new(OperationResult.Succeeded) { Data = true };
             }
@@ -489,11 +543,13 @@ namespace GamaEdtech.Application.Service
 
                 var token = await userManager.Value.GenerateUserTokenAsync(user, requestDto.TokenProvider, requestDto.Purpose);
                 var setTokenResult = await userManager.Value.SetAuthenticationTokenAsync(user, requestDto.TokenProvider, requestDto.Purpose, token);
+
                 return setTokenResult.Succeeded
                     ? new(OperationResult.Succeeded)
                     {
                         Data = new GenerateUserTokenResponseDto
                         {
+                            UserId = requestDto.UserId,
                             Token = $"{requestDto.UserId}{DelimiterAlternate}{token}",
                             ExpirationTime = DateTimeOffset.UtcNow.Add(ApiDataProtectorTokenProviderOptions.GetTokenLifespan(configuration.Value)),
                         }
@@ -636,7 +692,7 @@ namespace GamaEdtech.Application.Service
 
             var userId = context.Principal.UserId();
             var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-            var currentSecurityStamp = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => t.Id == userId).Select(t => t.SecurityStamp).FirstOrDefaultAsync();
+            var currentSecurityStamp = await uow.GetRepository<ApplicationUser>().GetManyQueryable(t => t.Id == userId).Select(t => t.SecurityStamp).FirstOrDefaultAsync();
             var securityStampClaim = context.Principal?.FindFirstValue(userManager.Value.Options.ClaimsIdentity.SecurityStampClaimType);
             if (currentSecurityStamp != securityStampClaim)
             {
@@ -656,8 +712,8 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var data = await uow.GetRepository<ApplicationUser, int>()
-                    .GetManyQueryable(new IdEqualsSpecification<ApplicationUser, int>(requestDto.UserId))
+                var data = await uow.GetRepository<ApplicationUser>()
+                    .GetManyQueryable(new IdEqualsSpecification<ApplicationUser, long>(requestDto.UserId))
                     .Select(t => new
                     {
                         Claims = t.UserClaims!.Select(u => new { u.ClaimType, u.ClaimValue }).ToList(),
@@ -695,8 +751,8 @@ namespace GamaEdtech.Application.Service
                 }
 
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var userRolesRepository = uow.GetRepository<ApplicationUserRole, int>();
-                var userRoles = await userRolesRepository.GetManyQueryable(new UserIdEqualsSpecification<ApplicationUserRole, int>(requestDto.UserId))
+                var userRolesRepository = uow.GetRepository<ApplicationUserRole>();
+                var userRoles = await userRolesRepository.GetManyQueryable(new UserIdEqualsSpecification<ApplicationUserRole, long>(requestDto.UserId))
                     .Select(t => t.Role!.Name!).ToListAsync();
 
                 if (userRoles.Exists(t => t.Equals(nameof(Role.Admin), StringComparison.OrdinalIgnoreCase)) && requestDto.Roles?.ExistInFlags(Role.Admin) != true)
@@ -732,7 +788,7 @@ namespace GamaEdtech.Application.Service
 
                 var repository = uow.GetRepository<ApplicationUserClaim, int>();
 
-                var specification = new UserIdEqualsSpecification<ApplicationUserClaim, int>(requestDto.UserId)
+                var specification = new UserIdEqualsSpecification<ApplicationUserClaim, long>(requestDto.UserId)
                     .And(new ClaimTypeEqualsSpecification(PermissionConstants.PermissionPolicy)
                         .Or(new ClaimTypeEqualsSpecification(PermissionConstants.SystemClaim))
                     );
@@ -810,8 +866,9 @@ namespace GamaEdtech.Application.Service
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var data = await uow.GetRepository<ApplicationUser, int>().GetManyQueryable(specification).Select(t => new
+                var data = await uow.GetRepository<ApplicationUser>().GetManyQueryable(specification).Select(t => new
                 {
+                    t.Id,
                     t.UserName,
                     t.FirstName,
                     t.LastName,
@@ -828,34 +885,72 @@ namespace GamaEdtech.Application.Service
                     t.CoreId,
                     t.WalletId,
                     t.ProfileUpdated,
+                    t.ProfileVisibility,
                     Roles = t.UserRoles != null ? t.UserRoles.Select(u => u.Role!.Name!) : null,
-                }).FirstOrDefaultAsync();
-
-                return data is null
-                    ? new(OperationResult.Failed) { Errors = new[] { new Error { Message = "User not found." } } }
-                    : new(OperationResult.Succeeded)
+                    t.Biography,
+                    t.Skills,
+                    t.CurrentStatusSentence,
+                    t.Handle,
+                    Experiences = t.Experiences == null ? null : t.Experiences.Select(e => new
                     {
-                        Data = new()
-                        {
-                            UserName = data.UserName,
-                            FirstName = data.FirstName,
-                            LastName = data.LastName,
-                            SchoolId = data.SchoolId,
-                            CityId = data.CityId,
-                            StateId = data.StateId,
-                            CountryId = data.CountryId,
-                            ReferralId = data.ReferralId,
-                            Gender = data.Gender,
-                            Board = data.Board,
-                            Grade = data.Grade,
-                            Avatar = data.Avatar,
-                            Group = data.Group,
-                            CoreId = data.CoreId,
-                            WalletId = data.WalletId,
-                            ProfileUpdated = data.ProfileUpdated,
-                            Roles = data.Roles?.ListToFlagsEnum<Role>(),
-                        },
-                    };
+                        e.Id,
+                        e.SchoolId,
+                        e.School.Name,
+                        e.Description,
+                        e.StartDate,
+                        e.EndDate,
+                    }),
+                }).FirstOrDefaultAsync();
+                if (data is null)
+                {
+                    return new(OperationResult.Failed) { Errors = new[] { new Error { Message = "User not found." } } };
+                }
+
+                var skills = data.Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
+                var experiences = data.Experiences?.Select(t => new ExperienceDto
+                {
+                    Id = t.Id,
+                    SchoolId = t.SchoolId,
+                    SchoolTitle = t.Name,
+                    Description = t.Description,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate,
+                });
+
+                var handle = string.IsNullOrEmpty(data.Handle)
+                    ? $"{data.Id}-{data.FirstName}-{data.LastName}".ToLowerInvariant()
+                    : data.Handle;
+
+                return new(OperationResult.Succeeded)
+                {
+                    Data = new()
+                    {
+                        UserName = data.UserName,
+                        FirstName = data.FirstName,
+                        LastName = data.LastName,
+                        SchoolId = data.SchoolId,
+                        CityId = data.CityId,
+                        StateId = data.StateId,
+                        CountryId = data.CountryId,
+                        ReferralId = data.ReferralId,
+                        Gender = data.Gender,
+                        Board = data.Board,
+                        Grade = data.Grade,
+                        Avatar = data.Avatar,
+                        Group = data.Group,
+                        CoreId = data.CoreId,
+                        WalletId = data.WalletId,
+                        ProfileUpdated = data.ProfileUpdated,
+                        Roles = data.Roles?.ListToFlagsEnum<Role>(),
+                        ProfileVisibility = data.ProfileVisibility,
+                        Biography = data.Biography,
+                        Skills = skills,
+                        CurrentStatusSentence = data.CurrentStatusSentence,
+                        Experiences = experiences,
+                        UserRateLevel = UserRateLevel.Calculate(data.Avatar, data.FirstName, data.LastName, data.CurrentStatusSentence, data.Biography, skills, experiences?.Select(t => t.Id)),
+                        Handle = handle,
+                    },
+                };
             }
             catch (Exception exc)
             {
@@ -881,6 +976,16 @@ namespace GamaEdtech.Application.Service
                     };
                 }
 
+                var valid = await ValidateHandleAsync(new()
+                {
+                    Handle = requestDto.Handle,
+                    UserId = requestDto.UserId,
+                });
+                if (valid.OperationResult is not OperationResult.Succeeded)
+                {
+                    return new(valid.OperationResult) { Errors = valid.Errors };
+                }
+
                 user.CityId = requestDto.CityId ?? user.CityId;
                 user.SchoolId = requestDto.SchoolId ?? user.SchoolId;
                 user.FirstName = !string.IsNullOrEmpty(requestDto.FirstName) ? requestDto.FirstName : user.FirstName;
@@ -892,6 +997,11 @@ namespace GamaEdtech.Application.Service
                 user.Group = requestDto.Group ?? user.Group;
                 user.CoreId = requestDto.CoreId ?? user.CoreId;
                 user.WalletId = requestDto.WalletId ?? user.WalletId;
+                user.ProfileVisibility = requestDto.ProfileVisibility ?? user.ProfileVisibility;
+                user.Biography = requestDto.Biography ?? user.Biography;
+                user.Skills = requestDto.Skills?.Any() == true ? string.Join(Delimiter, requestDto.Skills ?? []) : user.Skills;
+                user.CurrentStatusSentence = requestDto.CurrentStatusSentence ?? user.CurrentStatusSentence;
+                user.Handle = valid.Data ?? user.Handle;
                 user.ProfileUpdated = true;
 
                 var updateResult = await userManager.Value.UpdateAsync(user);
@@ -914,13 +1024,13 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> HasClaimAsync(int userId, SystemClaim claims)
+        public async Task<ResultData<bool>> HasClaimAsync(long userId, SystemClaim claims)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var userClaimsRepository = uow.GetRepository<ApplicationUserClaim, int>();
-                var names = claims.GetNames()!;
+                var names = claims.GetNames();
                 var exists = await userClaimsRepository.AnyAsync(t => t.UserId == userId && t.ClaimType == PermissionConstants.SystemClaim && names.Contains(t.ClaimValue));
 
                 return new(OperationResult.Succeeded)
@@ -933,58 +1043,6 @@ namespace GamaEdtech.Application.Service
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
             }
-        }
-
-        private async Task<string> GetTimeZoneIdAsync(int userId)
-        {
-            try
-            {
-                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var timeZoneId = await uow.GetRepository<ApplicationUserClaim, int>().GetManyQueryable(t => t.UserId == userId && t.ClaimType == TimeZoneIdClaim)
-                    .Select(t => t.ClaimValue).FirstOrDefaultAsync();
-
-                return !string.IsNullOrEmpty(timeZoneId) ? timeZoneId : UtcTimeZoneId;
-            }
-            catch
-            {
-                return UtcTimeZoneId;
-            }
-        }
-
-        private static IEnumerable<Error> MapUserManagerErrors(IdentityResult result)
-        {
-            foreach (var error in result.Errors)
-            {
-                yield return new Error { Message = error.Description };
-            }
-        }
-
-        private static string? GenerateDeviceHash(HttpContext? httpContext)
-        {
-            var ip = httpContext.GetClientIpAddress();
-            var userAgent = httpContext.UserAgent();
-
-            var byteValue = Encoding.UTF8.GetBytes(ip + userAgent);
-            var byteHash = SHA256.HashData(byteValue);
-            return Convert.ToBase64String(byteHash);
-        }
-
-        private ResultData<T> ValidateUser<T>(ApplicationUser? user)
-        {
-            IEnumerable<Error> errors = [];
-            if (user is null)
-            {
-                errors = [new() { Message = Localizer.Value["UserNotFound"] }];
-            }
-            else if (!user.Enabled)
-            {
-                errors = [new() { Message = Localizer.Value["UserNotEnabled"] }];
-            }
-
-            return new(user?.Enabled == true ? OperationResult.Succeeded : OperationResult.NotValid)
-            {
-                Errors = errors,
-            };
         }
 
         public async Task<ResultData<string>> GenerateReferralUserAsync()
@@ -1002,7 +1060,7 @@ namespace GamaEdtech.Application.Service
                 }
 
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var userRepo = uow.GetRepository<ApplicationUser, int>();
+                var userRepo = uow.GetRepository<ApplicationUser>();
 
                 var user = await userRepo.GetAsync(userId.Value);
 
@@ -1067,7 +1125,7 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public static string GenerateReferralId(int userId)
+        public static string GenerateReferralId(long userId)
         {
             var inputBytes = Encoding.UTF8.GetBytes(
                 $"{userId}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}-{Guid.NewGuid()}"
@@ -1125,7 +1183,7 @@ namespace GamaEdtech.Application.Service
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
                 var adminRole = nameof(Role.Admin).ToUpperInvariant();
-                var lst = uow.GetRepository<ApplicationUser, int>().GetManyQueryable(t => !t.UserRoles!.Any(r => r.Role!.NormalizedName == adminRole));
+                var lst = uow.GetRepository<ApplicationUser>().GetManyQueryable(t => !t.UserRoles!.Any(r => r.Role!.NormalizedName == adminRole));
 
                 if (requestDto is not null)
                 {
@@ -1191,7 +1249,11 @@ namespace GamaEdtech.Application.Service
         {
             try
             {
+<<<<<<< HEAD
                 const string endpoint = "https://gama.ir/";
+=======
+                var endpoint = configuration.Value.GetValue<string>("Core:Url");
+>>>>>>> 606f315b3176f64533a5fa34ebbf443891d24923
                 var data = await new JsonWebTokenHandler().ValidateTokenAsync(requestDto.Token, new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -1266,5 +1328,455 @@ namespace GamaEdtech.Application.Service
                 return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
             }
         }
+
+        public async Task<ResultData<Void>> AddLoginHistoryAsync([NotNull] LoginHistoryRequestDto requestDto)
+        {
+            try
+            {
+                var now = DateTimeOffset.UtcNow;
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                uow.GetRepository<LoginHistory>().Add(new()
+                {
+                    CreationDate = now,
+                    UserId = requestDto.UserId,
+                    IpAddress = requestDto.IpAddress,
+                    UserAgent = requestDto.UserAgent,
+                });
+                _ = await uow.SaveChangesAsync();
+                _ = await uow.GetRepository<ApplicationUser>().GetManyQueryable(t => t.Id == requestDto.UserId).ExecuteUpdateAsync(t => t.SetProperty(p => p.LastLoginDate, now));
+
+                return new(OperationResult.Succeeded);
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<ListDataSource<PublicProfileDto>>> GetProfilesListAsync(ListRequestDto<ApplicationUser>? requestDto = null)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var lst = uow.GetRepository<ApplicationUser>().GetManyQueryable(requestDto?.Specification);
+                int? total = requestDto?.PagingDto?.PageFilter?.ReturnTotalRecordsCount == true ? await lst.CountAsync() : null;
+                var query = lst.Select(t => new
+                {
+                    t.Id,
+                    t.Avatar,
+                    t.FirstName,
+                    t.LastName,
+                    t.Skills,
+                    t.Handle,
+                    UserRateLevel = (string.IsNullOrEmpty(t.Avatar) ? 0 : 15)
+                        + (string.IsNullOrEmpty(t.FirstName) ? 0 : 5)
+                        + (string.IsNullOrEmpty(t.LastName) ? 0 : 5)
+                        + (!string.IsNullOrEmpty(t.CurrentStatusSentence) && t.CurrentStatusSentence.Length > 9 ? 10 : 0)
+                        + (!string.IsNullOrEmpty(t.Biography) && t.Biography.Length > 49 ? 15 : 0)
+                        + (!string.IsNullOrEmpty(t.Skills) && t.Skills.Length > 1 ? 20 : 0),
+                    t.LastLoginDate,
+                });
+
+                (query, var sortApplied) = query.OrderBy(requestDto?.PagingDto?.SortFilter);
+                if (!sortApplied)
+                {
+                    query = query.OrderByDescending(t => t.LastLoginDate).ThenByDescending(t => t.UserRateLevel);
+                }
+                if (requestDto?.PagingDto?.PageFilter is not null)
+                {
+                    query = query.Skip(requestDto.PagingDto.PageFilter.Skip)
+                        .Take(requestDto.PagingDto.PageFilter.Size);
+                }
+                var items = await query.ToListAsync();
+                if (items is null || items.Count == 0)
+                {
+                    return new(OperationResult.Succeeded) { Data = new() { List = null } };
+                }
+
+                List<PublicProfileDto> result = new(items.Count);
+                for (var i = 0; i < items.Count; i++)
+                {
+                    var skills = items[i].Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
+                    var fullName = items[i].FirstName + " " + items[i].LastName;
+                    result.Add(new()
+                    {
+                        Avatar = items[i].Avatar,
+                        FullName = fullName,
+                        Handle = string.IsNullOrEmpty(items[i].Handle) ? $"{items[i].Id}-{fullName.Slugify()}" : items[i].Handle,
+                        Skills = skills,
+                        OnlineStatus = OnlineStatus.Calculate(items[i].LastLoginDate),
+                        UserRateLevel = UserRateLevel.Calculate(items[i].UserRateLevel)
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = new() { List = result, TotalRecordsCount = total } };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<PublicProfileResponseDto>> GetPublicProfileAsync([NotNull] PublicProfileRequestDto requestDto)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var repository = uow.GetRepository<ApplicationUser>();
+
+                var userId = await repository.GetManyQueryable(t => t.Handle == requestDto.ProfileHandle).Select(t => (long?)t.Id).FirstOrDefaultAsync();
+                if (userId is null)
+                {
+                    var match = HandleRegex().Match(requestDto.ProfileHandle);
+                    if (match.Success)
+                    {
+                        userId = match.Value.ValueOf<long?>();
+                    }
+                }
+
+                if (userId is null)
+                {
+                    return new(OperationResult.NotFound);
+                }
+
+                var result = await repository.GetManyQueryable(t => t.Id == userId.Value).Select(t => new
+                {
+                    t.FirstName,
+                    t.LastName,
+                    t.RegistrationDate,
+                    t.ProfileView,
+                    t.Biography,
+                    t.Skills,
+                    t.Avatar,
+                    t.CurrentStatusSentence,
+                    t.ProfileVisibility,
+                    t.Id,
+                    t.LastLoginDate,
+                }).FirstOrDefaultAsync();
+                if (result is null)
+                {
+                    return new(OperationResult.NotFound);
+                }
+
+                var valid = result.ProfileVisibility == ProfileVisibility.Public || result.Id == requestDto.UserId;
+                if (!valid)
+                {
+                    if (result.ProfileVisibility == ProfileVisibility.Private)
+                    {
+                        return new(OperationResult.NotFound);
+                    }
+
+                    var connectionRepository = uow.GetRepository<Connection>();
+                    var connected = await connectionRepository.AnyAsync(t => t.SourceUserId == requestDto.UserId && t.DestinationUserId == result.Id && t.Status == ConnectionStatus.Confirmed);
+                    if (!connected)
+                    {
+                        return new(OperationResult.NotFound);
+                    }
+
+                }
+
+                var experiences = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == result.Id).OrderByDescending(t => t.Id).Select(t => new ExperienceDto
+                {
+                    Id = t.Id,
+                    SchoolId = t.SchoolId,
+                    SchoolTitle = t.School.Name,
+                    Description = t.Description,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate,
+                }).ToListAsync();
+
+                _ = await repository.GetManyQueryable(t => t.Id == result.Id).ExecuteUpdateAsync(t => t.SetProperty(p => p.ProfileView, p => p.ProfileView + 1));
+
+                var skills = result.Skills?.Split(Delimiter, StringSplitOptions.RemoveEmptyEntries);
+                return new(OperationResult.Succeeded)
+                {
+                    Data = new()
+                    {
+                        FirstName = result.FirstName,
+                        LastName = result.LastName,
+                        RegistrationDate = result.RegistrationDate,
+                        Avatar = result.Avatar,
+                        ProfileView = result.ProfileView + 1,    //add current view
+                        OnlineStatus = OnlineStatus.Calculate(result.LastLoginDate),
+                        Biography = result.Biography,
+                        Skills = skills,
+                        CurrentStatusSentence = result.CurrentStatusSentence,
+                        Experiences = experiences,
+                        UserRateLevel = UserRateLevel.Calculate(result.Avatar, result.FirstName, result.LastName, result.CurrentStatusSentence, result.Biography, skills, experiences?.Select(t => t.Id))
+                    }
+                };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> ManageAvatarAsync([NotNull] ManageAvatarRequestDto requestDto)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var affectedRows = await uow.GetRepository<ApplicationUser>().GetManyQueryable(t => t.Id == requestDto.UserId)
+                    .ExecuteUpdateAsync(t => t.SetProperty(p => p.Avatar, requestDto.Avatar));
+
+                return new(OperationResult.Succeeded)
+                {
+                    Data = affectedRows > 0,
+                };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message },] };
+            }
+        }
+
+        public async Task<ResultData<bool>> InitializeDeletingAccountAsync([NotNull] ISpecification<ApplicationUser> specification)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var repository = uow.GetRepository<ApplicationUser>();
+                var now = DateTimeOffset.UtcNow;
+                var affectedRows = await repository.GetManyQueryable(specification)
+                    .ExecuteUpdateAsync(t => t.SetProperty(p => p.OrphanDate, now));
+                if (affectedRows > 0)
+                {
+                    var data = await repository.GetManyQueryable(specification).Select(t => new
+                    {
+                        t.FirstName,
+                        t.LastName,
+                        t.Email,
+                    }).FirstOrDefaultAsync();
+                    var template = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.InitializeDeletingAccountEmailTemplate))).Data;
+                    template = template?
+                        .Replace("[RECEIVER_NAME]", $"{data!.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                    _ = await emailService.Value.SendEmailAsync(new()
+                    {
+                        Subject = "Deleting Account Request",
+                        Body = template!,
+                        EmailAddresses = [data!.Email!],
+                    });
+                }
+
+                return new(OperationResult.Succeeded) { Data = affectedRows > 0 };
+            }
+            catch (ReferenceConstraintException)
+            {
+                return new(OperationResult.NotValid) { Errors = new[] { new Error { Message = Localizer.Value["UserCantBeRemoved"], } } };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        public async Task<ResultData<bool>> RecoverAccountAsync([NotNull] ISpecification<ApplicationUser> specification)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var repository = uow.GetRepository<ApplicationUser>();
+                DateTimeOffset? orphanDate = null;
+                var affectedRows = await repository.GetManyQueryable(specification).Where(t => t.OrphanDate != null)
+                    .ExecuteUpdateAsync(t => t.SetProperty(p => p.OrphanDate, orphanDate));
+
+                return new(OperationResult.Succeeded) { Data = affectedRows > 0 };
+            }
+            catch (ReferenceConstraintException)
+            {
+                return new(OperationResult.NotValid) { Errors = new[] { new Error { Message = Localizer.Value["UserCantBeRemoved"], } } };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        public async Task<ResultData<string>> ValidateHandleAsync([NotNull] ValidateHandleRequestDto requestDto)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(requestDto.Handle))
+                {
+                    return new(OperationResult.Succeeded);
+                }
+
+                var value = Globals.Slugify(requestDto.Handle);
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var exists = await uow.GetRepository<ApplicationUser>().AnyAsync(t => t.Handle == value && t.Id != requestDto.UserId);
+
+                return exists
+                    ? new(OperationResult.NotValid) { Errors = [new() { Message = Localizer.Value["InvalidHandle"] }] }
+                    : new(OperationResult.Succeeded) { Data = value };
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message, },] };
+            }
+        }
+
+        #region SiteMap
+
+        public ItemType ItemType => ItemType.Profile;
+
+        public IQueryable<SiteMapItemDto> GetSiteMapData([NotNull] IUnitOfWork uow) => uow.GetRepository<ApplicationUser>().GetManyQueryable(t => t.Enabled && t.ProfileVisibility == ProfileVisibility.Public).Select(t => new SiteMapItemDto
+        {
+            Id = t.Id,
+            Path1 = t.Handle,
+            Path2 = string.IsNullOrEmpty(t.Handle) ? t.Id + "-" + t.FirstName + "-" + t.LastName : null,
+            LastModifyDate = t.RegistrationDate,
+        });
+
+        #endregion
+
+        #region Job
+
+        public async Task<ResultData<bool>> UpdateOrphanUsersAsync()
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var repository = uow.GetRepository<ApplicationUser>();
+                var date = DateTimeOffset.UtcNow.AddDays(-7);
+                var lst = await repository.GetManyQueryable(t => t.OrphanDate != null && date >= t.OrphanDate.Value).Select(t => new
+                {
+                    t.Id,
+                    t.Email,
+                    t.FirstName,
+                    t.LastName,
+                }).ToListAsync();
+                if (lst is null)
+                {
+                    return new(OperationResult.Succeeded);
+                }
+
+                string? nullString = null;
+                DateTimeOffset? nullDate = null;
+                for (var i = 0; i < lst.Count; i++)
+                {
+                    try
+                    {
+                        var data = lst[i];
+                        var startTemplate = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.StartDeletingAccountEmailTemplate))).Data;
+                        startTemplate = startTemplate?
+                            .Replace("[RECEIVER_NAME]", $"{data.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                        _ = await emailService.Value.SendEmailAsync(new()
+                        {
+                            Subject = "Initialize Deleting Account",
+                            Body = startTemplate!,
+                            EmailAddresses = [data.Email!],
+                        });
+
+                        //clear user data
+                        _ = await repository.GetManyQueryable(t => t.Id == data.Id).ExecuteUpdateAsync(t => t
+                            .SetProperty(t => t.FirstName, "Deleted")
+                            .SetProperty(t => t.Email, nullString)
+                            .SetProperty(t => t.NormalizedEmail, nullString)
+                            .SetProperty(t => t.ProfileView, 0)
+                            .SetProperty(t => t.Avatar, nullString)
+                            .SetProperty(t => t.Biography, nullString)
+                            .SetProperty(t => t.WalletId, nullString)
+                            .SetProperty(t => t.Skills, nullString)
+                            .SetProperty(t => t.CurrentStatusSentence, nullString)
+                            .SetProperty(t => t.OrphanDate, nullDate));
+
+                        //delete Experience entries
+                        _ = await uow.GetRepository<Experience>().GetManyQueryable(t => t.UserId == data.Id).ExecuteDeleteAsync();
+
+                        //delete Follow relationships
+                        ConnectionStatus[] statuses = [ConnectionStatus.Confirmed, ConnectionStatus.Requested];
+                        _ = await uow.GetRepository<Connection>().GetManyQueryable(t => t.SourceUserId == data.Id && statuses.Contains(t.Status)).ExecuteUpdateAsync(t => t.SetProperty(p => p.Status, ConnectionStatus.Revoked));
+
+
+                        var finishedtemplate = (await applicationSettingsService.Value.GetSettingAsync<string?>(nameof(ApplicationSettingsDto.FinishedDeletingAccountEmailTemplate))).Data;
+                        finishedtemplate = finishedtemplate?
+                            .Replace("[RECEIVER_NAME]", $"{data.FirstName} {data.LastName}", StringComparison.OrdinalIgnoreCase);
+                        _ = await emailService.Value.SendEmailAsync(new()
+                        {
+                            Subject = "Finish Deleting Account",
+                            Body = finishedtemplate!,
+                            EmailAddresses = [data.Email!],
+                        });
+                    }
+                    catch (Exception exc)
+                    {
+                        Logger.Value.LogException(exc);
+                    }
+                }
+
+                return new(OperationResult.Succeeded);
+            }
+            catch (Exception exc)
+            {
+                Logger.Value.LogException(exc);
+                return new(OperationResult.Failed) { Errors = new[] { new Error { Message = exc.Message }, } };
+            }
+        }
+
+        #endregion
+
+        private async Task<string> GetTimeZoneIdAsync(long userId)
+        {
+            try
+            {
+                var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                var timeZoneId = await uow.GetRepository<ApplicationUserClaim, int>().GetManyQueryable(t => t.UserId == userId && t.ClaimType == TimeZoneIdClaim)
+                    .Select(t => t.ClaimValue).FirstOrDefaultAsync();
+
+                return !string.IsNullOrEmpty(timeZoneId) ? timeZoneId : UtcTimeZoneId;
+            }
+            catch
+            {
+                return UtcTimeZoneId;
+            }
+        }
+
+        private static IEnumerable<Error> MapUserManagerErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                yield return new Error { Message = error.Description };
+            }
+        }
+
+        private static string? GenerateDeviceHash(HttpContext? httpContext)
+        {
+            var ip = httpContext.GetClientIpAddress();
+            var userAgent = httpContext.UserAgent();
+
+            var byteValue = Encoding.UTF8.GetBytes(ip + userAgent);
+            var byteHash = SHA256.HashData(byteValue);
+            return Convert.ToBase64String(byteHash);
+        }
+
+        private ResultData<T> ValidateUser<T>(ApplicationUser? user)
+        {
+            IEnumerable<Error> errors = [];
+            if (user is null)
+            {
+                errors = [new() { Message = Localizer.Value["UserNotFound"] }];
+            }
+            else if (!user.Enabled)
+            {
+                errors = [new() { Message = Localizer.Value["UserNotEnabled"] }];
+            }
+
+            return new(user?.Enabled == true ? OperationResult.Succeeded : OperationResult.NotValid)
+            {
+                Errors = errors,
+            };
+        }
+
+        [GeneratedRegex("^\\d+")]
+        private static partial Regex HandleRegex();
     }
 }
+

@@ -15,7 +15,7 @@ namespace GamaEdtech.Domain.Entity
     using NetTopologySuite.Geometries;
 
     [Table(nameof(Location))]
-    public class Location : VersionableEntity<ApplicationUser, int, int?>, IEntity<Location, int>
+    public class Location : VersionableEntity<ApplicationUser, long, long?>, IEntity<Location, int>, IContentLocalizeable
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Int)]

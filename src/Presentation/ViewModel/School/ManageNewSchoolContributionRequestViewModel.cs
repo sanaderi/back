@@ -69,7 +69,7 @@ namespace GamaEdtech.Presentation.ViewModel.School
         public IEnumerable<long>? Tags { get; set; }
 
         [Display]
-        public IEnumerable<int?>? BoardCodes { get; set; }
+        public IEnumerable<int>? Boards { get; set; }
 
         [Display]
         public decimal? Tuition { get; set; }
@@ -82,5 +82,8 @@ namespace GamaEdtech.Presentation.ViewModel.School
 
         [Display]
         public IFormFile? File { get; set; }
+
+        [Display]
+        public IEnumerable<SchoolLocalizedValueViewModel>? LocalizedValues { get; set; }
     }
 }

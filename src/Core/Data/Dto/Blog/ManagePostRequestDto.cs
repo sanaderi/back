@@ -9,7 +9,7 @@ namespace GamaEdtech.Data.Dto.Blog
     public sealed class ManagePostRequestDto
     {
         public long? Id { get; set; }
-        public int CreationUserId { get; set; }
+        public long CreationUserId { get; set; }
         public DateTimeOffset CreationDate { get; set; }
         public string? Title { get; set; }
         public string? Slug { get; set; }
@@ -24,5 +24,6 @@ namespace GamaEdtech.Data.Dto.Blog
         public bool RemovePodcast { get; set; }
         public IEnumerable<long>? Tags { get; set; }
         public string? Keywords { get; set; }
+        public IEnumerable<PostLocalizedValueDto>? LocalizedValues { get; set; }
     }
 }

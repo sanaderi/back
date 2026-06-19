@@ -11,6 +11,6 @@ namespace GamaEdtech.Data.Dto.Identity
         public GenderType? Gender { get; set; }
         public int? Grade { get; set; }
         public int? Group { get; set; }
-        public int? CoreId { get; set; }
+        public long? CoreId { get; set; }
     }
 }

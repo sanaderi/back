@@ -60,7 +60,7 @@ namespace GamaEdtech.Common.Converter
 
             foreach ((var key, var value) in dictionary)
             {
-                var propertyName = key.Name!;
+                var propertyName = key.Name;
                 writer.WritePropertyName(options.PropertyNamingPolicy?.ConvertName(propertyName) ?? propertyName);
 
                 (options.GetConverter(typeof(object)) as JsonConverter<object?>)?.Write(writer, value, options);

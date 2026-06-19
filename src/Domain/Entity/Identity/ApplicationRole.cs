@@ -14,7 +14,7 @@ namespace GamaEdtech.Domain.Entity.Identity
     using GamaEdtech.Domain.Enumeration;
 
     [Table(nameof(ApplicationRole))]
-    public class ApplicationRole : IdentityRole<int>, IEntity<ApplicationRole, int>
+    public class ApplicationRole : IdentityRole<long>, IEntity<ApplicationRole, long>
     {
         public ApplicationRole()
         {
@@ -23,9 +23,9 @@ namespace GamaEdtech.Domain.Entity.Identity
         }
 
         [System.ComponentModel.DataAnnotations.Key]
-        [Column(nameof(Id), DataType.Int)]
+        [Column(nameof(Id), DataType.Long)]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public override int Id { get; set; }
+        public override long Id { get; set; }
 
         [Column(nameof(Name), DataType.UnicodeString)]
         [Required]
@@ -58,6 +58,8 @@ namespace GamaEdtech.Domain.Entity.Identity
                 new ApplicationRole { Id = 1, Name = nameof(Role.Admin), NormalizedName = nameof(Role.Admin).ToUpperInvariant(), ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE3", },
                 new ApplicationRole { Id = 2, Name = nameof(Role.Teacher), NormalizedName = nameof(Role.Teacher).ToUpperInvariant(), ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE4", },
                 new ApplicationRole { Id = 3, Name = nameof(Role.Student), NormalizedName = nameof(Role.Student).ToUpperInvariant(), ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE5", },
+                new ApplicationRole { Id = 4, Name = nameof(Role.Advisor), NormalizedName = nameof(Role.Advisor).ToUpperInvariant(), ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE6", },
+                new ApplicationRole { Id = 5, Name = nameof(Role.Finance), NormalizedName = nameof(Role.Finance).ToUpperInvariant(), ConcurrencyStamp = "85465B3B-E646-49BC-AAC6-D07C450B3AE7", },
             ];
             _ = builder.HasData(seedData);
         }

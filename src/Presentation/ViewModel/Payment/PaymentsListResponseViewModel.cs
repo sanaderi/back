@@ -9,7 +9,7 @@ namespace GamaEdtech.Presentation.ViewModel.Payment
     {
         public long Id { get; set; }
 
-        public int UserId { get; set; }
+        public long UserId { get; set; }
 
         public string? FirstName { get; set; }
 
@@ -19,6 +19,9 @@ namespace GamaEdtech.Presentation.ViewModel.Payment
 
         [JsonConverter(typeof(EnumerationConverter<Currency, byte>))]
         public Currency Currency { get; set; }
+
+        [JsonConverter(typeof(EnumerationConverter<PaymentGateway, byte>))]
+        public PaymentGateway Gateway { get; set; }
 
         [JsonConverter(typeof(EnumerationConverter<PaymentStatus, byte>))]
         public PaymentStatus Status { get; set; }

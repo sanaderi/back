@@ -1,0 +1,17 @@
+namespace GamaEdtech.Data.Dto.Subscription
+{
+    using GamaEdtech.Domain.Enumeration;
+
+    using NetTopologySuite.Geometries;
+
+    public sealed class ManageSubscriptionPlanRequestDto
+    {
+        public long? Id { get; set; }
+        public string? Title { get; set; }
+        public decimal? Price { get; set; }
+        public Currency? Currency { get; set; }
+        public Polygon? Polygon { get; set; }
+        public long? Point { get; set; }
+        public bool? IsActive { get; set; }
+    }
+}

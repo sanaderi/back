@@ -26,25 +26,27 @@ namespace GamaEdtech.Application.Service
         , Lazy<ILogger<ReactionService>> logger)
         : LocalizableServiceBase<ReactionService>(unitOfWorkProvider, httpContextAccessor, localizer, logger), IReactionService
     {
-        public async Task<ResultData<ReactionDto>> GetReactionsCountAsync([NotNull] ISpecification<Reaction> specification)
+        public async Task<ResultData<IEnumerable<ReactionDto>>> GetReactionsAsync([NotNull] ISpecification<Reaction> specification)
         {
             try
             {
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var reaction = await uow.GetRepository<Reaction>().GetManyQueryable(specification)
-                    .GroupBy(t => t.IsLike).Select(t => new
+                var reactions = await uow.GetRepository<Reaction>().GetManyQueryable(specification)
+                    .GroupBy(t => t.IdentifierId).Select(t => new
                     {
                         t.Key,
-                        Count = t.Count(),
+                        LikeCount = t.Count(r => r.IsLike),
+                        DislikeCount = t.Count(r => !r.IsLike),
                     }).ToListAsync();
 
                 return new(OperationResult.Succeeded)
                 {
-                    Data = new ReactionDto
+                    Data = reactions.Select(t => new ReactionDto
                     {
-                        Like = reaction.Find(t => t.Key)?.Count ?? 0,
-                        Dislike = reaction.Find(t => !t.Key)?.Count ?? 0,
-                    }
+                        IdentifierId = t.Key.GetValueOrDefault(),
+                        Like = t.LikeCount,
+                        Dislike = t.DislikeCount,
+                    }),
                 };
             }
             catch (Exception exc)
@@ -63,18 +65,20 @@ namespace GamaEdtech.Application.Service
 
                 var specification = new CategoryTypeEqualsSpecification<Reaction>(requestDto.CategoryType)
                     .And(new IdentifierIdEqualsSpecification<Reaction>(requestDto.IdentifierId))
-                    .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, int>(requestDto.CreationUserId));
+                    .And(new CreationUserIdEqualsSpecification<Reaction, ApplicationUser, long>(requestDto.CreationUserId));
 
                 var reaction = await repository.GetAsync(specification);
                 if (reaction is not null)
                 {
-                    if (reaction.IsLike != requestDto.IsLike)
+                    if (reaction.IsLike == requestDto.IsLike)
                     {
-                        reaction.IsLike = requestDto.IsLike;
-                        reaction.CreationDate = requestDto.CreationDate;
-
-                        _ = repository.Update(reaction);
+                        return new(OperationResult.NotValid) { Errors = [new() { Message = Localizer.Value["DuplicateReaction"], }] };
                     }
+
+                    reaction.IsLike = requestDto.IsLike;
+                    reaction.CreationDate = requestDto.CreationDate;
+
+                    _ = repository.Update(reaction);
                 }
                 else
                 {

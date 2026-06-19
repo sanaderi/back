@@ -1,4 +1,4 @@
-﻿namespace GamaEdtech.Domain.Entity.Identity
+namespace GamaEdtech.Domain.Entity.Identity
 {
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAccess.Entities;
@@ -13,21 +13,19 @@
     using System.Diagnostics.CodeAnalysis;
 
     [Table(nameof(ApplicationUserRole))]
-    public class ApplicationUserRole : IdentityUserRole<int>, IEntity<ApplicationUserRole, int>, IUserId<int>
+    public class ApplicationUserRole : IdentityUserRole<long>, IEntity<ApplicationUserRole, long>, IUserId<long>
     {
         [Required]
-        [Column(nameof(UserId), DataType.Int)]
-        public override int UserId { get; set; }
-
-        [Required]
-        [Column(nameof(RoleId), DataType.Int)]
-        public override int RoleId { get; set; }
-
-        public ApplicationRole? Role { get; set; }
-
+        [Column(nameof(UserId), DataType.Long)]
+        public override long UserId { get; set; }
         public ApplicationUser? User { get; set; }
 
-        int IIdentifiable<int>.Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        [Required]
+        [Column(nameof(RoleId), DataType.Long)]
+        public override long RoleId { get; set; }
+        public ApplicationRole? Role { get; set; }
+
+        long IIdentifiable<long>.Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public void Configure([NotNull] EntityTypeBuilder<ApplicationUserRole> builder)
         {

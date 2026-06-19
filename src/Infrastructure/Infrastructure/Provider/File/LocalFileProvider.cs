@@ -5,9 +5,9 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using GamaEdtech.Common.Core;
     using GamaEdtech.Common.Data;
-    using GamaEdtech.Data.Dto.School;
+    using GamaEdtech.Data.Dto.File;
+    using GamaEdtech.Data.Dto.Provider.File;
     using GamaEdtech.Domain.Enumeration;
-    using GamaEdtech.Infrastructure.Interface;
 
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Http;
@@ -16,17 +16,17 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
     using static GamaEdtech.Common.Core.Constants;
 
-    public sealed class LocalFileProvider(Lazy<ILogger<LocalFileProvider>> logger
-        , Lazy<IConfiguration> configuration, Lazy<IWebHostEnvironment> environment, Lazy<HttpContextAccessor> httpContextAccessor) : IFileProvider
+    public sealed class LocalFileProvider(Lazy<ILogger<LocalFileProvider>> logger, Lazy<IConfiguration> configuration, Lazy<IWebHostEnvironment> environment, Lazy<HttpContextAccessor> httpContextAccessor)
+        : FileProviderBase(configuration)
     {
-        public FileProviderType ProviderType => FileProviderType.Local;
+        public override FileProviderType ProviderType => FileProviderType.Local;
 
-        public ResultData<Uri?> GetFileUri(string? id, [NotNull] ContainerType containerType)
+        public override async Task<ResultData<Uri?>> GetFileUrlAsync([NotNull] FileUriRequestDto requestDto)
         {
             try
             {
-                var path = $"{GetDirectoryPath(containerType, false)}/{id}";
-                return new(OperationResult.Succeeded) { Data = new Uri(path) };
+                var path = $"{GetDirectoryPath(requestDto.ContainerType, false)}/{requestDto.FileId}";
+                return new(OperationResult.Succeeded) { Data = await Task.FromResult(new Uri(path)) };
             }
             catch (Exception exc)
             {
@@ -35,7 +35,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        public async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
+        public override async Task<ResultData<string?>> UploadFileAsync([NotNull] UploadFileRequestDto requestDto)
         {
             try
             {
@@ -45,7 +45,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
                     _ = Directory.CreateDirectory(dir);
                 }
 
-                var value = $"{Guid.NewGuid():N}{requestDto.FileExtension}";
+                var value = GenerateBlobFileName(requestDto.FileExtension);
                 var savedFilePath = Path.Combine(dir, value);
 
                 await System.IO.File.WriteAllBytesAsync(savedFilePath, requestDto.File);
@@ -59,7 +59,7 @@ namespace GamaEdtech.Infrastructure.Provider.File
             }
         }
 
-        public async Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto)
+        public override async Task<ResultData<bool>> RemoveFileAsync([NotNull] RemoveFileRequestDto requestDto)
         {
             try
             {
@@ -86,17 +86,18 @@ namespace GamaEdtech.Infrastructure.Provider.File
 
         private string GetDirectoryPath([NotNull] ContainerType containerType, bool physicalPath)
         {
-            var path = configuration.Value.GetValue<string>("FileProvider:Local:Path")!;
+            var path = Configuration.Value.GetValue<string>("FileProvider:Local:Path")!;
+            var container = GenerateBlobContainerName(containerType);
             if (physicalPath)
             {
                 List<string> lst = [environment.Value.WebRootPath];
                 lst.AddRange(path.Split('/'));
-                lst.Add(containerType.Name);
+                lst.Add(container);
                 return Path.Combine([.. lst]);
             }
 
             var hostUrl = $"{httpContextAccessor.Value.HttpContext?.Request.Scheme}://{httpContextAccessor.Value.HttpContext?.Request.Host}";
-            return hostUrl + "/" + path + "/" + containerType.Name;
+            return hostUrl + "/" + path + "/" + container;
         }
     }
 }

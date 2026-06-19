@@ -41,8 +41,6 @@ namespace GamaEdtech.Common.Core
         public const string MigrateIdentifier = "Migrate";
         public const string LineBreak = "[BR]";
         public const string HierarchyValueDelimiter = "/";
-        public const string PasswordIdentifier = "******";
-        public const string PasswordIdentifierWithData = "************";
         public const string SchemaIdentifier = "[SCHEMA]";
         public const string DateTimeFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
         public const string Cookie = "__f";

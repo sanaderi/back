@@ -40,6 +40,8 @@ namespace GamaEdtech.Common.Core
 
         public static DbProviderType ProviderType { get; set; }
 
+        public static IEnumerable<CultureInfo> AllCultures => CultureInfo.GetCultures(CultureTypes.AllCultures).Where(t => !string.IsNullOrEmpty(t.Name)).Select(GetCulture);
+
         public static string? GetClientIpAddress(this HttpContext? httpContext)
         {
             var ip = httpContext?.Connection?.RemoteIpAddress?.ToString();
@@ -372,12 +374,12 @@ namespace GamaEdtech.Common.Core
 
         public static string? UserAgent(this HttpContext? httpContext) => httpContext?.Request.Headers.UserAgent.ToString();
 
-        public static int UserId(this HttpContext? httpContext) => httpContext.UserId<int>();
+        public static long UserId(this HttpContext? httpContext) => httpContext.UserId<long>();
 
         public static T? UserId<T>(this HttpContext? httpContext)
             => (httpContext?.User).UserId<T>();
 
-        public static int UserId(this ClaimsPrincipal? claimsPrincipal) => claimsPrincipal.UserId<int>();
+        public static long UserId(this ClaimsPrincipal? claimsPrincipal) => claimsPrincipal.UserId<long>();
 
         public static T? UserId<T>(this ClaimsPrincipal? claimsPrincipal)
             => claimsPrincipal is null ? default : claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier).ValueOf<T>();
@@ -399,19 +401,14 @@ namespace GamaEdtech.Common.Core
             return dictionary;
         }
 
-        public static CultureInfo GetCulture(string name)
+        public static CultureInfo GetCulture([NotNull] CultureInfo culture)
         {
-            if (string.IsNullOrEmpty(name))
+            if (!culture.Name.StartsWith("fa", StringComparison.InvariantCultureIgnoreCase))
             {
-                return new CultureInfo(Constants.DefaultLanguageCode);
+                return culture;
             }
 
-            if (!name.StartsWith("fa", StringComparison.InvariantCultureIgnoreCase))
-            {
-                return new CultureInfo(name, false);
-            }
-
-            var persianCalture = new CultureInfo(name, false);
+            var persianCalture = new CultureInfo(culture.Name, false);
             var info = persianCalture.DateTimeFormat;
             var monthNames = new[] { "فروردين", "ارديبهشت", "خرداد", "تير", "مرداد", "شهريور", "مهر", "آبان", "آذر", "دي", "بهمن", "اسفند", string.Empty };
             var shortestDayNames = new[] { "ى", "د", "س", "چ", "پ", "ج", "ش" };

@@ -18,9 +18,8 @@ namespace GamaEdtech.Presentation.Api.Controllers
     public class PaymentsController(Lazy<ILogger<PaymentsController>> logger, Lazy<IPaymentService> paymentService)
         : ApiControllerBase<PaymentsController>(logger)
     {
-        [HttpPost, Produces(typeof(ApiResponse<long>))]
-        [Permission(policy: null)]
-        public async Task<IActionResult<long>> CreatePayment([NotNull] CreatePaymentRequestViewModel request)
+        [HttpPost, Produces(typeof(ApiResponse<CreatePaymentResponseViewModel>))]
+        public async Task<IActionResult<CreatePaymentResponseViewModel>> CreatePayment([NotNull] CreatePaymentRequestViewModel request)
         {
             try
             {
@@ -29,32 +28,38 @@ namespace GamaEdtech.Presentation.Api.Controllers
                     UserId = User.UserId(),
                     Amount = request.Amount.GetValueOrDefault(),
                     Currency = request.Currency!,
+                    Gateway = request.Gateway!,
+                    Title = request.Title,
+                    Description = request.Description,
                 });
 
-                return Ok<long>(new(result.Errors)
+                return Ok<CreatePaymentResponseViewModel>(new(result.Errors)
                 {
-                    Data = result.Data,
+                    Data = result.Data is null
+                    ? null
+                    : new()
+                    {
+                        PaymentId = result.Data.PaymentId,
+                        Url = result.Data.Url,
+                    },
                 });
             }
             catch (Exception exc)
             {
                 Logger.Value.LogException(exc);
-                return Ok<long>(new(new Error { Message = exc.Message }));
+                return Ok<CreatePaymentResponseViewModel>(new(new Error { Message = exc.Message }));
             }
         }
 
-        [HttpPost("verify"), Produces(typeof(ApiResponse<bool>))]
-        [Permission(policy: null)]
-        public async Task<IActionResult<bool>> VerifyPayment([NotNull] VerifyPaymentRequestViewModel request)
+        [HttpPost("{id:long}/verify"), Produces(typeof(ApiResponse<bool>))]
+        public async Task<IActionResult<bool>> VerifyPayment([FromRoute] long id, [NotNull] VerifyPaymentRequestViewModel request)
         {
             try
             {
                 var result = await paymentService.Value.VerifyPaymentAsync(new()
                 {
-                    Currency = request.Currency!,
-                    Id = request.Id.GetValueOrDefault(),
-                    TransactionId = request.TransactionId!,
-                    UserId = User.UserId(),
+                    Id = id,
+                    TransactionId = request.TransactionId,
                 });
 
                 return Ok<bool>(new(result.Errors)

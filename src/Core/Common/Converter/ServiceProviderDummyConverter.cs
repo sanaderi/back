@@ -1,4 +1,4 @@
-﻿namespace GamaEdtech.Common.Converter
+namespace GamaEdtech.Common.Converter
 {
     using System;
     using System.Text.Json;
@@ -8,8 +8,6 @@
 
     public class ServiceProviderDummyConverter(IHttpContextAccessor httpContextAccessor, IServiceProvider serviceProvider) : JsonConverter<object>
     {
-        private readonly IServiceProvider serviceProvider = serviceProvider;
-
         public IHttpContextAccessor HttpContextAccessor { get; } = httpContextAccessor;
 
         public IServiceProvider ServiceProvider => HttpContextAccessor.HttpContext?.RequestServices ?? serviceProvider;

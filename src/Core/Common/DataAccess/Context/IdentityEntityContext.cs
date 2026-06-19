@@ -28,9 +28,9 @@ namespace GamaEdtech.Common.DataAccess.Context
 
     using NUlid;
 
-    public abstract class IdentityEntityContext<TContext, TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>
-        : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>, IEntityContext
-        where TContext : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>
+    public abstract class IdentityEntityContext<TContext, TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken, TUserPasskey>
+        : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken, TUserPasskey>, IEntityContext
+        where TContext : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken, TUserPasskey>
         where TUser : IdentityUser<TKey>
         where TRole : IdentityRole<TKey>
         where TKey : IEquatable<TKey>
@@ -39,8 +39,9 @@ namespace GamaEdtech.Common.DataAccess.Context
         where TUserLogin : IdentityUserLogin<TKey>
         where TRoleClaim : IdentityRoleClaim<TKey>
         where TUserToken : IdentityUserToken<TKey>
+        where TUserPasskey : IdentityUserPasskey<TKey>
     {
-        private readonly string[] shadowProperties = [nameof(IVersionableEntity<TUser, TKey, TKey>.CreationDate), nameof(IVersionableEntity<TUser, TKey, TKey>.CreationUserId), nameof(IVersionableEntity<TUser, TKey, TKey>.LastModifyDate), nameof(IVersionableEntity<TUser, TKey, TKey>.LastModifyUserId)];
+        private readonly string[] shadowProperties = [nameof(IVersionableEntity<,,>.CreationDate), nameof(IVersionableEntity<,,>.CreationUserId), nameof(IVersionableEntity<,,>.LastModifyDate), nameof(IVersionableEntity<,,>.LastModifyUserId)];
         private readonly IHttpContextAccessor httpContextAccessor;
 
         protected IdentityEntityContext(IServiceProvider serviceProvider)
@@ -119,18 +120,18 @@ namespace GamaEdtech.Common.DataAccess.Context
 
                     if (interfaces.Exists(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IVersionableEntity<,,>)))
                     {
-                        _ = builder.Entity(type).HasOne(nameof(IVersionableEntity<TUser, TKey, TKey>.CreationUser))
-                                .WithMany().HasForeignKey(nameof(IVersionableEntity<TUser, TKey, TKey>.CreationUserId)).OnDelete(DeleteBehavior.NoAction);
+                        _ = builder.Entity(type).HasOne(nameof(IVersionableEntity<,,>.CreationUser))
+                                .WithMany().HasForeignKey(nameof(IVersionableEntity<,,>.CreationUserId)).OnDelete(DeleteBehavior.NoAction);
 
-                        _ = builder.Entity(type).HasOne(nameof(IVersionableEntity<TUser, TKey, TKey>.LastModifyUser))
-                            .WithMany().HasForeignKey(nameof(IVersionableEntity<TUser, TKey, TKey>.LastModifyUserId)).OnDelete(DeleteBehavior.NoAction);
+                        _ = builder.Entity(type).HasOne(nameof(IVersionableEntity<,,>.LastModifyUser))
+                            .WithMany().HasForeignKey(nameof(IVersionableEntity<,,>.LastModifyUserId)).OnDelete(DeleteBehavior.NoAction);
 
-                        _ = builder.Entity(type).Property(nameof(IVersionableEntity<TUser, TKey, TKey>.LastModifyUserId)).IsRequired(false);
+                        _ = builder.Entity(type).Property(nameof(IVersionableEntity<,,>.LastModifyUserId)).IsRequired(false);
                     }
                     else if (interfaces.Exists(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICreationableEntity<,>)))
                     {
-                        _ = builder.Entity(type).HasOne(nameof(ICreationableEntity<TUser, TKey>.CreationUser))
-                                .WithMany().HasForeignKey(nameof(ICreationableEntity<TUser, TKey>.CreationUserId)).OnDelete(DeleteBehavior.NoAction);
+                        _ = builder.Entity(type).HasOne(nameof(ICreationableEntity<,>.CreationUser))
+                                .WithMany().HasForeignKey(nameof(ICreationableEntity<,>.CreationUserId)).OnDelete(DeleteBehavior.NoAction);
                     }
 
                     if (type.IsGenericType)

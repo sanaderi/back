@@ -17,9 +17,9 @@ namespace GamaEdtech.Presentation.ViewModel.Blog
 
         public string? Body { get; set; }
 
-        public Uri? ImageUri { get; set; }
+        public string? ImageUri { get; set; }
 
-        public Uri? PodcastUri { get; set; }
+        public string? PodcastUri { get; set; }
 
         public int LikeCount { get; set; }
 
@@ -43,5 +43,9 @@ namespace GamaEdtech.Presentation.ViewModel.Blog
         public long? NextId { get; set; }
 
         public long? PreviousId { get; set; }
+
+        public bool LikedByCurrentUser { get; set; }
+
+        public bool DislikedByCurrentUser { get; set; }
     }
 }

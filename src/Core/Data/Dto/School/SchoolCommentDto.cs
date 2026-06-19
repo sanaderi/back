@@ -10,5 +10,7 @@ namespace GamaEdtech.Data.Dto.School
         public double AverageRate { get; set; }
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
+        public bool LikedByCurrentUser { get; set; }
+        public bool DislikedByCurrentUser { get; set; }
     }
 }

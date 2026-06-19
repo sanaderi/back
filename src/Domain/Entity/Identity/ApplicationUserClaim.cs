@@ -14,7 +14,7 @@ namespace GamaEdtech.Domain.Entity.Identity
 
     [Table(nameof(ApplicationUserClaim))]
     [Audit((int)Common.Core.Constants.EntityType.ApplicationUserClaim)]
-    public class ApplicationUserClaim : IdentityUserClaim<int>, IEntity<ApplicationUserClaim, int>, IUserId<int>
+    public class ApplicationUserClaim : IdentityUserClaim<long>, IEntity<ApplicationUserClaim, int>, IUserId<long>
     {
         [System.ComponentModel.DataAnnotations.Key]
         [Column(nameof(Id), DataType.Int)]
@@ -22,8 +22,8 @@ namespace GamaEdtech.Domain.Entity.Identity
         public override int Id { get; set; }
 
         [Required]
-        [Column(nameof(UserId), DataType.Int)]
-        public override int UserId { get; set; }
+        [Column(nameof(UserId), DataType.Long)]
+        public override long UserId { get; set; }
 
         [StringLength(1000)]
         [Column(nameof(ClaimType), DataType.String)]

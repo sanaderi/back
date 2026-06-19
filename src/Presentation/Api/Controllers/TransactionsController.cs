@@ -28,7 +28,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
         {
             try
             {
-                ISpecification<Transaction> specification = new UserIdEqualsSpecification<Transaction, int>(User.UserId());
+                ISpecification<Transaction> specification = new UserIdEqualsSpecification<Transaction, long>(User.UserId());
 
                 if (request.IsDebit.HasValue)
                 {
