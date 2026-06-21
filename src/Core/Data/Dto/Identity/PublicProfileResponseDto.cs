@@ -16,5 +16,6 @@ namespace GamaEdtech.Data.Dto.Identity
         public IEnumerable<ExperienceDto>? Experiences { get; set; }
         public string? CurrentStatusSentence { get; set; }
         public UserRateLevel UserRateLevel { get; set; }
+        public DateTimeOffset? OrphanDate { get; set; }
     }
 }

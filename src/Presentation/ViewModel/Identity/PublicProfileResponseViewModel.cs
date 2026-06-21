@@ -31,5 +31,7 @@ namespace GamaEdtech.Presentation.ViewModel.Identity
 
         [JsonConverter(typeof(EnumerationConverter<UserRateLevel, byte>))]
         public UserRateLevel UserRateLevel { get; set; }
+
+        public DateTimeOffset? OrphanDate { get; set; }
     }
 }

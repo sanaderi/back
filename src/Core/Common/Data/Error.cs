@@ -11,32 +11,30 @@ namespace GamaEdtech.Common.Data
     {
         public static readonly Regex CodeRegex = CodeRegexPartial();
 
-        private string? message = exception?.Message;
-
         public string? Message
         {
-            readonly get => message;
+            readonly get;
 
             set
             {
                 if (value is null)
                 {
-                    message = value;
+                    field = value;
                     return;
                 }
 
                 var match = CodeRegex.Match(value);
                 if (match.Success)
                 {
-                    message = value.Replace(match.Value, string.Empty, StringComparison.OrdinalIgnoreCase);
+                    field = value.Replace(match.Value, string.Empty, StringComparison.OrdinalIgnoreCase);
                     Code = Constants.ErrorCodePrefix + match.Value.Replace("*", string.Empty, StringComparison.OrdinalIgnoreCase);
                 }
                 else
                 {
-                    message = value;
+                    field = value;
                 }
             }
-        }
+        } = exception?.Message;
 
         public string? Code { get; set; }
 

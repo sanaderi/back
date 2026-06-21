@@ -14,6 +14,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
 
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.CodeAnalysis;
 
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]

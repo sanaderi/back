@@ -387,6 +387,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         }),
                         UserRateLevel = result.Data.UserRateLevel,
                         Handle = result.Data.Handle,
+                        OrphanDate = result.Data.OrphanDate,
                     },
                 });
             }
@@ -485,6 +486,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
                         }),
                         CurrentStatusSentence = result.Data.CurrentStatusSentence,
                         UserRateLevel = result.Data.UserRateLevel,
+                        OrphanDate = result.Data.OrphanDate,
                     },
                 });
             }
@@ -699,7 +701,7 @@ namespace GamaEdtech.Presentation.Api.Controllers
             {
                 var result = await identityService.Value.ValidateHandleAsync(new()
                 {
-                    Handle = handle!,
+                    Handle = handle,
                     UserId = User.UserId(),
                 });
                 return Ok<string>(new(result.Errors)

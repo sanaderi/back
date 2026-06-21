@@ -122,17 +122,17 @@ namespace GamaEdtech.Presentation.ViewModel.ApplicationSettings
 
         [Display]
         [Required]
-        [RequiredTokens("[RECEIVER_NAME]")]
+        [RequiredTokens("[RECEIVER_NAME]", "[DATE]")]
         public string? InitializeDeletingAccountEmailTemplate { get; set; }
 
         [Display]
         [Required]
-        [RequiredTokens("[RECEIVER_NAME]")]
+        [RequiredTokens("[RECEIVER_NAME]", "[DATE]")]
         public string? StartDeletingAccountEmailTemplate { get; set; }
 
         [Display]
         [Required]
-        [RequiredTokens("[RECEIVER_NAME]")]
+        [RequiredTokens("[RECEIVER_NAME]", "[DATE]")]
         public string? FinishedDeletingAccountEmailTemplate { get; set; }
 
         [Display]

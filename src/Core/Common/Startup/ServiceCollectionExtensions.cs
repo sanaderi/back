@@ -40,7 +40,7 @@ namespace GamaEdtech.Common.Startup
                     return;
                 }
 
-                var files = Directory.GetFiles(dir, $"{defaultNamespace}.*.dll").Where(t => !t.Contains(frameworkAssembly.ManifestModule.Name!, StringComparison.OrdinalIgnoreCase));
+                var files = Directory.GetFiles(dir, $"{defaultNamespace}.*.dll").Where(t => !t.Contains(frameworkAssembly.ManifestModule.Name, StringComparison.OrdinalIgnoreCase));
                 var assemblies = files.Select(Assembly.LoadFrom)
                     .Where(t => t.GetCustomAttribute<InjectableAttribute>() is not null)
                     .Union(new[] { frameworkAssembly });

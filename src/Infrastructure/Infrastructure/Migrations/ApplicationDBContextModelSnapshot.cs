@@ -18,7 +18,7 @@ namespace GamaEdtech.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -967,6 +967,23 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasDatabaseName("IX_ApplicationUserLogin_UserId");
 
                     b.ToTable("ApplicationUserLogins");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUserPasskey", b =>
+                {
+                    b.Property<byte[]>("CredentialId")
+                        .HasColumnType("varbinary(1024)")
+                        .HasColumnName("CredentialId");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("UserId");
+
+                    b.HasKey("CredentialId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ApplicationUserPasskeys");
                 });
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUserRole", b =>
@@ -2627,6 +2644,59 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUserPasskey", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Microsoft.AspNetCore.Identity.IdentityPasskeyData", "Data", b1 =>
+                        {
+                            b1.Property<byte[]>("ApplicationUserPasskeyCredentialId");
+
+                            b1.Property<byte[]>("AttestationObject")
+                                .IsRequired();
+
+                            b1.Property<byte[]>("ClientDataJson")
+                                .IsRequired();
+
+                            b1.Property<DateTimeOffset>("CreatedAt");
+
+                            b1.Property<bool>("IsBackedUp");
+
+                            b1.Property<bool>("IsBackupEligible");
+
+                            b1.Property<bool>("IsUserVerified");
+
+                            b1.Property<string>("Name");
+
+                            b1.Property<byte[]>("PublicKey")
+                                .IsRequired();
+
+                            b1.Property<long>("SignCount");
+
+                            b1.PrimitiveCollection<string>("Transports");
+
+                            b1.HasKey("ApplicationUserPasskeyCredentialId");
+
+                            b1.ToTable("ApplicationUserPasskeys");
+
+                            b1
+                                .ToJson("Data")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ApplicationUserPasskeyCredentialId");
+                        });
+
+                    b.Navigation("Data")
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Identity.ApplicationUserRole", b =>
                 {
                     b.HasOne("GamaEdtech.Domain.Entity.Identity.ApplicationRole", "Role")
@@ -2808,27 +2878,24 @@ namespace GamaEdtech.Infrastructure.Migrations
 
                     b.OwnsMany("GamaEdtech.Domain.Entity.QuestionOption", "Options", b1 =>
                         {
-                            b1.Property<long>("QuestionId")
-                                .HasColumnType("bigint");
+                            b1.Property<long>("QuestionId");
 
                             b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("int");
+                                .ValueGeneratedOnAddOrUpdate();
 
-                            b1.Property<string>("Body")
-                                .HasColumnType("nvarchar(max)");
+                            b1.Property<string>("Body");
 
-                            b1.Property<int>("Index")
-                                .HasColumnType("int");
+                            b1.Property<int>("Index");
 
-                            b1.Property<bool>("IsCorrect")
-                                .HasColumnType("bit");
+                            b1.Property<bool>("IsCorrect");
 
                             b1.HasKey("QuestionId", "__synthesizedOrdinal");
 
                             b1.ToTable("Questions");
 
-                            b1.ToJson("Options");
+                            b1
+                                .ToJson("Options")
+                                .HasColumnType("nvarchar(max)");
 
                             b1.WithOwner()
                                 .HasForeignKey("QuestionId");
