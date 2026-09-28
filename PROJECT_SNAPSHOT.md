@@ -804,8 +804,10 @@ be treated as "someone already fixed this."
   `EnumerationExtensions.TryGetFromNameOrValue` unboxed an `int` as the enum's key type, throwing
   `InvalidCastException` for any byte-keyed smart enum given a numeric string - including the numeric
   `targetBillingInterval` Stripe metadata. No `PlanSwitch` `Payment` was recorded for those invoices, and since
-  the webhook always answers `200`, Stripe didn't retry. **Still to do:** backfill the missed invoices from
-  Stripe (production log: 2 on 2026-09-22, 2 on 2026-09-27 - the latter already backfilled by hand).
+  the webhook always answers `200`, Stripe didn't retry. All four missed invoices in the production log (2 on
+  2026-09-22, 2 on 2026-09-27) were backfilled by hand from Stripe on 2026-09-28. Found alongside: one
+  subscription upgraded 2026-09-19 (before the 2026-09-20 payment-confirmation gate) whose proration invoice is
+  still unpaid in Stripe but which holds the higher plan locally - an open business decision, not a code bug.
 - **Two renewal-`Payment`-recording bugs found live in production, both fixed (2026-09-14/15 - see
   `docs/business/subscriptions.md`):** (1) a renewal landing exactly on a pending downgrade's
   boundary recorded `Payment.Amount` at the *old*, pre-downgrade price - `HandleInvoicePaidAsync`
