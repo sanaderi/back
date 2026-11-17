@@ -137,8 +137,8 @@ made by **topic matching**: an AI suggests matches between a GAMA topic and anot
   `TopicMatches` with their ids (967 in 2026-11: 408 approved, 559 waiting); a row gone from gama-api is removed here. It
   refuses to run once `Migration:WriteRoutes:Types.TopicMatches` is `Native`.
 - **Reviewing** (`[DelegablePermission]`: user management, Admin / TopicMatches): the list by GAMA topic, most confident
-  first, with each side's board, grade, subject and topic and the GAMA topic's first published tutorial; filters by topic
-  (either side), GAMA or other subject, status. **Approve** adds the link (unless it is there either way round) and marks
+  first, with each side's board, grade, subject and topic and the GAMA topic's first published tutorial; filters by topic or
+  subject (either side), GAMA or other subject, status. **Approve** adds the link (unless it is there either way round) and marks
   the match approved by the reviewer; **take back** removes the link and the match waits again; **remove** deletes a
   suggestion (gama-api's reject) and is refused for an approved one until it is taken back (gama-api allows it and leaves
   the link with no way to remove it); **add** records a match a person decided (`manual`, waiting).

@@ -7,6 +7,9 @@ namespace GamaEdtech.Data.Dto.TopicMatch
     {
         public int? TopicId { get; set; }
 
+        /// <summary>A subject on either side.</summary>
+        public int? SubjectId { get; set; }
+
         public int? GamaSubjectId { get; set; }
 
         public int? ExternalSubjectId { get; set; }

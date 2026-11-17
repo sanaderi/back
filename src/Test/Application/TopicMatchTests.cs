@@ -185,6 +185,9 @@ namespace GamaEdtech.Test.Application
             Assert.Equal(("GAMA", "High School", "Physics", "Forces", 1862L), (match.Gama.Board!.Title, match.Gama.Grade!.Title, match.Gama.Subject.Title, match.Gama.Topic.Title, match.Gama.Tutorial!.Id));
             Assert.Equal(("Cambridge", "IGCSE", "Physics (0625)", "Forces and motion"), (match.External.Board!.Title, match.External.Grade!.Title, match.External.Subject.Title, match.External.Topic.Title));
             Assert.Null(match.External.Tutorial);
+            Assert.Equal(1, (await Admin().GetListAsync(new() { SubjectId = IgcsePhysics })).Data!.Total);
+            Assert.Equal(1, (await Admin().GetListAsync(new() { SubjectId = GamaPhysics })).Data!.Total);
+            Assert.Equal(0, (await Admin().GetListAsync(new() { ExternalSubjectId = GamaPhysics })).Data!.Total);
         }
 
         [Fact]

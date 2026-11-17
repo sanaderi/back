@@ -78,6 +78,11 @@ namespace GamaEdtech.Application.Service
                     query = query.Where(t => t.GamaTopicId == topic || t.ExternalTopicId == topic);
                 }
 
+                if (requestDto.SubjectId is int anySubject)
+                {
+                    query = query.Where(t => t.GamaSubjectId == anySubject || t.ExternalSubjectId == anySubject);
+                }
+
                 if (requestDto.GamaSubjectId is int gamaSubject)
                 {
                     query = query.Where(t => t.GamaSubjectId == gamaSubject);

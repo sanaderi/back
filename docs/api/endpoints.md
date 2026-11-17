@@ -491,7 +491,7 @@ Reads work at any time; every change answers `notNative` until `Migration:WriteR
 
 | Verb | Route | Purpose | Request model | Response model |
 |---|---|---|---|---|
-| GET | `` | Matches by GAMA topic, most confident first, with both sides' board/grade/subject/topic and the GAMA topic's first tutorial | query: `topicId` (either side), `gamaSubjectId`, `externalSubjectId`, `status` (`Pending`/`Approved`, name or value), `page`, `pageSize` (max 200) | `TopicMatchListResponseViewModel` |
+| GET | `` | Matches by GAMA topic, most confident first, with both sides' board/grade/subject/topic and the GAMA topic's first tutorial | query: `topicId` and `subjectId` (either side), `gamaSubjectId`, `externalSubjectId`, `status` (`Pending`/`Approved`, name or value), `page`, `pageSize` (max 200) | `TopicMatchListResponseViewModel` |
 | POST | `` | Add a match decided by a person (waiting); `duplicateItem` if suggested already | `TopicMatchAddRequestViewModel` | `long` |
 | POST | `{id:long}/approve` | Approve: link the two topics | route | `bool` |
 | DELETE | `{id:long}/approve` | Take back: remove the link, the match waits again | route | `bool` |
