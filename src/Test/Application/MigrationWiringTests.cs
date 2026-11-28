@@ -47,7 +47,7 @@ namespace GamaEdtech.Test.Application
             var router = scope.ServiceProvider.GetRequiredService<IMigrationRouter>();
 
             var domains = EnumerationExtensions.GetAll<MigrationDomain, byte>()!.ToList();
-            Assert.Equal(6, domains.Count);
+            Assert.Equal(7, domains.Count);
             Assert.All(domains, domain =>
             {
                 Assert.Equal(MigrationRoute.Legacy, router.GetRoute(domain!));

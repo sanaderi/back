@@ -843,6 +843,809 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.ToTable("Contributions");
                 });
 
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CodeTemplate")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar")
+                        .HasColumnName("CodeTemplate");
+
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("varchar")
+                        .HasColumnName("CountryCode");
+
+                    b.Property<DateTimeOffset>("CreationDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CreationDate");
+
+                    b.Property<long?>("CreationUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("CreationUserId");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsDefault");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsEnabled");
+
+                    b.Property<bool>("IsMaster")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsMaster");
+
+                    b.Property<int?>("LanguageId")
+                        .HasColumnType("int")
+                        .HasColumnName("LanguageId");
+
+                    b.Property<DateTimeOffset?>("LastModifyDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("LastModifyDate");
+
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("LastModifyUserId");
+
+                    b.Property<int?>("LegacyId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Logo")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Logo");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<int?>("ParentBoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("ParentBoardId");
+
+                    b.Property<string>("ShortName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("ShortName");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Slug");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Website");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDefault")
+                        .IsUnique()
+                        .HasFilter("[IsDefault] = 1");
+
+                    b.HasIndex("IsMaster")
+                        .IsUnique()
+                        .HasFilter("[IsMaster] = 1");
+
+                    b.HasIndex("LanguageId");
+
+                    b.HasIndex("LegacyId")
+                        .IsUnique()
+                        .HasFilter("[LegacyId] IS NOT NULL");
+
+                    b.HasIndex("ParentBoardId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumBoards");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoardFilter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("BoardId");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsEnabled");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Key");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Label");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<byte>("Style")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Style");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId", "Key")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumBoardFilters");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoardLinkOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("BoardId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<int>("OtherBoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("OtherBoardId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OtherBoardId");
+
+                    b.HasIndex("BoardId", "OtherBoardId")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumBoardLinkOrders");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoardTab", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("BoardId");
+
+                    b.Property<byte>("Scope")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Scope");
+
+                    b.Property<byte>("Tab")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Tab");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId", "Tab")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumBoardTabs");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumDocumentType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Code");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Icon");
+
+                    b.Property<int?>("LegacyId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<string>("ShortLabel")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("ShortLabel");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("LegacyId")
+                        .IsUnique()
+                        .HasFilter("[LegacyId] IS NOT NULL");
+
+                    b.ToTable("CurriculumDocumentTypes");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumPaper", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("LegacyId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<string>("ShortLabel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("ShortLabel");
+
+                    b.Property<int>("SyllabusId")
+                        .HasColumnType("int")
+                        .HasColumnName("SyllabusId");
+
+                    b.Property<string>("Tier")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Tier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LegacyId");
+
+                    b.HasIndex("SyllabusId", "ListOrder");
+
+                    b.ToTable("CurriculumPapers");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumQualification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("BoardId");
+
+                    b.Property<DateTimeOffset>("CreationDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CreationDate");
+
+                    b.Property<long?>("CreationUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("CreationUserId");
+
+                    b.Property<int?>("LanguageId")
+                        .HasColumnType("int")
+                        .HasColumnName("LanguageId");
+
+                    b.Property<DateTimeOffset?>("LastModifyDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("LastModifyDate");
+
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("LastModifyUserId");
+
+                    b.Property<int?>("LegacyId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<string>("ShortName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("ShortName");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Slug");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LanguageId");
+
+                    b.HasIndex("LegacyId")
+                        .IsUnique()
+                        .HasFilter("[LegacyId] IS NOT NULL");
+
+                    b.HasIndex("BoardId", "Slug")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumQualifications");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumSeoTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("BoardId");
+
+                    b.Property<string>("DescriptionTemplate")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("DescriptionTemplate");
+
+                    b.Property<DateTimeOffset?>("LastModifyDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("LastModifyDate");
+
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("LastModifyUserId");
+
+                    b.Property<byte>("Page")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Page");
+
+                    b.Property<string>("TitleTemplate")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("TitleTemplate");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId", "Page")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumSeoTemplates");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumSeriesType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("BoardId");
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Code");
+
+                    b.Property<string>("FileCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("varchar")
+                        .HasColumnName("FileCode");
+
+                    b.Property<bool>("IsSupplementary")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsSupplementary");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Months")
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Months");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<int?>("QualificationId")
+                        .HasColumnType("int")
+                        .HasColumnName("QualificationId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QualificationId");
+
+                    b.HasIndex("BoardId", "QualificationId", "ListOrder");
+
+                    b.ToTable("CurriculumSeriesTypes");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumSubject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<string>("Picture")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Picture");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Slug");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumSubjects");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumSyllabus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Code");
+
+                    b.Property<DateTimeOffset>("CreationDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CreationDate");
+
+                    b.Property<long?>("CreationUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("CreationUserId");
+
+                    b.Property<DateTimeOffset?>("LastModifyDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("LastModifyDate");
+
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("LastModifyUserId");
+
+                    b.Property<int?>("LegacyId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<string>("Picture")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Picture");
+
+                    b.Property<int>("QualificationId")
+                        .HasColumnType("int")
+                        .HasColumnName("QualificationId");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Slug");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("int")
+                        .HasColumnName("SubjectId");
+
+                    b.Property<short?>("YearFrom")
+                        .HasColumnType("smallint")
+                        .HasColumnName("YearFrom");
+
+                    b.Property<short?>("YearTo")
+                        .HasColumnType("smallint")
+                        .HasColumnName("YearTo");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code");
+
+                    b.HasIndex("LegacyId")
+                        .IsUnique()
+                        .HasFilter("[LegacyId] IS NOT NULL");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("QualificationId", "Slug")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumSyllabus");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumTopic", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreationDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CreationDate");
+
+                    b.Property<long?>("CreationUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("CreationUserId");
+
+                    b.Property<bool>("IsUnit")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsUnit");
+
+                    b.Property<DateTimeOffset?>("LastModifyDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("LastModifyDate");
+
+                    b.Property<long?>("LastModifyUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("LastModifyUserId");
+
+                    b.Property<int?>("LegacyId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<int?>("ParentTopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("ParentTopicId");
+
+                    b.Property<int>("SyllabusId")
+                        .HasColumnType("int")
+                        .HasColumnName("SyllabusId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LegacyId")
+                        .IsUnique()
+                        .HasFilter("[LegacyId] IS NOT NULL");
+
+                    b.HasIndex("ParentTopicId");
+
+                    b.HasIndex("SyllabusId", "ParentTopicId", "ListOrder");
+
+                    b.ToTable("CurriculumTopics");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumTopicLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreationDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CreationDate");
+
+                    b.Property<long?>("CreationUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("CreationUserId");
+
+                    b.Property<byte>("Kind")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Kind");
+
+                    b.Property<int?>("LegacyRelationId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyRelationId");
+
+                    b.Property<int>("MasterTopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("MasterTopicId");
+
+                    b.Property<int>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("TopicId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LegacyRelationId")
+                        .IsUnique()
+                        .HasFilter("[LegacyRelationId] IS NOT NULL");
+
+                    b.HasIndex("TopicId");
+
+                    b.HasIndex("MasterTopicId", "TopicId")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumTopicLinks");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumVariantKind", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("BoardId");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Key");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Label");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId", "Key")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumVariantKinds");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumVariantOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Code");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Label");
+
+                    b.Property<int?>("LegacyId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<int>("VariantKindId")
+                        .HasColumnType("int")
+                        .HasColumnName("VariantKindId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LegacyId");
+
+                    b.HasIndex("VariantKindId", "ListOrder");
+
+                    b.ToTable("CurriculumVariantOptions");
+                });
+
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Exam", b =>
                 {
                     b.Property<long>("Id")
@@ -5365,6 +6168,158 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.Navigation("CreationUser");
 
                     b.Navigation("LastModifyUser");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", b =>
+                {
+                    b.HasOne("GamaEdtech.Common.Localization.Language", null)
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("ParentBoardId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoardFilter", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoardLinkOrder", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("OtherBoardId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoardTab", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumPaper", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumSyllabus", null)
+                        .WithMany()
+                        .HasForeignKey("SyllabusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumQualification", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("GamaEdtech.Common.Localization.Language", null)
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumSeoTemplate", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumSeriesType", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumQualification", null)
+                        .WithMany()
+                        .HasForeignKey("QualificationId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumSyllabus", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumQualification", null)
+                        .WithMany()
+                        .HasForeignKey("QualificationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumSubject", null)
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumTopic", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumTopic", null)
+                        .WithMany()
+                        .HasForeignKey("ParentTopicId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumSyllabus", null)
+                        .WithMany()
+                        .HasForeignKey("SyllabusId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumTopicLink", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumTopic", null)
+                        .WithMany()
+                        .HasForeignKey("MasterTopicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumTopic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumVariantKind", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumVariantOption", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumVariantKind", null)
+                        .WithMany()
+                        .HasForeignKey("VariantKindId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Exam", b =>

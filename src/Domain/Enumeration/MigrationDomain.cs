@@ -30,6 +30,14 @@ namespace GamaEdtech.Domain.Enumeration
         [Display]
         public static readonly MigrationDomain Identity = new(nameof(Identity), 5);
 
+        /// <summary>
+        /// Not a move from gama-api but the same kind of switch: from the copied lookup lists (<c>LegacyTaxonomyItems</c>,
+        /// the Legacy side) to the curriculum model (<c>Curriculum*</c> tables, the Native side), reads first (Shadow, then
+        /// Native), writes after. See docs/business/curriculum.md.
+        /// </summary>
+        [Display]
+        public static readonly MigrationDomain Curriculum = new(nameof(Curriculum), 6);
+
         public MigrationDomain()
         {
         }

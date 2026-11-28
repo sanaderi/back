@@ -35,7 +35,8 @@ The other domains (tutorials, exams, finance, identity) follow the same pattern 
 ## Domains and routes
 
 `MigrationDomain` (`Domain/Enumeration`) lists the domains in the order they move: `Types`, `PastPapers`, `Tutorials`,
-`Exams`, `Finance`, `Identity`.
+`Exams`, `Finance`, `Identity`; and `Curriculum` (2026-11-28), not a move from gama-api but the same switch from the
+copied lookup lists to the curriculum model (`docs/business/curriculum.md`).
 
 `MigrationRoute` says where a domain is served from:
 
