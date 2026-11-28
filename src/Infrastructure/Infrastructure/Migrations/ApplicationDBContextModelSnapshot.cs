@@ -5512,6 +5512,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("GamaTopicId");
 
+                    b.Property<byte>("Kind")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Kind");
+
                     b.Property<DateTimeOffset?>("LastModifyDate")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("LastModifyDate");

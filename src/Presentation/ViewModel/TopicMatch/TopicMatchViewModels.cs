@@ -55,6 +55,9 @@ namespace GamaEdtech.Presentation.ViewModel.TopicMatch
         [JsonConverter(typeof(EnumerationConverter<TopicMatchStatus, byte>))]
         public TopicMatchStatus? Status { get; set; }
 
+        [JsonConverter(typeof(EnumerationConverter<CurriculumLinkKind, byte>))]
+        public CurriculumLinkKind? Kind { get; set; }
+
         public string? ReviewedBy { get; set; }
 
         public DateTimeOffset CreationDate { get; set; }

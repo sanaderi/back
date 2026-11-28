@@ -61,6 +61,12 @@ namespace GamaEdtech.Domain.Entity
         [StringLength(50)]
         public string? AiModel { get; set; }
 
+        /// <summary>How closely the topics match once approved: exact matches bring each other's content into lists,
+        /// partial ones are only "related" on a page (the curriculum model's <see cref="CurriculumLinkKind"/>).</summary>
+        [Column(nameof(Kind), DataType.Byte)]
+        [Required]
+        public CurriculumLinkKind Kind { get; set; } = CurriculumLinkKind.Exact;
+
         [Column(nameof(Status), DataType.Byte)]
         [Required]
         public TopicMatchStatus Status { get; set; } = TopicMatchStatus.Pending;
@@ -89,6 +95,7 @@ namespace GamaEdtech.Domain.Entity
         public void Configure([NotNull] EntityTypeBuilder<TopicMatch> builder)
         {
             _ = builder.OwnEnumeration<TopicMatch, TopicMatchStatus, byte>(t => t.Status);
+            _ = builder.OwnEnumeration<TopicMatch, CurriculumLinkKind, byte>(t => t.Kind);
             _ = builder.HasOne(t => t.ReviewedByUser).WithMany().HasForeignKey(t => t.ReviewedByUserId).OnDelete(DeleteBehavior.NoAction);
 
             // One suggestion per pair, as gama-api's unique key; the review lists go by status and by GAMA subject.

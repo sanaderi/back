@@ -198,6 +198,19 @@ What keeps working once `WriteRoutes:Curriculum` is `Native`:
 Switch order: `WriteRoutes:Types` → `Native`, then `WriteRoutes:Curriculum` → `Native`. Dropping the old tables is a
 separate change, weeks later.
 
+## Topic matching on the model (phase 8)
+
+- **Exact or partial.** A reviewer approves a match as `Exact` (the default; lists bring in each other's content) or
+  `Partial` (only "related" on a page): `POST admin/topicmatches/{id}/approve?kind=`. The kind is stored on the match
+  (`TopicMatches.Kind`). Only an exact approval also writes gama-api's kind of link (`LegacyTaxonomyRelations`).
+- **The curriculum's link follows at once.** Approving creates the `CurriculumTopicLinks` row with the match's kind, and
+  taking it back removes it, before the write switch too; the copy never makes a pair twice.
+- **The subjects compared come from the model.** Once `WriteRoutes:Curriculum` is `Native`, a GAMA syllabus is compared
+  with every other board's syllabus of the same subject across boards (`CurriculumSyllabus.SubjectId`), and back
+  (`CurriculumMatching`). A board added in the admin is matched as soon as its syllabi have their subject.
+  `GamaSubjects` stays as the fallback for a syllabus with no subject, and goes with the old tables.
+- **The review's subject filter** (`subjectId`, either side) now filters; it was ignored before.
+
 ## Admin API
 
 `api/v1/admin/curriculum/...`, admins and anyone given the delegated permission (a board edit touches no money or users,

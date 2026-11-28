@@ -31,10 +31,10 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     public class TopicMatchesController(Lazy<ILogger<TopicMatchesController>> logger, Lazy<ITopicMatchAdminService> topicMatchAdminService)
         : ApiControllerBase<TopicMatchesController>(logger)
     {
-        /// <summary>Suggested matches by GAMA topic, most confident first: <c>topicId</c> (either side), <c>gamaSubjectId</c>,
+        /// <summary>Suggested matches by GAMA topic, most confident first: <c>topicId</c> (either side), <c>subjectId</c> (either side), <c>gamaSubjectId</c>,
         /// <c>externalSubjectId</c>, <c>status</c> (name or value), <c>page</c>, <c>pageSize</c> (max 200).</summary>
         [HttpGet(""), Produces<ApiResponse<TopicMatchListResponseViewModel>>()]
-        public Task<IActionResult<TopicMatchListResponseViewModel>> GetMatches([FromQuery] int? topicId, [FromQuery] int? gamaSubjectId,
+        public Task<IActionResult<TopicMatchListResponseViewModel>> GetMatches([FromQuery] int? topicId, [FromQuery] int? subjectId, [FromQuery] int? gamaSubjectId,
             [FromQuery] int? externalSubjectId, [FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 50) =>
             AnswerAsync(async () =>
             {
@@ -47,6 +47,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 var result = await topicMatchAdminService.Value.GetListAsync(new()
                 {
                     TopicId = topicId,
+                    SubjectId = subjectId,
                     GamaSubjectId = gamaSubjectId,
                     ExternalSubjectId = externalSubjectId,
                     Status = statusFilter,
@@ -71,10 +72,18 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
                 Reasoning = request.Reasoning,
             }));
 
-        /// <summary>Approves a match: links its two topics.</summary>
+        /// <summary>Approves a match: links its two topics, <c>kind</c> Exact (the default: lists bring in each other's
+        /// content) or Partial (only "related" on a page).</summary>
         [HttpPost("{id:long}/approve"), Produces<ApiResponse<bool>>()]
-        public Task<IActionResult<bool>> ApproveMatch([FromRoute] long id) =>
-            AnswerAsync(() => topicMatchAdminService.Value.ApproveAsync(id, User.UserId()));
+        public Task<IActionResult<bool>> ApproveMatch([FromRoute] long id, [FromQuery] string? kind) =>
+            AnswerAsync(async () =>
+            {
+                CurriculumLinkKind? linkKind = null;
+                var known = string.IsNullOrEmpty(kind) || kind.TryGetFromNameOrValue<CurriculumLinkKind, byte>(out linkKind);
+                return known
+                    ? await topicMatchAdminService.Value.ApproveAsync(id, User.UserId(), linkKind)
+                    : new ResultData<bool>(OperationResult.NotValid) { Errors = [new() { Message = "Unknown kind: Exact or Partial.", Reference = "kind" }] };
+            });
 
         /// <summary>Takes an approval back: removes the link; the match waits again.</summary>
         [HttpDelete("{id:long}/approve"), Produces<ApiResponse<bool>>()]
@@ -107,6 +116,7 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
             Reasoning = match.Reasoning,
             AiModel = match.AiModel,
             Status = match.Status,
+            Kind = match.Kind,
             ReviewedBy = match.ReviewedBy,
             CreationDate = match.CreationDate,
             Gama = ToViewModel(match.Gama),

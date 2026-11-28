@@ -7,6 +7,9 @@ namespace GamaEdtech.Data.Dto.TopicMatch
     {
         public int? TopicId { get; set; }
 
+        /// <summary>Either side's subject (the review screen's subject filter).</summary>
+        public int? SubjectId { get; set; }
+
         public int? GamaSubjectId { get; set; }
 
         public int? ExternalSubjectId { get; set; }
@@ -37,6 +40,8 @@ namespace GamaEdtech.Data.Dto.TopicMatch
         public string? AiModel { get; set; }
 
         public TopicMatchStatus? Status { get; set; }
+
+        public CurriculumLinkKind? Kind { get; set; }
 
         public string? ReviewedBy { get; set; }
 

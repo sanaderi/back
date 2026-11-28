@@ -78,6 +78,11 @@ namespace GamaEdtech.Application.Service
                     query = query.Where(t => t.GamaTopicId == topic || t.ExternalTopicId == topic);
                 }
 
+                if (requestDto.SubjectId is int eitherSubject)
+                {
+                    query = query.Where(t => t.GamaSubjectId == eitherSubject || t.ExternalSubjectId == eitherSubject);
+                }
+
                 if (requestDto.GamaSubjectId is int gamaSubject)
                 {
                     query = query.Where(t => t.GamaSubjectId == gamaSubject);
@@ -156,7 +161,7 @@ namespace GamaEdtech.Application.Service
             }
         }
 
-        public async Task<ResultData<bool>> ApproveAsync(long id, long userId)
+        public async Task<ResultData<bool>> ApproveAsync(long id, long userId, CurriculumLinkKind? kind = null)
         {
             try
             {
@@ -173,15 +178,17 @@ namespace GamaEdtech.Application.Service
                 }
 
                 // gama-api's addRelation: the link between the two topics, unless it is there already (either way round).
+                // Only an exact match is gama-api's kind of link (its lists' chain); a partial one is the curriculum's "related".
+                match.Kind = kind ?? match.Kind;
                 var relations = uow.GetRepository<LegacyTaxonomyRelation, int>();
-                if (!await relations.AnyAsync(t => (t.FromId == match.GamaTopicId && t.ToId == match.ExternalTopicId)
+                if (match.Kind == CurriculumLinkKind.Exact && !await relations.AnyAsync(t => (t.FromId == match.GamaTopicId && t.ToId == match.ExternalTopicId)
                     || (t.FromId == match.ExternalTopicId && t.ToId == match.GamaTopicId)))
                 {
                     var next = (await relations.GetManyQueryable(t => true).MaxAsync(t => (int?)t.Id) ?? 0) + 1;
                     relations.Add(new() { Id = next, FromId = match.GamaTopicId, ToId = match.ExternalTopicId, SyncDate = DateTimeOffset.UtcNow });
                 }
 
-                await MirrorCurriculumLinkAsync(uow, match.GamaTopicId, match.ExternalTopicId, add: true, userId);
+                await MirrorCurriculumLinkAsync(uow, match.GamaTopicId, match.ExternalTopicId, match.Kind, userId);
 
                 match.Status = TopicMatchStatus.Approved;
                 match.ReviewedByUserId = userId;
@@ -221,7 +228,7 @@ namespace GamaEdtech.Application.Service
                     relations.Remove(relation);
                 }
 
-                await MirrorCurriculumLinkAsync(uow, match.GamaTopicId, match.ExternalTopicId, add: false, null);
+                await MirrorCurriculumLinkAsync(uow, match.GamaTopicId, match.ExternalTopicId, null, null);
 
                 match.Status = TopicMatchStatus.Pending;
                 match.ReviewedByUserId = null;
@@ -291,14 +298,13 @@ namespace GamaEdtech.Application.Service
                     return NotFound<TopicMatchSuggestResultDto>();
                 }
 
-                var candidateSubjects = GamaSubjects.CandidateSubjects(sourceSubject);
+                var (candidateSubjects, sourceIsGama) = await CandidatesAsync(uow, sourceSubject);
                 if (candidateSubjects.Count == 0)
                 {
                     return new(OperationResult.NotValid) { Errors = [new() { Message = "This topic's subject has no corresponding subject to compare with.", Reference = "noCandidates" }] };
                 }
 
                 // Everything is read first; the AI calls then all run at once (the wait is the slowest answer, as gama-api's).
-                var sourceIsGama = GamaSubjects.IsGama(sourceSubject);
                 var sourceSeason = IsSeason(source);
                 var paths = await PathsAsync(uow, [sourceSubject, .. candidateSubjects]);
                 var candidateKeys = candidateSubjects.Select(t => t.ToString(CultureInfo.InvariantCulture)).ToList();
@@ -462,6 +468,7 @@ namespace GamaEdtech.Application.Service
                 Reasoning = t.Reasoning,
                 AiModel = t.AiModel,
                 Status = t.Status,
+                Kind = t.Kind,
                 ReviewedBy = t.ReviewedByUserId is long reviewer ? reviewers.GetValueOrDefault(reviewer) : null,
                 CreationDate = t.CreationDate,
                 Gama = Path(t.GamaSubjectId, t.GamaTopicId, tutorials.GetValueOrDefault(t.GamaTopicId)),
@@ -564,17 +571,23 @@ namespace GamaEdtech.Application.Service
 
         private static string? Cut(string? value, int length) => value is { Length: > 0 } && value.Length > length ? value[..length] : value;
 
-        /// <summary>Reviews link topics (<c>Types</c>): refused until both the types' writes and the topic matches' are here, or
-        /// the types copy from gama-api would remove the links made here.</summary>
-        // Once the curriculum is edited here (its copy no longer runs), an approval also makes or removes the curriculum's
-        // exact link between the two topics, so the review keeps working after the switch.
-        private async Task MirrorCurriculumLinkAsync(IUnitOfWork uow, int gamaTopicId, int externalTopicId, bool add, long? userId)
+        /// <summary>
+        /// The subjects a topic of this subject is compared with, and whether it is GAMA's. Once the curriculum is edited here,
+        /// from the model: a GAMA syllabus and the other boards' syllabi that share its subject across boards (and back).
+        /// Before that, or for a syllabus with no shared subject, gama-api's fixed list (<see cref="GamaSubjects"/>).
+        /// </summary>
+        private async Task<(IReadOnlyList<int> Subjects, bool IsGama)> CandidatesAsync(IUnitOfWork uow, int subjectId)
         {
-            if (migrationRouter.Value.GetWriteRoute(MigrationDomain.Curriculum) != MigrationRoute.Native)
-            {
-                return;
-            }
+            var fromModel = migrationRouter.Value.GetWriteRoute(MigrationDomain.Curriculum) == MigrationRoute.Native
+                ? await CurriculumMatching.CandidatesAsync(uow, subjectId)
+                : default;
+            return fromModel.Subjects is { Count: > 0 } ? fromModel : (GamaSubjects.CandidateSubjects(subjectId), GamaSubjects.IsGama(subjectId));
+        }
 
+        // An approval makes (or a take-back removes) the curriculum's link between the two topics, with the match's kind, so
+        // the model has it at once (exact links also come from the copy before the write switch; a pair is never made twice).
+        private static async Task MirrorCurriculumLinkAsync(IUnitOfWork uow, int gamaTopicId, int externalTopicId, CurriculumLinkKind? kind, long? userId)
+        {
             var topics = await uow.GetRepository<Domain.Entity.Curriculum.CurriculumTopic, int>().GetManyQueryable(t => t.LegacyId == gamaTopicId || t.LegacyId == externalTopicId)
                 .Select(t => new { t.Id, t.LegacyId }).ToListAsync();
             var master = topics.Find(t => t.LegacyId == gamaTopicId)?.Id;
@@ -586,16 +599,22 @@ namespace GamaEdtech.Application.Service
 
             var links = uow.GetRepository<Domain.Entity.Curriculum.CurriculumTopicLink, int>();
             var existing = await links.GetManyQueryable(t => t.MasterTopicId == m && t.TopicId == o, tracking: true).FirstOrDefaultAsync();
-            if (add && existing is null)
+            if (kind is not null && existing is null)
             {
-                links.Add(new() { MasterTopicId = m, TopicId = o, Kind = CurriculumLinkKind.Exact, CreationDate = DateTimeOffset.UtcNow, CreationUserId = userId });
+                links.Add(new() { MasterTopicId = m, TopicId = o, Kind = kind, CreationDate = DateTimeOffset.UtcNow, CreationUserId = userId });
             }
-            else if (!add && existing is not null)
+            else if (kind is not null)
+            {
+                existing!.Kind = kind;
+            }
+            else if (existing is not null)
             {
                 links.Remove(existing);
             }
         }
 
+        /// <summary>Reviews link topics (<c>Types</c>): refused until both the types' writes and the topic matches' are here, or
+        /// the types copy from gama-api would remove the links made here.</summary>
         private ResultData<T>? NotNative<T>() =>
             migrationRouter.Value.GetWriteRoute(MigrationDomain.Types) == MigrationRoute.Native
                 && migrationRouter.Value.GetWriteRoute(MigrationDomain.Types, MigrationFeatures.TopicMatches) == MigrationRoute.Native

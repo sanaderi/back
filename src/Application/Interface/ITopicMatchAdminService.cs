@@ -5,6 +5,7 @@ namespace GamaEdtech.Application.Interface
     using GamaEdtech.Common.Data;
     using GamaEdtech.Common.DataAnnotation;
     using GamaEdtech.Data.Dto.TopicMatch;
+    using GamaEdtech.Domain.Enumeration;
 
     /// <summary>
     /// The review of the suggested matches between GAMA's topics and other boards' (gama-api's topic matching): the list, adding
@@ -19,7 +20,7 @@ namespace GamaEdtech.Application.Interface
 
         Task<ResultData<long>> AddAsync([NotNull] TopicMatchAddDto requestDto);
 
-        Task<ResultData<bool>> ApproveAsync(long id, long userId);
+        Task<ResultData<bool>> ApproveAsync(long id, long userId, CurriculumLinkKind? kind = null);
 
         Task<ResultData<bool>> UnapproveAsync(long id);
 
