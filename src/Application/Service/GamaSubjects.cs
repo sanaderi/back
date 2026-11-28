@@ -204,6 +204,35 @@ namespace GamaEdtech.Application.Service
 
         private static readonly FrozenDictionary<int, int[]> Related = BuildRelated();
 
+        /// <summary>The named groups of the correspondence, which become the subjects across boards in the curriculum model
+        /// (the mixed primary and lower secondary lists are left to an admin).</summary>
+        internal static readonly IReadOnlyList<(string Name, int[] Subjects)> Groups =
+        [
+            ("Biology", Biology),
+            ("Chemistry", Chemistry),
+            ("Physics", Physics),
+            ("Geology", Geology),
+            ("Mathematics", MathGeneral),
+            ("Further Mathematics", MathFurther),
+            ("Statistics", MathStats),
+            ("Decision Mathematics", MathDecision),
+        ];
+
+        /// <summary>The named group a subject is in (another board's, listed in it, or a GAMA one whose list is exactly
+        /// it), the first when several; null when none.</summary>
+        internal static string? GroupOf(int subjectId)
+        {
+            foreach (var (name, subjects) in Groups)
+            {
+                if (subjects.Contains(subjectId))
+                {
+                    return name;
+                }
+            }
+
+            return Correlation.TryGetValue(subjectId, out var mapped) ? Groups.FirstOrDefault(t => ReferenceEquals(t.Subjects, mapped)).Name : null;
+        }
+
         /// <summary>Whether the subject is a GAMA subject (a key of the correspondence).</summary>
         internal static bool IsGama(int subjectId) => Correlation.ContainsKey(subjectId);
 

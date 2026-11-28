@@ -87,6 +87,38 @@ Template syntax:
 - The admin's preview (`POST admin/curriculum/seo-preview`) warns when a title is over 60 characters or a description
   outside 70-160, what search results show.
 
+## The copy (phase 2)
+
+`ICurriculumCopyService.CopyAsync`, the Hangfire job `CopyCurriculum` (never scheduled; run it from `/hangfire` or with
+`POST admin/curriculum/copy`). It reads only this backend's own copies (`LegacyTaxonomyItems`, `LegacyTaxonomyRelations`,
+`SchoolBoards`, and the past papers for what they use) and writes only the curriculum tables, so it can run on a live
+site. It is **rerunnable**: copied rows are matched by their old id and only updated, never deleted because the source
+lost them (old links and content may still point at them). It is refused (`notNative`) once
+`WriteRoutes:Curriculum` is `Native`.
+
+| Source | Becomes |
+|---|---|
+| Boards (list 1) | `CurriculumBoards`; GAMA (7131) the master board, Cambridge (6627) the default with its paper code template, the website's short names (CIE, IB...) |
+| Grades (2) | `CurriculumQualifications`, under their board; a grade under several boards is placed under the first and reported |
+| Subjects (4) | `CurriculumSyllabus`, under their grade; the code from the metadata or the title ("Mathematics (0580)" → Mathematics, 0580); the subject across boards from `GamaSubjects`' named groups (Biology, Chemistry, Physics, Geology, Mathematics, Further Mathematics, Statistics, Decision Mathematics) |
+| Topics (11) | `CurriculumTopics`; gama-api lists them flat, so a unit (`season`) and the chapters after it in list order become a unit with its chapters (a chapter before any unit stays at the top) |
+| Classifications (6) that are papers | `CurriculumPapers` of each syllabus whose past papers use them ("Paper 4", chip "4") |
+| Classifications that are not papers | `CurriculumResourceTypes` (Worksheets, Predicted Papers...) |
+| Variants (29) | Each board's `variant` kind with the values its papers use; `nv` is no variant |
+| Extra file types (20) | `CurriculumDocumentTypes` with the website's codes (in, sf, ci, tn, qr, i2, pm), plus qp and ms |
+| Links between topics | `CurriculumTopicLinks` (exact) when they join a GAMA topic and another board's; any other link is reported. A link removed at the source is removed here |
+| `SchoolBoards` | `SchoolQualifications` (school → board), through the native board's code; mirrored the same way |
+
+Set **once** per board or level (an admin's later edits are kept): the sessions per level the website's search showed
+(`SEARCH_MONTHS_BY_LEVEL`, with Cambridge's codes, file letters and title words such as "May June"), else one per month
+its papers were sat in; the search panel's filters (Level, Subject, Year, Session, Paper, and Variant where the board has
+variants); Cambridge's past paper SEO texts and GAMA's tutorial title.
+
+What can't be placed without guessing goes to the **review list** (`CurriculumCopyIssues`, `GET admin/curriculum/copy/issues`),
+replaced on each run. **The check** (`GET admin/curriculum/copy/check`) counts each list against its source (missing
+must be 0 before phase 3) and how many past papers, tutorials and exams find their board, level, subject, paper or
+resource type, variant and topics in the model, with what left the others out.
+
 ## Admin API
 
 `api/v1/admin/curriculum/...`, admins and anyone given the delegated permission (a board edit touches no money or users,

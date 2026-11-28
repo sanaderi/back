@@ -1062,6 +1062,42 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.ToTable("CurriculumBoardTabs");
                 });
 
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumCopyIssue", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreationDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CreationDate");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Kind");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Message");
+
+                    b.Property<long?>("SourceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("SourceId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Kind", "SourceId");
+
+                    b.ToTable("CurriculumCopyIssues");
+                });
+
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumDocumentType", b =>
                 {
                     b.Property<int>("Id")
@@ -1232,6 +1268,47 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.ToTable("CurriculumQualifications");
                 });
 
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumResourceType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("LegacyId")
+                        .HasColumnType("int")
+                        .HasColumnName("LegacyId");
+
+                    b.Property<int>("ListOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("ListOrder");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("Name");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar")
+                        .HasColumnName("Slug");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LegacyId")
+                        .IsUnique()
+                        .HasFilter("[LegacyId] IS NOT NULL");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumResourceTypes");
+                });
+
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumSeoTemplate", b =>
                 {
                     b.Property<int>("Id")
@@ -1322,6 +1399,11 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.Property<int?>("QualificationId")
                         .HasColumnType("int")
                         .HasColumnName("QualificationId");
+
+                    b.Property<string>("SeoName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar")
+                        .HasColumnName("SeoName");
 
                     b.HasKey("Id");
 
@@ -1644,6 +1726,55 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasIndex("VariantKindId", "ListOrder");
 
                     b.ToTable("CurriculumVariantOptions");
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.SchoolQualification", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("BoardId");
+
+                    b.Property<DateTimeOffset>("CreationDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CreationDate");
+
+                    b.Property<long?>("CreationUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("CreationUserId");
+
+                    b.Property<long?>("LegacySchoolBoardId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("LegacySchoolBoardId");
+
+                    b.Property<int?>("QualificationId")
+                        .HasColumnType("int")
+                        .HasColumnName("QualificationId");
+
+                    b.Property<long>("SchoolId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("SchoolId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LegacySchoolBoardId")
+                        .IsUnique()
+                        .HasFilter("[LegacySchoolBoardId] IS NOT NULL");
+
+                    b.HasIndex("QualificationId");
+
+                    b.HasIndex("BoardId", "QualificationId");
+
+                    b.HasIndex("SchoolId", "BoardId", "QualificationId")
+                        .IsUnique();
+
+                    b.ToTable("SchoolQualifications");
                 });
 
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Exam", b =>
@@ -6318,6 +6449,26 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumVariantKind", null)
                         .WithMany()
                         .HasForeignKey("VariantKindId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.SchoolQualification", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumBoard", null)
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumQualification", null)
+                        .WithMany()
+                        .HasForeignKey("QualificationId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("GamaEdtech.Domain.Entity.School", null)
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

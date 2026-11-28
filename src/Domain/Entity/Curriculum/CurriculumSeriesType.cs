@@ -41,6 +41,11 @@ namespace GamaEdtech.Domain.Entity.Curriculum
         [StringLength(20)]
         public string? Code { get; set; }
 
+        /// <summary>How it is written in titles and descriptions ("May June" for May/Jun), when not as <see cref="Name"/>.</summary>
+        [Column(nameof(SeoName), DataType.UnicodeString)]
+        [StringLength(100)]
+        public string? SeoName { get; set; }
+
         /// <summary>The letter in the board's file names (s for May/June).</summary>
         [Column(nameof(FileCode), DataType.String)]
         [StringLength(5)]

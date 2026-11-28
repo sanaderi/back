@@ -298,6 +298,9 @@
             // Copies gama-api's lookup lists (types) for the paper page's titles. By hand, never scheduled: it reads every list
             // of a live site. See docs/architecture/legacy-migration.md.
             RecurringJob.AddOrUpdate<ILegacyTaxonomySyncService>("SyncLegacyTaxonomy", t => t.SyncAsync(), Cron.Never());
+            // Fills the curriculum model from the copied lookup lists and school boards (phase 2), by hand; rerunnable, and
+            // refused once Migration:WriteRoutes:Curriculum is Native. See docs/business/curriculum.md.
+            RecurringJob.AddOrUpdate<ICurriculumCopyService>("CopyCurriculum", t => t.CopyAsync(), Cron.Never());
             // Copies the past paper files bought on gama-api (read-only on gama-api), by hand like ImportPastPapers. The daily
             // link only reads this database: it turns copied purchases into ownership once their buyer has an account here.
             RecurringJob.AddOrUpdate<IPastPaperPurchaseImportService>("ImportPastPaperPurchases", t => t.ImportAsync(), Cron.Never());

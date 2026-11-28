@@ -3,6 +3,7 @@
 ## Inventory
 
 - **140 migrations** (counted 2026-10-08) in `src/Infrastructure/Infrastructure/Migrations/` (one `<Timestamp>_<Name>.cs` + one matching `<Timestamp>_<Name>.Designer.cs` per migration, plus one shared `ApplicationDBContextModelSnapshot.cs`).
+- `20261128150403_AddCurriculumCopy` — creates `CurriculumResourceTypes`, `SchoolQualifications` (FK `SchoolId` cascade; unique school + board + qualification, NULL counted as a value) and `CurriculumCopyIssues`, and adds nullable `CurriculumSeriesTypes.SeoName`. Only new tables and a nullable column. Filled by `CopyCurriculum`. See `docs/business/curriculum.md`, "The copy".
 - `20261128142141_AddCurriculumModel` — creates the 15 `Curriculum*` tables of the curriculum model (boards and their profile, qualifications, subjects, syllabi, papers, series types, variant kinds/options, document types, topics, topic links, SEO templates; filtered unique `LegacyId` indexes for the copied rows) and seeds the 11 default `CurriculumSeoTemplates` (ids 1-11). Only new tables, safe on a running site. See `docs/business/curriculum.md`.
 - `20261125075411_AddPastPaperPendingEdits` — adds nullable `PastPapers.PendingEditDate`, `PendingDescription`, `PendingEditNote` and creates `PastPaperPendingFiles` (identity id; FK to `PastPapers`, Cascade; index `PastPaperId`). No data change.
 - `20261124072321_AddCampaigns` — creates `Campaigns` (identity id; index `IsEnabled`+`EndsAt`) and adds nullable `Payments.CampaignId` (FK to `Campaigns`, NoAction; index). No data change.

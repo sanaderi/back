@@ -68,6 +68,7 @@ namespace GamaEdtech.Data.Dto.Curriculum
         public string? Name { get; set; }
         public string? Code { get; set; }
         public string? FileCode { get; set; }
+        public string? SeoName { get; set; }
         public string? Months { get; set; }
         public bool IsSupplementary { get; set; }
         public int ListOrder { get; set; }

@@ -25,7 +25,8 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
     [ApiVersion("1.0")]
     [Permission(Roles = [nameof(Role.Admin)])]
     [DelegablePermission]
-    public class CurriculumController(Lazy<ILogger<CurriculumController>> logger, Lazy<ICurriculumAdminService> adminService, Lazy<ICurriculumService> curriculumService)
+    public class CurriculumController(Lazy<ILogger<CurriculumController>> logger, Lazy<ICurriculumAdminService> adminService, Lazy<ICurriculumService> curriculumService,
+        Lazy<ICurriculumCopyService> copyService)
         : ApiControllerBase<CurriculumController>(logger)
     {
         #region Boards
@@ -247,6 +248,23 @@ namespace GamaEdtech.Presentation.Api.Areas.Admin.Controllers
         public Task<IActionResult<CurriculumSeoResultDto>> PreviewSeo([FromQuery] int? boardId, [FromQuery] CurriculumSeoPage? page,
             [NotNull, FromBody] Dictionary<string, string?> values) =>
             AnswerAsync(() => curriculumService.Value.GetSeoAsync(boardId, page ?? CurriculumSeoPage.PastPaperList, values));
+
+        #endregion
+
+        #region The copy (phase 2)
+
+        /// <summary>Starts the copy from the lookup lists in the background (also <c>CopyCurriculum</c> in /hangfire).</summary>
+        [HttpPost("copy"), Produces<ApiResponse<bool>>()]
+        public Task<IActionResult<bool>> StartCopy() => AnswerAsync(copyService.Value.StartCopyAsync);
+
+        /// <summary>Each copied list against its source, and how much of the content finds its place in the model.</summary>
+        [HttpGet("copy/check"), Produces<ApiResponse<CurriculumCheckDto>>()]
+        public Task<IActionResult<CurriculumCheckDto>> CheckCopy() => AnswerAsync(() => copyService.Value.CheckAsync());
+
+        /// <summary>The rows the last copy could not place without guessing, by <c>kind</c> (all when empty).</summary>
+        [HttpGet("copy/issues"), Produces<ApiResponse<IReadOnlyList<CurriculumCopyIssueDto>>>()]
+        public Task<IActionResult<IReadOnlyList<CurriculumCopyIssueDto>>> GetCopyIssues([FromQuery] string? kind) =>
+            AnswerAsync(() => copyService.Value.GetIssuesAsync(kind));
 
         #endregion
 

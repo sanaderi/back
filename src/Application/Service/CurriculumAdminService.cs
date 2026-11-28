@@ -58,6 +58,7 @@ namespace GamaEdtech.Application.Service
                     Name = t.Name,
                     Code = t.Code,
                     FileCode = t.FileCode,
+                    SeoName = t.SeoName,
                     Months = t.Months,
                     IsSupplementary = t.IsSupplementary,
                     ListOrder = t.ListOrder,
@@ -273,7 +274,7 @@ namespace GamaEdtech.Application.Service
 
             foreach (var item in seriesTypes)
             {
-                if (Invalid<bool>(Required(item.Name, 100, "name"), Optional(item.Code, 20, "code"), Optional(item.FileCode, 5, "fileCode"),
+                if (Invalid<bool>(Required(item.Name, 100, "name"), Optional(item.Code, 20, "code"), Optional(item.FileCode, 5, "fileCode"), Optional(item.SeoName, 100, "seoName"),
                     item.Months is { Length: > 0 } months && !Months().IsMatch(months) ? "months" : null) is { } invalid)
                 {
                     return invalid;
@@ -305,6 +306,7 @@ namespace GamaEdtech.Application.Service
                 row.Name = item.Name!.Trim();
                 row.Code = Trim(item.Code);
                 row.FileCode = Trim(item.FileCode);
+                row.SeoName = Trim(item.SeoName);
                 row.Months = Trim(item.Months);
                 row.IsSupplementary = item.IsSupplementary;
                 row.ListOrder = item.ListOrder;
