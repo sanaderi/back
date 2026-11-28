@@ -178,6 +178,26 @@ When a paper is uploaded, its cover is read with the curriculum model first once
 A page no board fits, and the site's predicted papers, go to the Cambridge patterns and the AI as before. So a board added
 in the admin with its codes, papers and sessions is detected without a code change.
 
+## After the write switch (phase 7)
+
+What keeps working once `WriteRoutes:Curriculum` is `Native`:
+
+- **New rows get lookup ids.** Every past paper, tutorial, exam, form and list still speaks the lookup lists' ids. So a
+  board, level, syllabus, topic, paper or variant made or renamed in Admin › Curriculum is also written to
+  `LegacyTaxonomyItems` (`CurriculumMirror`), with the parents and flags gama-api used. Topics are numbered flat in tree
+  order with units as seasons; a paper or variant reuses the board's item of that title. The row gets that id as its
+  `LegacyId`. A board made in the admin then has papers, exams, tutorials, schools, filters, links and detection like
+  any other, and `LinkCurriculumContent` places its content.
+- **It waits for the lists' own switch.** The curriculum's writes are refused (`typesNotNative`) until
+  `WriteRoutes:Types` is `Native`, so gama-api's copy can never bring an id that is made here.
+- **Schools.** Saving a school's boards also brings its `SchoolQualifications` in step (`SyncSchoolAsync`), so they no
+  longer wait for the copy.
+- **New lookup items before the switch.** The copy runs daily, so items added on gama-api or in `admin/types` reach the
+  model until the switch (then it is refused, and nothing new can come from there).
+
+Switch order: `WriteRoutes:Types` → `Native`, then `WriteRoutes:Curriculum` → `Native`. Dropping the old tables is a
+separate change, weeks later.
+
 ## Admin API
 
 `api/v1/admin/curriculum/...`, admins and anyone given the delegated permission (a board edit touches no money or users,

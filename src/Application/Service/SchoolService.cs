@@ -726,6 +726,12 @@ namespace GamaEdtech.Application.Service
 
                 _ = await uow.SaveChangesAsync();
 
+                // The school's boards in the curriculum model follow (they no longer wait for the curriculum copy).
+                if (requestDto.Boards is not null)
+                {
+                    await CurriculumMirror.SyncSchoolAsync(uow, school.Id);
+                }
+
                 if (requestDto.DefaultImageId.HasValue)
                 {
                     var result = await SetDefaultSchoolImageAsync(new()

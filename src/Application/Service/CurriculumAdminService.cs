@@ -77,6 +77,11 @@ namespace GamaEdtech.Application.Service
 
         public Task<ResultData<int>> SaveBoardAsync([NotNull] CurriculumBoardDto board, long userId) => RunAsync(async uow =>
         {
+            if (SwitchRefusal<int>() is { } notReady)
+            {
+                return notReady;
+            }
+
             if (Invalid<int>(Slug(board.Slug), Required(board.Name, 200, "name"), Optional(board.ShortName, 50, "shortName"),
                 board.CountryCode is { Length: > 0 } country && !CountryCode().IsMatch(country) ? "countryCode" : null,
                 Optional(board.Logo, 300, "logo"), Optional(board.Website, 300, "website"), Optional(board.CodeTemplate, 200, "codeTemplate")) is { } invalid)
@@ -131,6 +136,12 @@ namespace GamaEdtech.Application.Service
             entity.LanguageId = board.LanguageId;
             Touch(entity, board.Id, userId, repository);
             _ = await uow.SaveChangesAsync();
+            if (MirrorOn)
+            {
+                await CurriculumMirror.MirrorBoardAsync(uow, entity);
+                _ = await uow.SaveChangesAsync();
+            }
+
             return Ok(entity.Id);
         });
 
@@ -318,6 +329,11 @@ namespace GamaEdtech.Application.Service
 
         public Task<ResultData<bool>> SaveVariantKindsAsync(int boardId, [NotNull] IReadOnlyList<CurriculumVariantKindDto> variantKinds) => RunAsync(async uow =>
         {
+            if (SwitchRefusal<bool>() is { } notReady)
+            {
+                return notReady;
+            }
+
             if (!await uow.GetRepository<CurriculumBoard, int>().AnyAsync(t => t.Id == boardId))
             {
                 return NotFound<bool>();
@@ -398,6 +414,17 @@ namespace GamaEdtech.Application.Service
             }
 
             _ = await uow.SaveChangesAsync();
+            if (MirrorOn)
+            {
+                List<int> savedKinds = [.. await kinds.GetManyQueryable(t => t.BoardId == boardId).Select(t => t.Id).ToListAsync()];
+                foreach (var option in await options.GetManyQueryable(t => savedKinds.Contains(t.VariantKindId), tracking: true).ToListAsync())
+                {
+                    await CurriculumMirror.MirrorVariantAsync(uow, option);
+                }
+
+                _ = await uow.SaveChangesAsync();
+            }
+
             return Ok(true);
         });
 
@@ -421,6 +448,11 @@ namespace GamaEdtech.Application.Service
 
         public Task<ResultData<int>> SaveQualificationAsync([NotNull] CurriculumQualificationDto qualification, long userId) => RunAsync(async uow =>
         {
+            if (SwitchRefusal<int>() is { } notReady)
+            {
+                return notReady;
+            }
+
             if (Invalid<int>(Slug(qualification.Slug), Required(qualification.Name, 200, "name"), Optional(qualification.ShortName, 50, "shortName")) is { } invalid)
             {
                 return invalid;
@@ -451,6 +483,12 @@ namespace GamaEdtech.Application.Service
             entity.ListOrder = qualification.ListOrder;
             Touch(entity, qualification.Id, userId, repository);
             _ = await uow.SaveChangesAsync();
+            if (MirrorOn)
+            {
+                await CurriculumMirror.MirrorQualificationAsync(uow, entity);
+                _ = await uow.SaveChangesAsync();
+            }
+
             return Ok(entity.Id);
         });
 
@@ -553,6 +591,11 @@ namespace GamaEdtech.Application.Service
 
         public Task<ResultData<int>> SaveSyllabusAsync([NotNull] CurriculumSyllabusDto syllabus, long userId) => RunAsync(async uow =>
         {
+            if (SwitchRefusal<int>() is { } notReady)
+            {
+                return notReady;
+            }
+
             if (Invalid<int>(Slug(syllabus.Slug), Required(syllabus.Name, 200, "name"), Optional(syllabus.Code, 30, "code"), Optional(syllabus.Picture, 300, "picture"),
                 syllabus.YearFrom is { } from && syllabus.YearTo is { } to && from > to ? "yearTo" : null) is { } invalid)
             {
@@ -588,6 +631,12 @@ namespace GamaEdtech.Application.Service
             entity.ListOrder = syllabus.ListOrder;
             Touch(entity, syllabus.Id, userId, repository);
             _ = await uow.SaveChangesAsync();
+            if (MirrorOn)
+            {
+                await CurriculumMirror.MirrorSyllabusAsync(uow, entity);
+                _ = await uow.SaveChangesAsync();
+            }
+
             return Ok(entity.Id);
         });
 
@@ -621,6 +670,11 @@ namespace GamaEdtech.Application.Service
 
         public Task<ResultData<bool>> SavePapersAsync(int syllabusId, [NotNull] IReadOnlyList<CurriculumPaperDto> papers) => RunAsync(async uow =>
         {
+            if (SwitchRefusal<bool>() is { } notReady)
+            {
+                return notReady;
+            }
+
             if (!await uow.GetRepository<CurriculumSyllabus, int>().AnyAsync(t => t.Id == syllabusId))
             {
                 return NotFound<bool>();
@@ -670,6 +724,16 @@ namespace GamaEdtech.Application.Service
             }
 
             _ = await uow.SaveChangesAsync();
+            if (MirrorOn)
+            {
+                foreach (var row in await repository.GetManyQueryable(t => t.SyllabusId == syllabusId, tracking: true).ToListAsync())
+                {
+                    await CurriculumMirror.MirrorPaperAsync(uow, row);
+                }
+
+                _ = await uow.SaveChangesAsync();
+            }
+
             return Ok(true);
         });
 
@@ -758,6 +822,11 @@ namespace GamaEdtech.Application.Service
 
         public Task<ResultData<int>> SaveTopicAsync([NotNull] CurriculumTopicDto topic, long userId) => RunAsync(async uow =>
         {
+            if (SwitchRefusal<int>() is { } notReady)
+            {
+                return notReady;
+            }
+
             if (Invalid<int>(Required(topic.Name, 500, "name")) is { } invalid)
             {
                 return invalid;
@@ -794,6 +863,12 @@ namespace GamaEdtech.Application.Service
             entity.ListOrder = topic.ListOrder;
             Touch(entity, topic.Id, userId, repository);
             _ = await uow.SaveChangesAsync();
+            if (MirrorOn)
+            {
+                await CurriculumMirror.MirrorTopicsAsync(uow, entity.SyllabusId);
+                _ = await uow.SaveChangesAsync();
+            }
+
             return Ok(entity.Id);
         });
 
@@ -1012,6 +1087,20 @@ namespace GamaEdtech.Application.Service
                 return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message }] };
             }
         }
+
+        // The curriculum's writes can't be switched before the lookup lists' (gama-api's copy could bring the ids it makes).
+        private ResultData<T>? SwitchRefusal<T>() =>
+            migrationRouter.Value.GetWriteRoute(MigrationDomain.Curriculum) == MigrationRoute.Native
+                && migrationRouter.Value.GetWriteRoute(MigrationDomain.Types) != MigrationRoute.Native
+                ? new(OperationResult.NotValid)
+                {
+                    Errors = [new() { Message = "Set Migration:WriteRoutes:Types to Native before WriteRoutes:Curriculum: the lists' ids must be made here only.", Reference = "typesNotNative" }],
+                }
+                : null;
+
+        // After the write switch, what is saved here also gets lookup ids (CurriculumMirror), so content and forms can use it.
+        private bool MirrorOn => migrationRouter.Value.GetWriteRoute(MigrationDomain.Curriculum) == MigrationRoute.Native
+            && migrationRouter.Value.GetWriteRoute(MigrationDomain.Types) == MigrationRoute.Native;
 
         // A copied row is refused while the copy still writes it (it would overwrite the edit).
         private ResultData<T>? Copied<T>(int? legacyId) => legacyId is null ? null : CopyRefusal<T>();

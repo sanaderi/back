@@ -199,7 +199,7 @@ namespace GamaEdtech.Application.Service
         }
 
         /// <summary>Sets the item's columns, and the flags and parent keys the copy derives from them.</summary>
-        private static void Apply(LegacyTaxonomyItem item, TaxonomyItemEditDto requestDto)
+        internal static void Apply(LegacyTaxonomyItem item, TaxonomyItemEditDto requestDto)
         {
             item.Title = requestDto.Title!.Trim();
             item.ListOrder = requestDto.ListOrder;
