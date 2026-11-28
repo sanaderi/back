@@ -48,6 +48,13 @@ namespace GamaEdtech.Presentation.Api.Controllers
         [ResponseCache(Location = ResponseCacheLocation.Any, Duration = CacheSeconds)]
         public Task<IActionResult<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicItemDto>>>> GetTopics([FromRoute] int id) => AnswerAsync(() => service.Value.GetChildrenAsync("topics", id));
 
+        /// <summary>The forms' lists by today's ids: <c>type</c> base (a board's levels), lesson (a level's subjects) or
+        /// topic (a subject's topics), <c>parent</c> the parent's lookup id.</summary>
+        [HttpGet("types"), Produces<ApiResponse<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicItemDto>>>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = CacheSeconds, VaryByQueryKeys = ["*"])]
+        public Task<IActionResult<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicItemDto>>>> GetTypeList([FromQuery] string type, [FromQuery] int parent) =>
+            AnswerAsync(() => service.Value.GetTypeListAsync(type, parent));
+
         /// <summary>A board's filter panel for today's search ids (<c>section</c>, <c>base</c>, <c>lesson</c>), with counts;
         /// <c>isPaper</c> false for the study materials tab.</summary>
         [HttpGet("filters"), Produces<ApiResponse<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicFilterDto>>>>()]

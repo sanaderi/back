@@ -69,6 +69,34 @@ namespace GamaEdtech.Application.Service
             _ => [],
         });
 
+        public Task<ResultData<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicItemDto>>>> GetTypeListAsync(string type, int parentLegacyId) =>
+            AnswerAsync<IReadOnlyList<CurriculumPublicItemDto>>(async uow =>
+            {
+                switch (type)
+                {
+                    case "base":
+                    {
+                        var boardId = await uow.GetRepository<CurriculumBoard, int>().GetManyQueryable(t => t.LegacyId == parentLegacyId).Select(t => (int?)t.Id).FirstOrDefaultAsync();
+                        return boardId is int id ? ((await GetChildrenAsync("levels", id)).Data?.Data ?? []).Where(t => t.LegacyId != null).ToList() : [];
+                    }
+
+                    case "lesson":
+                    {
+                        var levelId = await uow.GetRepository<CurriculumQualification, int>().GetManyQueryable(t => t.LegacyId == parentLegacyId).Select(t => (int?)t.Id).FirstOrDefaultAsync();
+                        return levelId is int id ? ((await GetChildrenAsync("subjects", id)).Data?.Data ?? []).Where(t => t.LegacyId != null).ToList() : [];
+                    }
+
+                    case "topic":
+                    {
+                        var syllabusId = await uow.GetRepository<CurriculumSyllabus, int>().GetManyQueryable(t => t.LegacyId == parentLegacyId).Select(t => (int?)t.Id).FirstOrDefaultAsync();
+                        return syllabusId is int id ? ((await GetChildrenAsync("topics", id)).Data?.Data ?? []).Where(t => t.LegacyId != null).ToList() : [];
+                    }
+
+                    default:
+                        return [];
+                }
+            });
+
         public Task<ResultData<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicFilterDto>>>> GetFiltersAsync(int boardLegacyId, int? levelLegacyId, int? subjectLegacyId, bool isPaper) =>
             AnswerAsync<IReadOnlyList<CurriculumPublicFilterDto>>(async uow =>
             {

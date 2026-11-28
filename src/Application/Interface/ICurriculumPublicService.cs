@@ -21,6 +21,10 @@ namespace GamaEdtech.Application.Interface
         /// levels, subjects, topics), by the parent's curriculum id.</summary>
         Task<ResultData<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicItemDto>>>> GetChildrenAsync(string kind, int parentId);
 
+        /// <summary>The forms' lists by today's ids (<paramref name="type"/>: base = a board's levels, lesson = a level's
+        /// subjects, topic = a subject's topics), only the rows that have one, so a form saves the same ids as before.</summary>
+        Task<ResultData<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicItemDto>>>> GetTypeListAsync(string type, int parentLegacyId);
+
         /// <summary>The panel for a board, and level and subject when chosen (the ids today's search takes), with counts of
         /// the papers (<paramref name="isPaper"/>: past papers, or the other resources).</summary>
         Task<ResultData<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicFilterDto>>>> GetFiltersAsync(int boardLegacyId, int? levelLegacyId, int? subjectLegacyId, bool isPaper);

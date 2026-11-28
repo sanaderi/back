@@ -113,6 +113,18 @@ namespace GamaEdtech.Test.Curriculum
         }
 
         [Fact]
+        public async Task TheFormsListsAnswerByTodaysIds()
+        {
+            await CopyAsync();
+            var levels = (await Service(MigrationRoute.Native).GetTypeListAsync("base", 6627)).Data!.Data!;
+            // "Shared" is under two boards on gama-api; the copy put it under the first, Cambridge.
+            Assert.Equal([(22, "IGCSE"), (99, "Shared")], levels.Select(t => (t.LegacyId!.Value, t.Name)));
+            var topics = (await Service(MigrationRoute.Native).GetTypeListAsync("topic", 2195)).Data!.Data!;
+            Assert.Equal([10, 11, 12, 13, 14], topics.Select(t => t.LegacyId!.Value));
+            Assert.True(topics[0].IsUnit);
+        }
+
+        [Fact]
         public void RanksPutTheBoardsOwnFirstThenEachGroup()
         {
             System.Linq.Expressions.Expression<Func<int, bool>> own = t => t < 10;
