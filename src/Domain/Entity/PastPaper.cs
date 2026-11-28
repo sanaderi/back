@@ -228,8 +228,38 @@ namespace GamaEdtech.Domain.Entity
 
         public ICollection<PastPaperPendingFile>? PendingFiles { get; set; }
 
+        /// <summary>The board in the curriculum model (<c>CurriculumBoards</c>), from <see cref="CoreBoardId"/>; kept filled by <c>LinkCurriculumContent</c>.</summary>
+        [Column(nameof(CurriculumBoardId), DataType.Int)]
+        public int? CurriculumBoardId { get; set; }
+
+        /// <summary>The qualification in the model, from <see cref="CoreGradeId"/>.</summary>
+        [Column(nameof(CurriculumQualificationId), DataType.Int)]
+        public int? CurriculumQualificationId { get; set; }
+
+        /// <summary>The syllabus in the model, from <see cref="CoreSubjectId"/>.</summary>
+        [Column(nameof(CurriculumSyllabusId), DataType.Int)]
+        public int? CurriculumSyllabusId { get; set; }
+
+        /// <summary>The paper (component) in the model, from <see cref="CorePaperTypeId"/>.</summary>
+        [Column(nameof(CurriculumPaperId), DataType.Int)]
+        public int? CurriculumPaperId { get; set; }
+
+        /// <summary>The variant in the model, from <see cref="Variant"/>.</summary>
+        [Column(nameof(CurriculumVariantOptionId), DataType.Int)]
+        public int? CurriculumVariantOptionId { get; set; }
+
+        /// <summary>The session in the model, from <see cref="EduMonth"/> and the qualification's sessions.</summary>
+        [Column(nameof(CurriculumSeriesTypeId), DataType.Int)]
+        public int? CurriculumSeriesTypeId { get; set; }
+
+        /// <summary>When <c>LinkCurriculumContent</c> last placed it in the model; it is placed again after any change.</summary>
+        [Column(nameof(CurriculumLinkDate), DataType.DateTimeOffset)]
+        public DateTimeOffset? CurriculumLinkDate { get; set; }
+
         public void Configure([NotNull] EntityTypeBuilder<PastPaper> builder)
         {
+            _ = builder.HasIndex(t => t.CurriculumSyllabusId);
+            _ = builder.HasIndex(t => t.CurriculumLinkDate);
             _ = builder.OwnEnumeration<PastPaper, PastPaperStatus, byte>(t => t.Status);
             _ = builder.Property(t => t.PriceMultiplier).HasPrecision(9, 4);
             _ = builder.HasOne(t => t.OwnerUser).WithMany().HasForeignKey(t => t.OwnerUserId).OnDelete(DeleteBehavior.NoAction);

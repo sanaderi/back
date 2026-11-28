@@ -181,6 +181,8 @@ namespace GamaEdtech.Application.Service
                     relations.Add(new() { Id = next, FromId = match.GamaTopicId, ToId = match.ExternalTopicId, SyncDate = DateTimeOffset.UtcNow });
                 }
 
+                await MirrorCurriculumLinkAsync(uow, match.GamaTopicId, match.ExternalTopicId, add: true, userId);
+
                 match.Status = TopicMatchStatus.Approved;
                 match.ReviewedByUserId = userId;
                 match.LastModifyDate = DateTimeOffset.UtcNow;
@@ -218,6 +220,8 @@ namespace GamaEdtech.Application.Service
                 {
                     relations.Remove(relation);
                 }
+
+                await MirrorCurriculumLinkAsync(uow, match.GamaTopicId, match.ExternalTopicId, add: false, null);
 
                 match.Status = TopicMatchStatus.Pending;
                 match.ReviewedByUserId = null;
@@ -562,6 +566,36 @@ namespace GamaEdtech.Application.Service
 
         /// <summary>Reviews link topics (<c>Types</c>): refused until both the types' writes and the topic matches' are here, or
         /// the types copy from gama-api would remove the links made here.</summary>
+        // Once the curriculum is edited here (its copy no longer runs), an approval also makes or removes the curriculum's
+        // exact link between the two topics, so the review keeps working after the switch.
+        private async Task MirrorCurriculumLinkAsync(IUnitOfWork uow, int gamaTopicId, int externalTopicId, bool add, long? userId)
+        {
+            if (migrationRouter.Value.GetWriteRoute(MigrationDomain.Curriculum) != MigrationRoute.Native)
+            {
+                return;
+            }
+
+            var topics = await uow.GetRepository<Domain.Entity.Curriculum.CurriculumTopic, int>().GetManyQueryable(t => t.LegacyId == gamaTopicId || t.LegacyId == externalTopicId)
+                .Select(t => new { t.Id, t.LegacyId }).ToListAsync();
+            var master = topics.Find(t => t.LegacyId == gamaTopicId)?.Id;
+            var other = topics.Find(t => t.LegacyId == externalTopicId)?.Id;
+            if (master is not int m || other is not int o)
+            {
+                return;
+            }
+
+            var links = uow.GetRepository<Domain.Entity.Curriculum.CurriculumTopicLink, int>();
+            var existing = await links.GetManyQueryable(t => t.MasterTopicId == m && t.TopicId == o, tracking: true).FirstOrDefaultAsync();
+            if (add && existing is null)
+            {
+                links.Add(new() { MasterTopicId = m, TopicId = o, Kind = CurriculumLinkKind.Exact, CreationDate = DateTimeOffset.UtcNow, CreationUserId = userId });
+            }
+            else if (!add && existing is not null)
+            {
+                links.Remove(existing);
+            }
+        }
+
         private ResultData<T>? NotNative<T>() =>
             migrationRouter.Value.GetWriteRoute(MigrationDomain.Types) == MigrationRoute.Native
                 && migrationRouter.Value.GetWriteRoute(MigrationDomain.Types, MigrationFeatures.TopicMatches) == MigrationRoute.Native

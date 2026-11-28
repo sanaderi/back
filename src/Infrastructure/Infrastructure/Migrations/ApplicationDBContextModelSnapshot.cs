@@ -1062,6 +1062,37 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.ToTable("CurriculumBoardTabs");
                 });
 
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumContentTopic", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ContentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("ContentId");
+
+                    b.Property<byte>("ContentKind")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("ContentKind");
+
+                    b.Property<int>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("TopicId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TopicId", "ContentKind");
+
+                    b.HasIndex("ContentKind", "ContentId", "TopicId")
+                        .IsUnique();
+
+                    b.ToTable("CurriculumContentTopics");
+                });
+
             modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumCopyIssue", b =>
                 {
                     b.Property<long>("Id")
@@ -1834,6 +1865,22 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
+                    b.Property<int?>("CurriculumBoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumBoardId");
+
+                    b.Property<DateTimeOffset?>("CurriculumLinkDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CurriculumLinkDate");
+
+                    b.Property<int?>("CurriculumQualificationId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumQualificationId");
+
+                    b.Property<int?>("CurriculumSyllabusId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumSyllabusId");
+
                     b.Property<int>("DownloadCount")
                         .HasColumnType("int")
                         .HasColumnName("DownloadCount");
@@ -1975,6 +2022,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Code");
+
+                    b.HasIndex("CurriculumLinkDate");
+
+                    b.HasIndex("CurriculumSyllabusId");
 
                     b.HasIndex("LastModifyDate");
 
@@ -3556,6 +3607,34 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
+                    b.Property<int?>("CurriculumBoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumBoardId");
+
+                    b.Property<DateTimeOffset?>("CurriculumLinkDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CurriculumLinkDate");
+
+                    b.Property<int?>("CurriculumPaperId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumPaperId");
+
+                    b.Property<int?>("CurriculumQualificationId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumQualificationId");
+
+                    b.Property<int?>("CurriculumSeriesTypeId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumSeriesTypeId");
+
+                    b.Property<int?>("CurriculumSyllabusId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumSyllabusId");
+
+                    b.Property<int?>("CurriculumVariantOptionId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumVariantOptionId");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Description");
@@ -3682,6 +3761,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                     b.HasIndex("CoreOwnerId");
 
                     b.HasIndex("CreationDate");
+
+                    b.HasIndex("CurriculumLinkDate");
+
+                    b.HasIndex("CurriculumSyllabusId");
 
                     b.HasIndex("DisplayOwnerUserId");
 
@@ -5573,6 +5656,22 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("CreationDate");
 
+                    b.Property<int?>("CurriculumBoardId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumBoardId");
+
+                    b.Property<DateTimeOffset?>("CurriculumLinkDate")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("CurriculumLinkDate");
+
+                    b.Property<int?>("CurriculumQualificationId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumQualificationId");
+
+                    b.Property<int?>("CurriculumSyllabusId")
+                        .HasColumnType("int")
+                        .HasColumnName("CurriculumSyllabusId");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar")
@@ -5618,6 +5717,10 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .HasColumnName("ViewCount");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CurriculumLinkDate");
+
+                    b.HasIndex("CurriculumSyllabusId");
 
                     b.HasIndex("DisplayOwnerUserId");
 
@@ -6344,6 +6447,15 @@ namespace GamaEdtech.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("BoardId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GamaEdtech.Domain.Entity.Curriculum.CurriculumContentTopic", b =>
+                {
+                    b.HasOne("GamaEdtech.Domain.Entity.Curriculum.CurriculumTopic", null)
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
                 });
 

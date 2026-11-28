@@ -24,6 +24,10 @@
         [Display]
         public static readonly ItemType Tutorial = new(nameof(Tutorial), 5, "tutorial");
 
+        /// <summary>The curriculum model's board, qualification and syllabus pages (<c>/boards/...</c>).</summary>
+        [Display]
+        public static readonly ItemType Board = new(nameof(Board), 6, "boards");
+
         public string Identifier { get; }
 
         public ItemType()

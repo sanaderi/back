@@ -112,8 +112,26 @@ namespace GamaEdtech.Domain.Entity
 
         public ICollection<TutorialImage>? Images { get; set; }
 
+        /// <summary>The board in the curriculum model (<c>CurriculumBoards</c>), from <see cref="CoreBoardId"/>; kept filled by <c>LinkCurriculumContent</c>.</summary>
+        [Column(nameof(CurriculumBoardId), DataType.Int)]
+        public int? CurriculumBoardId { get; set; }
+
+        /// <summary>The qualification in the model, from <see cref="CoreGradeId"/>.</summary>
+        [Column(nameof(CurriculumQualificationId), DataType.Int)]
+        public int? CurriculumQualificationId { get; set; }
+
+        /// <summary>The syllabus in the model, from <see cref="CoreSubjectId"/>.</summary>
+        [Column(nameof(CurriculumSyllabusId), DataType.Int)]
+        public int? CurriculumSyllabusId { get; set; }
+
+        /// <summary>When <c>LinkCurriculumContent</c> last placed it in the model; it is placed again after any change.</summary>
+        [Column(nameof(CurriculumLinkDate), DataType.DateTimeOffset)]
+        public DateTimeOffset? CurriculumLinkDate { get; set; }
+
         public void Configure([NotNull] EntityTypeBuilder<Tutorial> builder)
         {
+            _ = builder.HasIndex(t => t.CurriculumSyllabusId);
+            _ = builder.HasIndex(t => t.CurriculumLinkDate);
             _ = builder.OwnEnumeration<Tutorial, TutorialStatus, byte>(t => t.Status);
             _ = builder.HasOne(t => t.OwnerUser).WithMany().HasForeignKey(t => t.OwnerUserId).OnDelete(DeleteBehavior.NoAction);
             _ = builder.HasOne(t => t.DisplayOwnerUser).WithMany().HasForeignKey(t => t.DisplayOwnerUserId).OnDelete(DeleteBehavior.NoAction);

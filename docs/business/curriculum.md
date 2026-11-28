@@ -144,6 +144,24 @@ resource type, variant and topics in the model, with what left the others out.
 | `boards/{id}/schools?cityId=` | Schools teaching the board (`SchoolQualifications`) |
 | `landing/{board}/{level?}/{subject?}` | A landing page by slugs: what is under it, paper count, SEO texts, schools |
 
+## The write switch (phase 5)
+
+- **Content keys.** Past papers, tutorials and exams get nullable `CurriculumBoardId`, `CurriculumQualificationId`,
+  `CurriculumSyllabusId` (papers also `CurriculumPaperId`, `CurriculumVariantOptionId`, `CurriculumSeriesTypeId`) and
+  their topics as rows of `CurriculumContentTopics`. `LinkCurriculumContent` (every 15 minutes) works them out from the
+  lookup ids for every row that is new or changed since its `CurriculumLinkDate`, in batches of 1000, each row once per
+  run. The lookup ids stay as they are: they are what old links and gama-api's copies use.
+- **`Migration:WriteRoutes:Curriculum` = `Native`**: the copy refuses to run, the old lists' editor (`admin/types`) refuses
+  changes (`curriculumNative`; the website hides it), and approving a topic match also makes the curriculum's exact link
+  (taking it back removes it), so the review keeps working.
+- **Sitemap**: `sitemap-boards*.xml` lists the board, qualification and syllabus pages once
+  `Routes:Curriculum.Website` is `Native`.
+- **`GET api/v1/curriculum/status`**: `{ readNative, writeNative }`, for the website and the admin.
+
+The order of the switch: run the copy and check it (missing 0); `Routes:Curriculum.Website` `Shadow`, then `Native`
+(visitors see the model); `WriteRoutes:Curriculum` `Native` (edits move to Admin › Curriculum). The old tables are
+dropped in a later, separate change, weeks after.
+
 ## Admin API
 
 `api/v1/admin/curriculum/...`, admins and anyone given the delegated permission (a board edit touches no money or users,

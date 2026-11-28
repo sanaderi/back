@@ -74,4 +74,12 @@ namespace GamaEdtech.Data.Dto.Curriculum
         public CurriculumSeoResultDto? Seo { get; set; }
         public IReadOnlyList<CurriculumPublicSchoolDto> Schools { get; set; } = [];
     }
+
+    /// <summary>The curriculum's switches: the website reads the model (<see cref="ReadNative"/>), the model is edited here and
+    /// the lookup lists no longer are (<see cref="WriteNative"/>).</summary>
+    public sealed class CurriculumStatusDto
+    {
+        public bool ReadNative { get; set; }
+        public bool WriteNative { get; set; }
+    }
 }

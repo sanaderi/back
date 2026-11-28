@@ -206,8 +206,26 @@ namespace GamaEdtech.Domain.Entity
         [Required]
         public DateTimeOffset SyncDate { get; set; }
 
+        /// <summary>The board in the curriculum model (<c>CurriculumBoards</c>), from <see cref="CoreBoardId"/>; kept filled by <c>LinkCurriculumContent</c>.</summary>
+        [Column(nameof(CurriculumBoardId), DataType.Int)]
+        public int? CurriculumBoardId { get; set; }
+
+        /// <summary>The qualification in the model, from <see cref="CoreGradeId"/>.</summary>
+        [Column(nameof(CurriculumQualificationId), DataType.Int)]
+        public int? CurriculumQualificationId { get; set; }
+
+        /// <summary>The syllabus in the model, from <see cref="CoreSubjectId"/>.</summary>
+        [Column(nameof(CurriculumSyllabusId), DataType.Int)]
+        public int? CurriculumSyllabusId { get; set; }
+
+        /// <summary>When <c>LinkCurriculumContent</c> last placed it in the model; it is placed again after any change.</summary>
+        [Column(nameof(CurriculumLinkDate), DataType.DateTimeOffset)]
+        public DateTimeOffset? CurriculumLinkDate { get; set; }
+
         public void Configure([NotNull] EntityTypeBuilder<Exam> builder)
         {
+            _ = builder.HasIndex(t => t.CurriculumSyllabusId);
+            _ = builder.HasIndex(t => t.CurriculumLinkDate);
             _ = builder.HasOne(t => t.OwnerUser).WithMany().HasForeignKey(t => t.OwnerUserId).OnDelete(DeleteBehavior.NoAction);
             _ = builder.HasIndex(t => new { t.CoreSubjectId, t.Status });
             _ = builder.HasIndex(t => new { t.CoreBoardId, t.CoreGradeId, t.Status });

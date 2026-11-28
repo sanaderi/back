@@ -259,12 +259,27 @@ namespace GamaEdtech.Application.Service
             return null;
         }
 
-        private ResultData<T>? NotNative<T>() =>
-            migrationRouter.Value.GetWriteRoute(MigrationDomain.Types) == MigrationRoute.Native
-                ? null
-                : new(OperationResult.NotValid)
+        private ResultData<T>? NotNative<T>()
+        {
+            // Once the curriculum is edited here, these lists are only what old content points at: boards, levels, subjects
+            // and topics are edited in the curriculum admin.
+            ResultData<T>? refused = null;
+            if (migrationRouter.Value.GetWriteRoute(MigrationDomain.Curriculum) == MigrationRoute.Native)
+            {
+                refused = new(OperationResult.NotValid)
+                {
+                    Errors = [new() { Message = "The curriculum is edited in Admin › Curriculum since Migration:WriteRoutes:Curriculum is Native.", Reference = "curriculumNative" }],
+                };
+            }
+            else if (migrationRouter.Value.GetWriteRoute(MigrationDomain.Types) != MigrationRoute.Native)
+            {
+                refused = new(OperationResult.NotValid)
                 {
                     Errors = [new() { Message = "The lists are edited on gama-api until Migration:WriteRoutes:Types is Native.", Reference = "notNative" }],
                 };
+            }
+
+            return refused;
+        }
     }
 }

@@ -24,10 +24,15 @@ namespace GamaEdtech.Presentation.Api.Controllers
     [ApiVersion("1.0")]
     [Permission(policy: null)]
     [AllowAnonymous]
-    public class CurriculumController(Lazy<ILogger<CurriculumController>> logger, Lazy<ICurriculumPublicService> service)
+    public class CurriculumController(Lazy<ILogger<CurriculumController>> logger, Lazy<ICurriculumPublicService> service, Lazy<ICurriculumContentService> contentService)
         : ApiControllerBase<CurriculumController>(logger)
     {
         private const int CacheSeconds = 300;
+
+        /// <summary>The curriculum's switches: whether the website reads the model, and whether it is edited here.</summary>
+        [HttpGet("status"), Produces<ApiResponse<CurriculumStatusDto>>()]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
+        public IActionResult<CurriculumStatusDto> GetStatus() => Ok<CurriculumStatusDto>(new() { Data = contentService.Value.GetStatus() });
 
         [HttpGet("boards"), Produces<ApiResponse<CurriculumAnswerDto<IReadOnlyList<CurriculumPublicItemDto>>>>()]
         [ResponseCache(Location = ResponseCacheLocation.Any, Duration = CacheSeconds)]

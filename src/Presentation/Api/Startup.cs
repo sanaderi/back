@@ -301,6 +301,8 @@
             // Fills the curriculum model from the copied lookup lists and school boards (phase 2), by hand; rerunnable, and
             // refused once Migration:WriteRoutes:Curriculum is Native. See docs/business/curriculum.md.
             RecurringJob.AddOrUpdate<ICurriculumCopyService>("CopyCurriculum", t => t.CopyAsync(), Cron.Never());
+            // Keeps papers, tutorials and exams placed in the curriculum model (phase 5): what is new or changed since the last pass.
+            RecurringJob.AddOrUpdate<ICurriculumContentService>("LinkCurriculumContent", t => t.LinkAsync(20000), "*/15 * * * *");
             // Copies the past paper files bought on gama-api (read-only on gama-api), by hand like ImportPastPapers. The daily
             // link only reads this database: it turns copied purchases into ownership once their buyer has an account here.
             RecurringJob.AddOrUpdate<IPastPaperPurchaseImportService>("ImportPastPaperPurchases", t => t.ImportAsync(), Cron.Never());
