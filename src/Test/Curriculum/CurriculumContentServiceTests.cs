@@ -88,6 +88,16 @@ namespace GamaEdtech.Test.Curriculum
         }
 
         [Fact]
+        public async Task TheOldListsAreNotEditedOnceTheCurriculumIs()
+        {
+            PassThroughMigrationRouter router = new() { WriteRoutes = new Dictionary<string, MigrationRoute> { [nameof(MigrationDomain.Types)] = MigrationRoute.Native, [nameof(MigrationDomain.Curriculum)] = MigrationRoute.Native } };
+            var admin = new LegacyTaxonomyAdminService(new(serviceProvider.GetRequiredService<IUnitOfWorkProvider>), new(serviceProvider.GetRequiredService<IHttpContextAccessor>),
+                new(() => NullLogger<LegacyTaxonomyAdminService>.Instance), new(() => router));
+            var refused = await admin.CreateItemAsync(new() { Kind = Data.Dto.Taxonomy.LegacyTaxonomyKinds.Board, Title = "New board" });
+            Assert.Equal("curriculumNative", refused.Errors!.Single().Reference);
+        }
+
+        [Fact]
         public void TheStatusSaysWhichSwitchIsOn()
         {
             var status = new CurriculumContentService(new(serviceProvider.GetRequiredService<IUnitOfWorkProvider>), new(serviceProvider.GetRequiredService<IHttpContextAccessor>),

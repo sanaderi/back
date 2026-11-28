@@ -82,7 +82,7 @@ namespace GamaEdtech.Test.Application
                 new(() => NullLogger<LegacyTaxonomySyncService>.Instance),
                 new(() => TypeSlaveFake.Create(typeSlave, typesRelation, lessonsPic, columnsRead, () => readFails, () => configured)),
                 new(() => PicturesFake.Create(storedPictures)),
-                new(() => new PassThroughMigrationRouter { WriteRoute = typesWrites }));
+                new(() => new PassThroughMigrationRouter { WriteRoutes = new Dictionary<string, MigrationRoute> { [nameof(MigrationDomain.Types)] = typesWrites } }));
         }
 
         // A new service per route, as the router is read once.
@@ -90,7 +90,7 @@ namespace GamaEdtech.Test.Application
             new(serviceProvider.GetRequiredService<IUnitOfWorkProvider>),
             new(serviceProvider.GetRequiredService<IHttpContextAccessor>),
             new(() => NullLogger<LegacyTaxonomyAdminService>.Instance),
-            new(() => new PassThroughMigrationRouter { WriteRoute = typesWrites }));
+            new(() => new PassThroughMigrationRouter { WriteRoutes = new Dictionary<string, MigrationRoute> { [nameof(MigrationDomain.Types)] = typesWrites } }));
 
         [Fact]
         public async Task AdminsEditTheListsOnlyOnceTheyAreEditedHere()
