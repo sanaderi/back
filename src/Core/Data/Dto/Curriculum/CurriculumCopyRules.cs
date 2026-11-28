@@ -91,6 +91,18 @@ namespace GamaEdtech.Data.Dto.Curriculum
             ["pre released material"] = ("pm", "PM"),
         };
 
+        /// <summary>How a paper's extra files are named in its SEO description (useCambridgeSeo), by document type code.</summary>
+        public static readonly IReadOnlyDictionary<string, string> SeoFileLabels = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["in"] = "insert",
+            ["sf"] = "sound file (SF)",
+            ["ci"] = "confidential instructions",
+            ["tn"] = "teacher's notes",
+            ["qr"] = "transcript (QR)",
+            ["i2"] = "map file",
+            ["pm"] = "pre released material",
+        };
+
         private static readonly string[] MonthNames = [.. Enumerable.Range(1, 12).Select(t => CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(t))];
 
         /// <summary>

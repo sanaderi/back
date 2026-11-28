@@ -12,6 +12,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.Service;
     using GamaEdtech.Data.Dto.Game;
     using GamaEdtech.Data.Dto.Provider.Core;
+    using GamaEdtech.Data.Dto.Curriculum;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
@@ -248,15 +249,43 @@ namespace GamaEdtech.Application.Service
                 var page = Number(search, "page") is long p2 and > 0 ? p2 : 1;
 
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var exams = await FilterAsync(uow, search);
+                CurriculumLinking.Plan? plan = null;
+                System.Linq.Expressions.Expression<Func<Exam, int>>? rank = null;
+                var exams = await FilterAsync(uow, search, (p, r) => (plan, rank) = (p, r));
                 var total = await exams.CountAsync();
-                // gama-api's English search always sorts by the exam's year and month, then the latest change.
-                var list = await exams.OrderByDescending(t => t.EduYear).ThenByDescending(t => t.EduMonth).ThenByDescending(t => t.LastModifyDate).ThenByDescending(t => t.Id)
+                // gama-api's English search always sorts by the exam's year and month, then the latest change (a linked list
+                // by its groups first: own, GAMA, the other boards).
+                var list = await CurriculumLinking.OrderFirst(exams, rank, t => t.EduYear, true).ThenByDescending(t => t.EduMonth).ThenByDescending(t => t.LastModifyDate).ThenByDescending(t => t.Id)
                     .Skip((int)((page - 1) * perPage)).Take(perPage).ToListAsync();
+                Dictionary<long, string> sources = [];
+                if (plan is not null && rank is not null)
+                {
+                    List<long> ids = [.. list.Select(t => t.Id)];
+                    for (var r = 1; r <= plan.Groups.Count; r++)
+                    {
+                        foreach (var id in await exams.Where(t => ids.Contains(t.Id)).Where(CurriculumLinking.RankIs(rank, r)).Select(t => t.Id).ToListAsync())
+                        {
+                            sources[id] = CurriculumLinking.Source(plan, r);
+                        }
+                    }
+                }
                 var context = await LoadContextAsync(uow, list);
                 return new(OperationResult.Succeeded)
                 {
-                    Data = new() { ["num"] = Invariant(total), ["list"] = new JsonArray([.. list.Select(t => (JsonNode)SearchItem(t, context))]) },
+                    Data = new()
+                    {
+                        ["num"] = Invariant(total),
+                        ["list"] = new JsonArray([.. list.Select(t =>
+                        {
+                            var item = SearchItem(t, context);
+                            if (plan is not null)
+                            {
+                                item["link_source"] = sources.GetValueOrDefault(t.Id, CurriculumLinkSource.Own);
+                            }
+
+                            return (JsonNode)item;
+                        })]),
+                    },
                 };
             }
             catch (Exception exc)
@@ -645,7 +674,8 @@ namespace GamaEdtech.Application.Service
         /// <summary>gama-api's search filters for exams: published, not deleted; a topic (with its linked topics), else the subject
         /// or the board, course and grade (each with the topics imported into it); the title, exam type, kind, date status and a
         /// question it holds.</summary>
-        private static async Task<IQueryable<Exam>> FilterAsync(IUnitOfWork uow, Dictionary<string, string?> search)
+        private static async Task<IQueryable<Exam>> FilterAsync(IUnitOfWork uow, Dictionary<string, string?> search,
+            Action<CurriculumLinking.Plan, System.Linq.Expressions.Expression<Func<Exam, int>>>? ranked = null)
         {
             var query = uow.GetRepository<Exam>().GetManyQueryable(t => t.Status == 1 && !t.IsDeleted);
             if (search.GetValueOrDefault("title") is { Length: > 0 } title)
@@ -683,6 +713,25 @@ namespace GamaEdtech.Application.Service
                 3 => query.Where(t => t.StartDate != null && t.EndDate < now),
                 _ => query,
             };
+
+            // From the curriculum model once its route is Native (one hop through GAMA, the board's tab scope, ranked).
+            if (CurriculumLinking.IsOn(search)
+                && await CurriculumLinking.PlanAsync(uow, CurriculumContentTab.Exams, Number(search, "section"), Number(search, "base"), Number(search, "lesson"), Number(search, "topic")) is { } plan)
+            {
+                var lessonId = Number(search, "lesson");
+                var sectionId = Number(search, "section");
+                var courseId = Number(search, "course");
+                var gradeId = Number(search, "base");
+                System.Linq.Expressions.Expression<Func<Exam, bool>> ownPlace = lessonId is long subject
+                    ? t => t.CoreSubjectId == subject
+                    : t => (sectionId == null || t.CoreBoardId == sectionId) && (courseId == null || t.CoreCourseId == courseId) && (gradeId == null || t.CoreGradeId == gradeId);
+                var ownRows = Number(search, "topic") is long ownTopic
+                    ? TopicMatching.TopicIn<Exam>(nameof(Exam.CoreTopicIds), [ownTopic.ToString(CultureInfo.InvariantCulture), .. plan.OwnTopicKeys])
+                    : ownPlace;
+                List<System.Linq.Expressions.Expression<Func<Exam, bool>>> groups = [.. plan.Groups.Select(t => TopicMatching.TopicIn<Exam>(nameof(Exam.CoreTopicIds), t.TopicKeys))];
+                ranked?.Invoke(plan, CurriculumLinking.Rank(ownRows, groups));
+                return query.Where(CurriculumLinking.Any(ownRows, groups));
+            }
 
             if (Number(search, "topic") is long topicId)
             {

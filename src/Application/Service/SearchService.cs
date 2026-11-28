@@ -97,7 +97,7 @@ namespace GamaEdtech.Application.Service
         {
             var queryString = NormalizeQuery(query, QueryKeys);
             // Versioned: bump it if what is cached changes shape.
-            var cacheKey = $"Search:v1:{(typesStats ? "stats" : "list")}:{queryString}";
+            var cacheKey = $"Search:v1:{(typesStats ? "stats" : "list")}:{CurriculumCacheTag()}:{queryString}";
 
             // gama-api answers it all while past papers and tutorials are on gama-api. Once a route moves, that type in it (its
             // list and every count of it) follows the route; everything else stays gama-api's.
@@ -126,6 +126,9 @@ namespace GamaEdtech.Application.Service
                 _ => () => OtherSearchAsync(queryString, parsed),
             });
         }
+
+        // The lists' links change with the curriculum route, so a switch is not hidden behind cached answers.
+        private string CurriculumCacheTag() => migrationRouter.Value.GetRoute(MigrationDomain.Curriculum, MigrationFeatures.Website) == MigrationRoute.Native ? "c1" : "c0";
 
         public Task<ResultData<JsonObject>> GetRelatedAsync([NotNull] IEnumerable<KeyValuePair<string, StringValues>> query)
         {
@@ -210,7 +213,7 @@ namespace GamaEdtech.Application.Service
         public Task<ResultData<JsonObject>> SearchPapersAsync([NotNull] IEnumerable<KeyValuePair<string, StringValues>> query)
         {
             var queryString = NormalizeQuery(query, PaperQueryKeys);
-            return GetOrFetchAsync($"Search:v1:papers:{queryString}", () => migrationRouter.Value.RunAsync(MigrationDomain.PastPapers, MigrationFeatures.Website, (IPastPaperSource source) => source.SearchPapersAsync(queryString)));
+            return GetOrFetchAsync($"Search:v1:papers:{CurriculumCacheTag()}:{queryString}", () => migrationRouter.Value.RunAsync(MigrationDomain.PastPapers, MigrationFeatures.Website, (IPastPaperSource source) => source.SearchPapersAsync(CurriculumLinking.Mark(migrationRouter.Value, queryString))));
         }
 
         public Task<ResultData<JsonObject>> GetPaperAsync(long id)
@@ -276,7 +279,7 @@ namespace GamaEdtech.Application.Service
         private async Task<ResultData<JsonObject>> PaperSearchAsync(Dictionary<string, StringValues> parsed)
         {
             var paperQuery = NormalizeQuery(parsed, PaperSearchKeys);
-            var papers = await migrationRouter.Value.RunAsync(MigrationDomain.PastPapers, MigrationFeatures.Website, (IPastPaperSource source) => source.SearchPapersAsync(paperQuery));
+            var papers = await migrationRouter.Value.RunAsync(MigrationDomain.PastPapers, MigrationFeatures.Website, (IPastPaperSource source) => source.SearchPapersAsync(CurriculumLinking.Mark(migrationRouter.Value, paperQuery)));
             if (papers.OperationResult is not OperationResult.Succeeded || papers.Data is null)
             {
                 return papers;
@@ -339,10 +342,10 @@ namespace GamaEdtech.Application.Service
         private sealed record MovedType(string Name, FrozenSet<string> Keys, string[] CountKeys, Func<IMigrationRouter, string, Task<ResultData<JsonObject>>> Search);
 
         private static readonly MovedType Tutorials = new("tutorial", TutorialSearchKeys, ["tutorials", "dars"],
-            (router, query) => router.RunAsync(MigrationDomain.Tutorials, MigrationFeatures.Website, (ITutorialSource source) => source.SearchTutorialsAsync(query)));
+            (router, query) => router.RunAsync(MigrationDomain.Tutorials, MigrationFeatures.Website, (ITutorialSource source) => source.SearchTutorialsAsync(CurriculumLinking.Mark(router, query))));
 
         private static readonly MovedType Exams = new("exam", ExamSearchKeys, ["exams", "azmoon"],
-            (router, query) => router.RunAsync(MigrationDomain.Exams, MigrationFeatures.Website, (IExamSource source) => source.SearchExamsAsync(query)));
+            (router, query) => router.RunAsync(MigrationDomain.Exams, MigrationFeatures.Website, (IExamSource source) => source.SearchExamsAsync(CurriculumLinking.Mark(router, query))));
 
         /// <summary>A moved type's count in <c>types_stats</c> for the same filters: its routed search's total (one row asked for).</summary>
         private async Task<ResultData<bool>> ReplaceCountAsync(JsonObject stats, Dictionary<string, StringValues> parsed, MovedType moved)
@@ -400,7 +403,7 @@ namespace GamaEdtech.Application.Service
             _ = countQuery.Remove("page");
             var queryString = NormalizeQuery(countQuery, PaperSearchKeys);
             var count = await GetOrFetchAsync($"Search:v1:paperCount:{queryString}",
-                () => migrationRouter.Value.RunAsync(MigrationDomain.PastPapers, MigrationFeatures.Website, (IPastPaperSource source) => source.SearchPapersAsync(queryString)));
+                () => migrationRouter.Value.RunAsync(MigrationDomain.PastPapers, MigrationFeatures.Website, (IPastPaperSource source) => source.SearchPapersAsync(CurriculumLinking.Mark(migrationRouter.Value, queryString))));
             if (count.Data?["num"] is not JsonNode num)
             {
                 // Never mix a missing count into a cached answer.
@@ -423,7 +426,7 @@ namespace GamaEdtech.Application.Service
         {
             var queryString = NormalizeQuery([new("section", section), new("base", grade), new("is_paper", isPaper ? "1" : "0"), new("perpage", "1")], PaperCountKeys);
             return GetOrFetchAsync($"Search:v1:paperCount:{queryString}",
-                () => migrationRouter.Value.RunAsync(MigrationDomain.PastPapers, MigrationFeatures.Website, (IPastPaperSource source) => source.SearchPapersAsync(queryString)));
+                () => migrationRouter.Value.RunAsync(MigrationDomain.PastPapers, MigrationFeatures.Website, (IPastPaperSource source) => source.SearchPapersAsync(CurriculumLinking.Mark(migrationRouter.Value, queryString))));
         }
 
         /// <summary>How many a moved type (exams, tutorials) has for a board and grade: its routed search's <c>num</c>, cached as

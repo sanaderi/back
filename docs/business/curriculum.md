@@ -119,6 +119,31 @@ replaced on each run. **The check** (`GET admin/curriculum/copy/check`) counts e
 must be 0 before phase 3) and how many past papers, tutorials and exams find their board, level, subject, paper or
 resource type, variant and topics in the model, with what left the others out.
 
+## Reading the model (phase 3)
+
+**One switch for both sides:** `Migration:Routes:Curriculum.Website`.
+
+- **Content lists** (`search` past papers, study materials, Exam Hub and tutorials tabs, `search/papers`): on `Native` the
+  search marks the query it sends to the native sources (`CurriculumLinking.Flag`, never taken from a visitor), and they
+  take their topic links from the model (`CurriculumLinking.PlanAsync`): one hop through GAMA, exact links, the board's
+  tab scope, a unit with its chapters. Rows are ranked own → GAMA → each other board, then in the list's order, and
+  each item carries `link_source` (`own`, `gama`, `otherBoard`) for the website's labels. Content still holds the lookup
+  ids, so the model is joined through each row's `LegacyId`. `Legacy` and `Shadow` keep gama-api's chain: the new links
+  differ on purpose, so a comparison would only report the decision. The search's cache key includes the route.
+- **Public read API** `api/v1/curriculum/...` (anonymous, cached five minutes). Every answer is
+  `{ native, data }`; the website uses `data` only when `native` is true and keeps its own code otherwise, so rollback
+  is setting the route back.
+
+| Endpoint | Answers |
+|---|---|
+| `boards`, `boards/{id}/levels`, `levels/{id}/subjects`, `subjects/{id}/topics` | The pickers' lists, each item with its `legacyId` (what today's search and forms take) |
+| `filters?section=&base=&lesson=&isPaper=` | The board's panel in order: key, the search `param` it sets, label, style, options with live counts (empty ones left out) |
+| `seo?page=&section=&{values}` | A page's title and description from the board's template, else the default |
+| `seo/paper/{id}` | A past paper's or study material's texts with every value worked out from the model (code, session words, paper and variant, file list), as `useCambridgeSeo` wrote them |
+| `tree/{subjectId}` | The lesson tree from the model with linked tutorials, in the shape of `search/tutorials/lessonTree` |
+| `boards/{id}/schools?cityId=` | Schools teaching the board (`SchoolQualifications`) |
+| `landing/{board}/{level?}/{subject?}` | A landing page by slugs: what is under it, paper count, SEO texts, schools |
+
 ## Admin API
 
 `api/v1/admin/curriculum/...`, admins and anyone given the delegated permission (a board edit touches no money or users,

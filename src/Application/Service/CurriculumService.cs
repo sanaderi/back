@@ -1,5 +1,6 @@
 namespace GamaEdtech.Application.Service
 {
+    using System.Globalization;
     using System.Linq;
 
     using GamaEdtech.Application.Interface;
@@ -145,6 +146,50 @@ namespace GamaEdtech.Application.Service
                 Logger.Value.LogException(exc);
                 return new(OperationResult.Failed) { Errors = [new() { Message = exc.Message }] };
             }
+        }
+
+        public async Task<IReadOnlyDictionary<int, IReadOnlyCollection<string>>> GetLinkedTopicsForTreeAsync(int boardId, IReadOnlyCollection<int> topicIds)
+        {
+            ArgumentNullException.ThrowIfNull(topicIds);
+            var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+            var boards = await uow.GetRepository<CurriculumBoard, int>().GetManyQueryable().Select(t => new { t.Id, t.IsMaster, t.ListOrder }).ToListAsync();
+            var board = boards.Find(t => t.Id == boardId);
+            if (board is null || topicIds.Count == 0)
+            {
+                return new Dictionary<int, IReadOnlyCollection<string>>();
+            }
+
+            List<int> ids = [.. topicIds];
+            var links = uow.GetRepository<CurriculumTopicLink, int>().GetManyQueryable();
+            var masters = board.IsMaster ? links.Where(t => ids.Contains(t.MasterTopicId)).Select(t => t.MasterTopicId) : links.Where(t => ids.Contains(t.TopicId)).Select(t => t.MasterTopicId);
+            var rows = await links.Where(t => masters.Contains(t.MasterTopicId)).ToListAsync();
+            if (rows.Count == 0)
+            {
+                return new Dictionary<int, IReadOnlyCollection<string>>();
+            }
+
+            var places = await CurriculumAdminService.TopicPlacesAsync(uow, [.. rows.Select(t => t.TopicId)]);
+            var legacy = await uow.GetRepository<CurriculumTopic, int>().GetManyQueryable(t => t.LegacyId != null)
+                .Where(t => rows.Select(r => r.TopicId).Contains(t.Id) || rows.Select(r => r.MasterTopicId).Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id, t => t.LegacyId!.Value.ToString(CultureInfo.InvariantCulture));
+            var scope = (await uow.GetRepository<CurriculumBoardTab, int>().GetAsync(t => t.BoardId == boardId && t.Tab == CurriculumContentTab.Tutorials, tracking: false))?.Scope
+                ?? CurriculumLinkRules.DefaultScope(CurriculumContentTab.Tutorials);
+            var order = await uow.GetRepository<CurriculumBoardLinkOrder, int>().GetManyQueryable(t => t.BoardId == boardId).OrderBy(t => t.ListOrder).Select(t => t.OtherBoardId).ToListAsync();
+            var edges = rows.Where(t => places.ContainsKey(t.TopicId)).Select(t => new CurriculumLinkEdge(t.MasterTopicId, t.TopicId, places[t.TopicId].BoardId, t.Kind)).ToList();
+            var listOrder = boards.ToDictionary(t => t.Id, t => t.ListOrder);
+
+            Dictionary<int, IReadOnlyCollection<string>> result = [];
+            foreach (var id in ids)
+            {
+                var resolved = CurriculumLinkRules.Resolve(boardId, board.IsMaster, [id], edges, scope, order, listOrder);
+                List<string> keys = [.. resolved.Master.Concat(resolved.OtherBoards.SelectMany(t => t.TopicIds)).Where(legacy.ContainsKey).Select(t => legacy[t])];
+                if (keys.Count > 0)
+                {
+                    result[id] = keys;
+                }
+            }
+
+            return result;
         }
 
         private static async Task<List<CurriculumFilterOptionDto>> OptionsAsync(IUnitOfWork uow, int boardId, int? qualificationId, string key, List<CurriculumPaper> papers)

@@ -21,6 +21,10 @@ namespace GamaEdtech.Application.Interface
         /// partial matches apart.</summary>
         Task<ResultData<CurriculumLinkedTopicsDto>> GetLinkedTopicsAsync(int boardId, int topicId, CurriculumContentTab tab);
 
+        /// <summary>For each of a board's topics, the lookup ids of the topics its tutorials tab brings in (GAMA's, then the
+        /// other boards', by the board's scope), so a lesson tree lists linked tutorials under the board's own topics.</summary>
+        Task<IReadOnlyDictionary<int, IReadOnlyCollection<string>>> GetLinkedTopicsForTreeAsync(int boardId, IReadOnlyCollection<int> topicIds);
+
         /// <summary>A page's title and description from the board's template, else the default, filled with
         /// <paramref name="values"/> (see <c>CurriculumSeoDefaults</c> for the names).</summary>
         Task<ResultData<CurriculumSeoResultDto>> GetSeoAsync(int? boardId, CurriculumSeoPage page, IReadOnlyDictionary<string, string?> values);

@@ -11,6 +11,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Common.DataAccess.UnitOfWork;
     using GamaEdtech.Common.Service;
     using GamaEdtech.Data.Dto.Taxonomy;
+    using GamaEdtech.Data.Dto.Curriculum;
     using GamaEdtech.Domain.Entity;
     using GamaEdtech.Domain.Entity.Identity;
     using GamaEdtech.Domain.Enumeration;
@@ -221,15 +222,24 @@ namespace GamaEdtech.Application.Service
                 var page = Number(search, "page") is long p2 and > 0 ? p2 : 1;
 
                 var uow = UnitOfWorkProvider.Value.CreateUnitOfWork();
-                var tutorials = await FilterAsync(uow, search);
+                CurriculumLinking.Plan? plan = null;
+                System.Linq.Expressions.Expression<Func<Tutorial, int>>? rank = null;
+                var tutorials = await FilterAsync(uow, search, (p, r) => (plan, rank) = (p, r));
                 var total = await tutorials.CountAsync();
-                var list = await Sorted(tutorials, search.GetValueOrDefault("sortby")).Skip((int)((page - 1) * perPage)).Take(perPage).ToListAsync();
+                var list = await Sorted(tutorials, search.GetValueOrDefault("sortby"), rank).Skip((int)((page - 1) * perPage)).Take(perPage).ToListAsync();
+                var sources = plan is null || rank is null ? null : await SourcesAsync(tutorials, list, plan, rank);
                 var context = await LoadContextAsync(uow, list);
 
                 JsonArray items = [];
                 foreach (var tutorial in list)
                 {
-                    items.Add(SearchItem(tutorial, context));
+                    var item = SearchItem(tutorial, context);
+                    if (sources is not null)
+                    {
+                        item["link_source"] = sources.GetValueOrDefault(tutorial.Id, CurriculumLinkSource.Own);
+                    }
+
+                    items.Add(item);
                 }
 
                 return new(OperationResult.Succeeded) { Data = new() { ["num"] = total, ["list"] = items } };
@@ -244,7 +254,8 @@ namespace GamaEdtech.Application.Service
         /// <summary>Published tutorials matching gama-api's search filters: a topic (with its linked topics), else the
         /// subject, else the board, course and grade (each with the topics imported into it); and, as this backend adds, a
         /// title search (the title, description or keywords contain it).</summary>
-        private static async Task<IQueryable<Tutorial>> FilterAsync(IUnitOfWork uow, Dictionary<string, string?> search)
+        private static async Task<IQueryable<Tutorial>> FilterAsync(IUnitOfWork uow, Dictionary<string, string?> search,
+            Action<CurriculumLinking.Plan, System.Linq.Expressions.Expression<Func<Tutorial, int>>>? ranked = null)
         {
             var query = uow.GetRepository<Tutorial>().GetManyQueryable(t => t.Status == TutorialStatus.Confirmed);
 
@@ -253,6 +264,25 @@ namespace GamaEdtech.Application.Service
                 var text = title.Trim();
                 query = query.Where(t => t.Title!.Contains(text) || (t.Description != null && t.Description.Contains(text))
                     || (t.Keywords != null && t.Keywords.Contains(text)));
+            }
+
+            // From the curriculum model once its route is Native (one hop through GAMA, the board's tab scope, ranked).
+            if (CurriculumLinking.IsOn(search)
+                && await CurriculumLinking.PlanAsync(uow, CurriculumContentTab.Tutorials, Number(search, "section"), Number(search, "base"), Number(search, "lesson"), Number(search, "topic")) is { } plan)
+            {
+                var lessonId = Number(search, "lesson");
+                var sectionId = Number(search, "section");
+                var courseId = Number(search, "course");
+                var gradeId = Number(search, "base");
+                System.Linq.Expressions.Expression<Func<Tutorial, bool>> ownPlace = lessonId is long subject
+                    ? t => t.CoreSubjectId == subject
+                    : t => (sectionId == null || t.CoreBoardId == sectionId) && (courseId == null || t.CoreCourseId == courseId) && (gradeId == null || t.CoreGradeId == gradeId);
+                var ownRows = Number(search, "topic") is long ownTopic
+                    ? TopicMatching.TopicIn<Tutorial>(nameof(Tutorial.CoreTopicIds), [ownTopic.ToString(CultureInfo.InvariantCulture), .. plan.OwnTopicKeys])
+                    : ownPlace;
+                List<System.Linq.Expressions.Expression<Func<Tutorial, bool>>> groups = [.. plan.Groups.Select(t => TopicMatching.TopicIn<Tutorial>(nameof(Tutorial.CoreTopicIds), t.TopicKeys))];
+                ranked?.Invoke(plan, CurriculumLinking.Rank(ownRows, groups));
+                return query.Where(CurriculumLinking.Any(ownRows, groups));
             }
 
             if (Number(search, "topic") is long topicId)
@@ -293,15 +323,33 @@ namespace GamaEdtech.Application.Service
         }
 
         /// <summary>gama-api's tutorial order (<c>Tutorial_model::orders</c>): newest change first unless asked otherwise.</summary>
-        private static IQueryable<Tutorial> Sorted(IQueryable<Tutorial> query, string? sortBy) => sortBy switch
+        // A linked list is ordered by its groups first (own, GAMA, the other boards), then as asked.
+        private static IQueryable<Tutorial> Sorted(IQueryable<Tutorial> query, string? sortBy, System.Linq.Expressions.Expression<Func<Tutorial, int>>? rank = null) => sortBy switch
         {
-            "idDesc" => query.OrderByDescending(t => t.Id),
-            "subdateDesc" or "subdatedesc" or "subdate" => query.OrderByDescending(t => t.CreationDate).ThenByDescending(t => t.Id),
-            "subdateAsc" => query.OrderBy(t => t.CreationDate).ThenBy(t => t.Id),
-            "view" or "viewsDesc" => query.OrderByDescending(t => t.ViewCount).ThenByDescending(t => t.Id),
-            "topic" or "topicAsc" => query.OrderBy(t => t.TopicOrder).ThenBy(t => t.Id),
-            _ => query.OrderByDescending(t => t.LastModifyDate).ThenByDescending(t => t.Id),
+            "idDesc" => CurriculumLinking.OrderFirst(query, rank, t => t.Id, true),
+            "subdateDesc" or "subdatedesc" or "subdate" => CurriculumLinking.OrderFirst(query, rank, t => t.CreationDate, true).ThenByDescending(t => t.Id),
+            "subdateAsc" => CurriculumLinking.OrderFirst(query, rank, t => t.CreationDate, false).ThenBy(t => t.Id),
+            "view" or "viewsDesc" => CurriculumLinking.OrderFirst(query, rank, t => t.ViewCount, true).ThenByDescending(t => t.Id),
+            "topic" or "topicAsc" => CurriculumLinking.OrderFirst(query, rank, t => t.TopicOrder, false).ThenBy(t => t.Id),
+            _ => CurriculumLinking.OrderFirst(query, rank, t => t.LastModifyDate, true).ThenByDescending(t => t.Id),
         };
+
+        // Each listed tutorial's group, for the website's labels.
+        private static async Task<Dictionary<long, string>> SourcesAsync(IQueryable<Tutorial> query, List<Tutorial> page, CurriculumLinking.Plan plan,
+            System.Linq.Expressions.Expression<Func<Tutorial, int>> rank)
+        {
+            List<long> ids = [.. page.Select(t => t.Id)];
+            Dictionary<long, string> sources = [];
+            for (var r = 1; r <= plan.Groups.Count; r++)
+            {
+                foreach (var id in await query.Where(t => ids.Contains(t.Id)).Where(CurriculumLinking.RankIs(rank, r)).Select(t => t.Id).ToListAsync())
+                {
+                    sources[id] = CurriculumLinking.Source(plan, r);
+                }
+            }
+
+            return sources;
+        }
 
         /// <summary>Up to 20 published tutorials of each topic (gama-api's <c>getListByTopic</c>, newest change first).</summary>
         private static async Task<Dictionary<long, List<(long Id, string? Title)>>> TutorialsByTopicAsync(IUnitOfWork uow, IEnumerable<long> topicIds)

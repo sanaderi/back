@@ -235,14 +235,32 @@ namespace GamaEdtech.Application.Service
             var page = Number(search, "page") is long p2 and > 0 ? p2 : 1;
             var offset = Number(search, "ipp") ?? ((page - 1) * perPage);
 
-            var query = await FilterAsync(uow, search);
+            CurriculumLinking.Plan? plan = null;
+            System.Linq.Expressions.Expression<Func<PastPaper, int>>? rank = null;
+            var query = await FilterAsync(uow, search, (p, r) => (plan, rank) = (p, r));
             var total = await query.CountAsync();
 
             // Ordered in memory on the matching ids' sort keys: the default order uses the paper type's and variant's titles.
             var keys = await query.Select(t => new SortKey(t.Id, t.EduYear, t.EduMonth, t.CorePaperTypeId, t.Variant, t.IsPaper, t.RefereeScore, t.ViewCount,
                 t.DownloadCount, t.LastModifyDate)).ToListAsync();
             var titles = await TitlesAsync(uow, [.. keys.Where(t => t.IsPaper).SelectMany(t => new long?[] { t.PaperType, t.Variant }).OfType<long>()]);
-            var pageIds = Sort(keys, SortBy(search), titles).Skip((int)Math.Max(offset, 0)).Take(perPage).Select(t => t.Id).ToList();
+            var sorted = Sort(keys, SortBy(search), titles);
+            Dictionary<long, int> ranks = [];
+            if (plan is not null && rank is not null)
+            {
+                // A linked list: the board's own first, then GAMA's, then each other board's, each in the list's order.
+                for (var r = 1; r <= plan.Groups.Count; r++)
+                {
+                    foreach (var id in await query.Where(CurriculumLinking.RankIs(rank, r)).Select(t => t.Id).ToListAsync())
+                    {
+                        ranks[id] = r;
+                    }
+                }
+
+                sorted = [.. sorted.OrderBy(t => ranks.GetValueOrDefault(t.Id))];
+            }
+
+            var pageIds = sorted.Skip((int)Math.Max(offset, 0)).Take(perPage).Select(t => t.Id).ToList();
 
             var papers = await uow.GetRepository<PastPaper>().GetManyQueryable(t => pageIds.Contains(t.Id), includes: t => t.Include(p => p.Files)).ToListAsync();
             var byId = papers.ToDictionary(t => t.Id);
@@ -252,7 +270,13 @@ namespace GamaEdtech.Application.Service
             JsonArray list = [];
             foreach (var paper in ordered)
             {
-                list.Add(paperDirectory ? DirectoryItem(paper, context) : SearchItem(paper, context));
+                var item = paperDirectory ? DirectoryItem(paper, context) : SearchItem(paper, context);
+                if (plan is not null)
+                {
+                    item["link_source"] = CurriculumLinking.Source(plan, ranks.GetValueOrDefault(paper.Id));
+                }
+
+                list.Add(item);
             }
 
             return new() { ["num"] = total, ["list"] = list };
@@ -343,7 +367,20 @@ namespace GamaEdtech.Application.Service
 
         /// <summary>gama-api's paper filters (<c>Test_model::conditions</c> for a public search): published and not deleted,
         /// then each filter given. A board, grade, subject or topic also matches the topics linked to it from other boards.</summary>
-        private static async Task<IQueryable<PastPaper>> FilterAsync(IUnitOfWork uow, Dictionary<string, string?> search)
+        // The board's own papers for the place filter: the subject, else the board, course and grade given.
+        private static System.Linq.Expressions.Expression<Func<PastPaper, bool>> OwnPlace(Dictionary<string, string?> search)
+        {
+            var lesson = Number(search, "lesson");
+            var section = Number(search, "section");
+            var course = Number(search, "course");
+            var grade = Number(search, "base");
+            return lesson is long subject
+                ? t => t.CoreSubjectId == subject
+                : t => (section == null || t.CoreBoardId == section) && (course == null || t.CoreCourseId == course) && (grade == null || t.CoreGradeId == grade);
+        }
+
+        private static async Task<IQueryable<PastPaper>> FilterAsync(IUnitOfWork uow, Dictionary<string, string?> search,
+            Action<CurriculumLinking.Plan, System.Linq.Expressions.Expression<Func<PastPaper, int>>>? ranked = null)
         {
             var query = uow.GetRepository<PastPaper>().GetManyQueryable(t => t.Status == PastPaperStatus.Confirmed && !t.IsDeleted);
 
@@ -362,44 +399,59 @@ namespace GamaEdtech.Application.Service
                 query = query.Where(t => t.CoreTeacherId == teacher);
             }
 
-            // The deepest place filter (topic, else subject, else grade, else board) brings in its linked topics.
+            // The deepest place filter (topic, else subject, else grade, else board) brings in its linked topics: from the
+            // curriculum model once its route is Native (one hop through GAMA, the board's tab scope, ranked), else gama-api's.
             var topic = Number(search, "topic");
-            if (topic is long topicId)
+            var tab = search.GetValueOrDefault("is_paper") == "0" ? CurriculumContentTab.StudyMaterials : CurriculumContentTab.PastPapers;
+            if (CurriculumLinking.IsOn(search)
+                && await CurriculumLinking.PlanAsync(uow, tab, Number(search, "section"), Number(search, "base"), Number(search, "lesson"), topic) is { } plan)
             {
-                List<long> topics = [topicId, .. await TopicMatching.LinkedAsync(uow, topicId)];
-                List<string> keys = [.. topics.Select(t => t.ToString(CultureInfo.InvariantCulture))];
-                query = query.Where(TopicMatching.TopicIn<PastPaper>(nameof(PastPaper.CoreTopicIds), keys));
+                var own = topic is long ownTopic
+                    ? TopicMatching.TopicIn<PastPaper>(nameof(PastPaper.CoreTopicIds), [ownTopic.ToString(CultureInfo.InvariantCulture), .. plan.OwnTopicKeys])
+                    : OwnPlace(search);
+                List<System.Linq.Expressions.Expression<Func<PastPaper, bool>>> groups = [.. plan.Groups.Select(t => TopicMatching.TopicIn<PastPaper>(nameof(PastPaper.CoreTopicIds), t.TopicKeys))];
+                query = query.Where(CurriculumLinking.Any(own, groups));
+                ranked?.Invoke(plan, CurriculumLinking.Rank(own, groups));
             }
             else
             {
-                var filterId = Number(search, "lesson") ?? Number(search, "base") ?? Number(search, "section");
-                var imported = filterId is long id ? await TopicMatching.ImportedTopicsAsync(uow, id) : [];
-                List<string?> importedKeys = [.. imported.Select(t => t.ToString(CultureInfo.InvariantCulture))];
-
-                var own = query;
-                if (Number(search, "lesson") is long lesson)
+                if (topic is long topicId)
                 {
-                    own = own.Where(t => t.CoreSubjectId == lesson);
+                    List<long> topics = [topicId, .. await TopicMatching.LinkedAsync(uow, topicId)];
+                    List<string> keys = [.. topics.Select(t => t.ToString(CultureInfo.InvariantCulture))];
+                    query = query.Where(TopicMatching.TopicIn<PastPaper>(nameof(PastPaper.CoreTopicIds), keys));
                 }
                 else
                 {
-                    if (Number(search, "section") is long section)
+                    var filterId = Number(search, "lesson") ?? Number(search, "base") ?? Number(search, "section");
+                    var imported = filterId is long id ? await TopicMatching.ImportedTopicsAsync(uow, id) : [];
+                    List<string?> importedKeys = [.. imported.Select(t => t.ToString(CultureInfo.InvariantCulture))];
+
+                    var own = query;
+                    if (Number(search, "lesson") is long lesson)
                     {
-                        own = own.Where(t => t.CoreBoardId == section);
+                        own = own.Where(t => t.CoreSubjectId == lesson);
+                    }
+                    else
+                    {
+                        if (Number(search, "section") is long section)
+                        {
+                            own = own.Where(t => t.CoreBoardId == section);
+                        }
+
+                        if (Number(search, "course") is long course)
+                        {
+                            own = own.Where(t => t.CoreCourseId == course);
+                        }
+
+                        if (Number(search, "base") is long grade)
+                        {
+                            own = own.Where(t => t.CoreGradeId == grade);
+                        }
                     }
 
-                    if (Number(search, "course") is long course)
-                    {
-                        own = own.Where(t => t.CoreCourseId == course);
-                    }
-
-                    if (Number(search, "base") is long grade)
-                    {
-                        own = own.Where(t => t.CoreGradeId == grade);
-                    }
+                    query = importedKeys.Count > 0 ? own.Union(query.Where(t => importedKeys.Contains(t.CoreTopicIds!))) : own;
                 }
-
-                query = importedKeys.Count > 0 ? own.Union(query.Where(t => importedKeys.Contains(t.CoreTopicIds!))) : own;
             }
 
             if (Number(search, "test_type") is long paperType)
