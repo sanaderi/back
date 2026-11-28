@@ -15,6 +15,7 @@ namespace GamaEdtech.Application.Service
     using GamaEdtech.Data.Dto.PastPaper;
     using GamaEdtech.Data.Dto.Taxonomy;
     using GamaEdtech.Domain.Entity;
+    using GamaEdtech.Domain.Enumeration;
 
     using Microsoft.AspNetCore.Http;
     using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ namespace GamaEdtech.Application.Service
 
     /// <inheritdoc cref="IPastPaperDetectService"/>
     public sealed partial class PastPaperDetectService(Lazy<IUnitOfWorkProvider> unitOfWorkProvider, Lazy<IHttpContextAccessor> httpContextAccessor,
-        Lazy<ILogger<PastPaperDetectService>> logger, Lazy<IAiService> aiService)
+        Lazy<ILogger<PastPaperDetectService>> logger, Lazy<IAiService> aiService, Lazy<IMigrationRouter>? migrationRouter = null)
         : ServiceBase<PastPaperDetectService>(unitOfWorkProvider, httpContextAccessor, logger), IPastPaperDetectService
     {
         /// <summary>The cover page (and the next, where a code sometimes sits) is all that is read.</summary>
@@ -67,6 +68,19 @@ namespace GamaEdtech.Application.Service
                 }
 
                 var kind = ReadFileKind(text);
+
+                // Any board, from the curriculum model, once the website reads it; Cambridge's patterns below otherwise.
+                if (!PredictedRegex().IsMatch(text)
+                    && migrationRouter?.Value.GetRoute(MigrationDomain.Curriculum, MigrationFeatures.Website) == MigrationRoute.Native)
+                {
+                    var curriculumUow = UnitOfWorkProvider.Value.CreateUnitOfWork();
+                    if (ReadWithCurriculum(text, await LoadCoverBoardsAsync(curriculumUow), MarkSchemeRegex().IsMatch(text) || kind == FileKind.MarkScheme) is { } found)
+                    {
+                        await MapFileKindAsync(curriculumUow, found, kind ?? (found.IsMarkScheme ? FileKind.MarkScheme : null));
+                        return new(OperationResult.Succeeded) { Data = found };
+                    }
+                }
+
                 var facts = ReadPrintedCodes(text);
                 var source = "pattern";
                 if (facts is null && askAi)

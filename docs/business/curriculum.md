@@ -162,6 +162,22 @@ The order of the switch: run the copy and check it (missing 0); `Routes:Curricul
 (visitors see the model); `WriteRoutes:Curriculum` `Native` (edits move to Admin › Curriculum). The old tables are
 dropped in a later, separate change, weeks after.
 
+## Paper detection (phase 6)
+
+When a paper is uploaded, its cover is read with the curriculum model first once `Routes:Curriculum.Website` is
+`Native` (`PastPaperDetectService.ReadWithCurriculum`), for any board that has a paper code template:
+
+- **The board:** its name or short name on the page.
+- **The printed code:** the board's template up to its session part, with the board's own syllabus codes in place of
+  `{syllabusCode}`. `{paperVariant}` is the paper's digit then the variant's (`42`; `0Y` or one digit is that paper with no
+  variant), and `{paper}` and `{variant}` are read on their own. For example, Cambridge's `{syllabusCode}/{paperVariant}`
+  reads `0625/42`, and a template `{syllabusCode}/{paper}` reads NECTA's `031/2`.
+- **The session:** the board's session names or their title words followed by a year.
+- **The answer:** in the lookup ids the add form saves (`source` = `curriculum`).
+
+A page no board fits, and the site's predicted papers, go to the Cambridge patterns and the AI as before. So a board added
+in the admin with its codes, papers and sessions is detected without a code change.
+
 ## Admin API
 
 `api/v1/admin/curriculum/...`, admins and anyone given the delegated permission (a board edit touches no money or users,
